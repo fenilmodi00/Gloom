@@ -1,151 +1,104 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, {
-  FadeInDown,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
-import OccasionBadge from './OccasionBadge';
+import { OccasionBadge } from './OccasionBadge';
+import { Outfit } from '../../lib/store/outfit.store';
+import { useWardrobeStore } from '../../lib/store/wardrobe.store';
 
-interface OutfitItem {
-  id: string;
-  imageUrl: string;
+interface OutfitCardProps {
+  outfit: Outfit;
 }
 
-export interface OutfitCardProps {
-  id: string;
-  items: OutfitItem[];
-  occasion: string;
-  vibe: string;
-  colorReasoning?: string;
-  aiScore?: number;
-  onTryOn?: (id: string) => void;
-  index?: number;
-}
+export function OutfitCard({ outfit }: OutfitCardProps) {
+  const { items } = useWardrobeStore();
 
-export default function OutfitCard({
-  id,
-  items,
-  occasion,
-  vibe,
-  aiScore,
-  onTryOn,
-  index = 0,
-}: OutfitCardProps) {
-  const scale = useSharedValue(1);
+  // Find the actual wardrobe items for this outfit
+  const outfitItems = outfit.item_ids
+    .map((id) => items.find((i) => i.id === id))
+    .filter(Boolean);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.97, { damping: 15 });
+  const handleTryOn = () => {
+    Alert.alert('Coming Soon', 'Virtual Try-On will be available in Phase 2!');
   };
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15 });
-  };
-
-  // Show up to 3 item images in a stacked collage
-  const visibleItems = items.slice(0, 3);
 
   return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 80).duration(400).springify()}
-      style={animatedStyle}
-    >
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        className="bg-surface rounded-3xl mx-4 mb-4 overflow-hidden"
-        accessibilityLabel={`${vibe} outfit for ${occasion}`}
-      >
-        {/* Collage area */}
-        <View className="h-80 relative items-center justify-center bg-[#F2F0E9]">
-          {/* Background cards (slightly rotated) */}
-          {visibleItems[1] && (
-            <View 
-              className="absolute w-[130px] h-[180px] rounded-2xl overflow-hidden border-4 border-white opacity-80"
-              style={{ left: 16, top: 8, transform: [{ rotate: '-8deg' }] }}
-            >
-              <Image
-                source={{ uri: visibleItems[1].imageUrl }}
-                className="w-full h-full"
-                contentFit="cover"
-              />
-            </View>
-          )}
-          {visibleItems[2] && (
-            <View 
-              className="absolute w-[130px] h-[180px] rounded-2xl overflow-hidden border-4 border-white opacity-80"
-              style={{ right: 16, top: 20, transform: [{ rotate: '6deg' }] }}
-            >
-              <Image
-                source={{ uri: visibleItems[2].imageUrl }}
-                className="w-full h-full"
-                contentFit="cover"
-              />
-            </View>
-          )}
-          {/* Front card */}
-          {visibleItems[0] && (
-            <View 
-              className="w-[220px] h-[290px] rounded-2xl overflow-hidden border-7 border-white z-10"
-              style={Platform.OS === 'ios' ? {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 12 },
-                shadowOpacity: 0.15,
-                shadowRadius: 20,
-              } : { elevation: 12 }}
-            >
-              <Image
-                source={{ uri: visibleItems[0].imageUrl }}
-                className="w-full h-full"
-                contentFit="cover"
-              />
-              {/* Vibe label overlay */}
-              <View className="absolute bottom-3 left-2.5 right-2.5 bg-white/95 rounded-xl py-2.5 px-3">
-                <Text className="text-[8px] font-bold tracking-widest text-[#2D2F1D]/60 uppercase mb-0.5">
-                  SIGNATURE LOOK
-                </Text>
-                <Text className="text-[13px] italic text-[#2D2F1D] font-medium">
-                  {vibe}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Bottom info row */}
-        <View className="flex-row items-center justify-between px-4 py-3.5">
-          <View className="gap-1.5">
-            <OccasionBadge label={occasion} />
-            {aiScore !== undefined && (
-              <Text className="text-[11px] text-[#2D2F1D]/50 tracking-wider">
-                {Math.round(aiScore * 100)}% match
-              </Text>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={Platform.OS === 'ios' ? {
-              shadowColor: '#2D2F1D',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 8,
-            } : { elevation: 4 }}
-            className="bg-[#2D2F1D] rounded-full py-2.5 px-5"
-            onPress={() => onTryOn?.(id)}
-            accessibilityLabel="Try On (Coming Soon)"
-          >
-            <Text className="text-[#F2F0E9] text-xs font-semibold tracking-wide">
-              ✦ Try On
+    <View style={styles.card}>
+      {/* Header */}
+      <View className="px-5 pt-5 pb-3">
+        <View className="flex-row justify-between items-start mb-2">
+          <OccasionBadge occasion={outfit.occasion} />
+          <View className="bg-[#F2F0E9] px-3 py-1 rounded-full">
+            <Text className="text-[#2D2F1D] font-medium text-xs">
+              {Math.round((outfit.ai_score || 0.95) * 100)}% match
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
-      </TouchableOpacity>
-    </Animated.View>
+        <Text className="text-lg font-bold text-[#2D2F1D] tracking-tight">{outfit.vibe}</Text>
+        <Text className="text-[#2D2F1D]/50 text-sm mt-1 leading-5">{outfit.color_reasoning}</Text>
+      </View>
+
+      {/* Item images grid */}
+      <View className="flex-row flex-wrap px-5 py-3 gap-2 justify-center">
+        {outfitItems.map((item, index) => (
+          <View
+            key={item?.id ?? index}
+            style={styles.imageWrapper}
+          >
+            <Image
+              source={{ uri: item?.image_url }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              transition={200}
+            />
+          </View>
+        ))}
+        {outfitItems.length === 0 && (
+          <Text className="text-[#2D2F1D]/30 my-4 text-sm">No item images available</Text>
+        )}
+      </View>
+
+      {/* Try On CTA */}
+      <View className="px-5 pb-5 pt-2">
+        <TouchableOpacity
+          onPress={handleTryOn}
+          style={styles.tryOnButton}
+          activeOpacity={0.85}
+        >
+          <Text className="text-[#F2F0E9] font-semibold text-sm tracking-wide">✦ Try On</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(45, 47, 29, 0.06)',
+    shadowColor: '#2D2F1D',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.1,
+    shadowRadius: 40,
+    elevation: 6,
+  },
+  imageWrapper: {
+    width: '46%',
+    aspectRatio: 3 / 4,
+    borderRadius: 16,
+    backgroundColor: '#F2F0E9',
+    overflow: 'hidden',
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  tryOnButton: {
+    backgroundColor: '#2D2F1D',
+    paddingVertical: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

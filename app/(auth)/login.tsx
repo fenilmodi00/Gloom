@@ -118,9 +118,9 @@ export default function LoginScreen() {
         
         if (profile?.name) {
           setUser(profile);
-          router.replace('/(tabs)');
+          router.replace('/(tabs)/inspo' as any);
         } else {
-          router.replace('/onboarding');
+          router.replace('/(auth)/onboarding' as any);
         }
       }
     } catch (err) {

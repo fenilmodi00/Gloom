@@ -1,40 +1,33 @@
 import React from 'react';
-import { Text, ViewStyle } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { View, Text, StyleSheet } from 'react-native';
 
 interface OccasionBadgeProps {
-  label: string;
-  style?: ViewStyle;
+  occasion: string;
 }
 
-const OCCASION_EMOJI: Record<string, string> = {
-  casual: '☀️',
-  formal: '✦',
-  wedding: '💐',
-  party: '🎉',
-  work: '💼',
-  date: '🕯️',
-  diwali: '🪔',
-  holi: '🌈',
-  ethnic: '🌸',
-  travel: '✈️',
-  sport: '🏃',
-};
-
-export default function OccasionBadge({ label, style }: OccasionBadgeProps) {
-  const key = label.toLowerCase();
-  const emoji = OCCASION_EMOJI[key] ?? '✦';
-
+export function OccasionBadge({ occasion }: OccasionBadgeProps) {
   return (
-    <Animated.View 
-      entering={FadeIn.duration(300)} 
-      className="flex-row items-center gap-1 self-start bg-[#EBE7DB] rounded-full py-1 px-2.5"
-      style={style}
-    >
-      <Text className="text-[11px]">{emoji}</Text>
-      <Text className="text-[10px] font-semibold tracking-wide uppercase text-[#2D2F1D] opacity-70">
-        {label}
-      </Text>
-    </Animated.View>
+    <View style={styles.badge}>
+      <Text style={styles.text}>{occasion}</Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    backgroundColor: 'rgba(45, 47, 29, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(45, 47, 29, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    alignSelf: 'flex-start',
+  },
+  text: {
+    color: '#2D2F1D',
+    fontWeight: '500',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+});

@@ -1,281 +1,319 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/lib/store/auth.store';
-import { useOutfitStore, useOutfits, useOutfitGenerating } from '@/lib/store/outfit.store';
-import { generateOutfitSuggestions } from '@/lib/gemini';
-import { useWardrobeStore, useWardrobeItems } from '@/lib/store/wardrobe.store';
+import React, { useEffect, useState, useCallback } from 'react';
+import { 
+  View, Text, FlatList, TouchableOpacity, RefreshControl, 
+  Alert, Platform, StyleSheet, Dimensions 
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useAuthStore } from '../../../lib/store/auth.store';
+import { useWardrobeStore } from '../../../lib/store/wardrobe.store';
+import { useOutfitStore } from '../../../lib/store/outfit.store';
+import { OutfitCard } from '../../../components/outfits/OutfitCard';
+import { LoadingOverlay } from '../../../components/shared/LoadingOverlay';
+import { supabase } from '../../../lib/supabase';
+import { generateOutfitSuggestions } from '../../../lib/gemini';
+import { useRouter } from 'expo-router';
 
-function OccasionBadge({ occasion }: { occasion: string }) {
-  return (
-    <View style={styles.badge}>
-      <Text style={styles.badgeText}>{occasion}</Text>
-    </View>
-  );
-}
-
-function OutfitCard({ outfit, items }: { outfit: any; items: any[] }) {
-  return (
-    <View style={styles.outfitCard}>
-      <View style={styles.outfitImages}>
-        {outfit.item_ids.slice(0, 3).map((itemId: string, index: number) => {
-          const item = items.find(i => i.id === itemId);
-          return item ? (
-            <Image
-              key={itemId}
-              source={{ uri: item.image_url }}
-              style={[
-                styles.outfitImage,
-                { marginLeft: index > 0 ? -20 : 0, zIndex: 3 - index },
-              ]}
-            />
-          ) : null;
-        })}
-      </View>
-      <View style={styles.outfitInfo}>
-        <OccasionBadge occasion={outfit.occasion || 'casual'} />
-        <Text style={styles.vibe}>{outfit.vibe}</Text>
-        <Text style={styles.reasoning} numberOfLines={2}>
-          {outfit.color_reasoning}
-        </Text>
-      </View>
-      <TouchableOpacity style={styles.tryOnButton}>
-        <Text style={styles.tryOnText}>Try On</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function EmptyState({ onGenerate }: { onGenerate: () => void }) {
-  return (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>✨</Text>
-      <Text style={styles.emptyTitle}>No outfits yet</Text>
-      <Text style={styles.emptySubtitle}>
-        Get AI-powered outfit suggestions based on your wardrobe
-      </Text>
-      <TouchableOpacity style={styles.generateButton} onPress={onGenerate}>
-        <Text style={styles.generateButtonText}>Generate Outfits</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function NoItemsState() {
-  return (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>👗</Text>
-      <Text style={styles.emptyTitle}>Add wardrobe items first</Text>
-      <Text style={styles.emptySubtitle}>
-        You need items in your wardrobe to get outfit suggestions
-      </Text>
-    </View>
-  );
-}
+const { width: SCREEN_W } = Dimensions.get('window');
 
 export default function OutfitsScreen() {
-  const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user } = useAuthStore();
-  const { fetchItems, items: wardrobeItems } = useWardrobeStore();
-  const { fetchOutfits, generateOutfits, isGenerating } = useOutfitStore();
-  const outfits = useOutfits();
-  const generating = useOutfitGenerating();
+  const { items: wardrobeItems, fetchItems } = useWardrobeStore();
+  const { outfits, isLoading, fetchOutfits, addOutfit } = useOutfitStore();
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
-      fetchItems(user.id);
-      fetchOutfits(user.id);
-    }
+    fetchItems();
+    fetchOutfits();
   }, [user?.id]);
 
-  const handleGenerate = async () => {
-    if (wardrobeItems.length === 0) {
-      Alert.alert('No Items', 'Add items to your wardrobe first!');
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchItems(), fetchOutfits()]);
+    setRefreshing(false);
+  }, [user?.id]);
+
+  const generateSuggestions = async () => {
+    if (!user?.id) return;
+
+    if (wardrobeItems.length < 3) {
+      Alert.alert('Add more items', 'You need at least 3 items in your wardrobe for AI suggestions.');
       return;
     }
 
     try {
-      const suggestions = await generateOutfitSuggestions(
-        wardrobeItems,
-        new Date().toLocaleDateString(),
-        'Mumbai',
-        'Sunny, 28°C'
-      );
-      
-      // Save suggestions to store (would normally save to DB too)
-      // This is a simplified version
-      Alert.alert('Success', `Generated ${suggestions.length} outfit suggestions!`);
-    } catch (error) {
-      console.error('Generate error:', error);
-      Alert.alert('Error', 'Failed to generate outfits. Please try again.');
+      setIsGenerating(true);
+
+      const date = new Date().toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      const weather = 'Clear, 28°C';
+      const city = 'Mumbai';
+
+      const suggestions = await generateOutfitSuggestions(wardrobeItems, date, weather, city);
+
+      for (const suggestion of suggestions) {
+        const coverItem = wardrobeItems.find((i) => i.id === suggestion.item_ids[0]);
+
+        const { data, error } = await supabase
+          .from('outfits')
+          .insert({
+            user_id: user.id,
+            item_ids: suggestion.item_ids,
+            occasion: suggestion.occasion,
+            vibe: suggestion.vibe,
+            color_reasoning: suggestion.color_reasoning,
+            ai_score: suggestion.ai_score,
+            cover_image_url: coverItem?.image_url || '',
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) addOutfit(data);
+      }
+
+      Alert.alert('Done!', 'New outfits generated.');
+      await fetchOutfits();
+    } catch (error: any) {
+      Alert.alert('Generation Failed', error.message || 'Could not generate suggestions.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Outfits</Text>
-        <TouchableOpacity
-          style={[styles.generateButtonHeader, isGenerating && styles.buttonDisabled]}
-          onPress={handleGenerate}
-          disabled={isGenerating || wardrobeItems.length === 0}
-        >
-          <Text style={styles.generateTextHeader}>
-            {isGenerating ? 'Generating...' : 'Refresh'}
-          </Text>
-        </TouchableOpacity>
+  // ─── EMPTY STATE ────────────────────────────────────────
+  const renderEmptyState = () => (
+    <Animated.View entering={FadeInDown.delay(150).springify()} className="flex-1 justify-center items-center px-6">
+      {/* Cursive tagline — matches Stitch reference */}
+      <Text style={styles.tagline}>
+        Curated styles for your{'\n'}inspired wardrobe
+      </Text>
+
+      {/* Stacked card illustration — mimics the Stitch card fan */}
+      <View style={styles.cardFan}>
+        {/* Back-left card */}
+        <View style={[styles.fanCard, styles.fanCardLeft]} />
+        {/* Back-right card */}
+        <View style={[styles.fanCard, styles.fanCardRight]} />
+        {/* Front center card */}
+        <View style={[styles.fanCard, styles.fanCardCenter]}>
+          <View style={styles.fanCardLabel}>
+            <Text style={styles.fanCardLabelSub}>SIGNATURE LOOK</Text>
+            <Text style={styles.fanCardLabelTitle}>Modern Classics</Text>
+          </View>
+        </View>
       </View>
 
-      {wardrobeItems.length === 0 ? (
-        <NoItemsState />
-      ) : outfits.length === 0 ? (
-        <EmptyState onGenerate={handleGenerate} />
+      {/* CTAs */}
+      <View className="w-full px-4 mt-8 gap-3">
+        {wardrobeItems.length === 0 ? (
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => router.push('/(tabs)/wardrobe/add-item')}
+            activeOpacity={0.85}
+          >
+            <Feather name="plus" size={18} color="#F2F0E9" />
+            <Text style={styles.primaryBtnText}>Add items to wardrobe</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.primaryBtn} onPress={generateSuggestions} activeOpacity={0.85}>
+            <Text style={styles.primaryBtnText}>✦ Generate Outfits</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </Animated.View>
+  );
+
+  // ─── MAIN RENDER ────────────────────────────────────────
+  if (isLoading && outfits.length === 0) {
+    return (
+      <View className="flex-1 bg-[#F2F0E9] justify-center items-center">
+        <LoadingOverlay message="Loading outfits..." />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header — Stitch style */}
+      <View className="flex-row justify-between items-center px-8 pt-2 pb-4">
+        <Text style={styles.headerTitle}>Outfits</Text>
+        <View className="flex-row items-center gap-3">
+          <TouchableOpacity style={styles.uploadBtn} onPress={() => generateSuggestions()} activeOpacity={0.85}>
+            <Feather name="plus" size={16} color="#F2F0E9" />
+            <Text style={styles.uploadBtnText}>Upload outfit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterBtn} activeOpacity={0.7}>
+            <Feather name="sliders" size={20} color="#2D2F1D" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {outfits.length === 0 ? (
+        renderEmptyState()
       ) : (
-        <ScrollView
+        <FlatList
+          data={outfits}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <OutfitCard outfit={item} />}
+          contentContainerStyle={{ padding: 20, paddingBottom: Platform.OS === 'ios' ? 120 : 100 }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {outfits.map((outfit) => (
-            <OutfitCard
-              key={outfit.id}
-              outfit={outfit}
-              items={wardrobeItems}
-            />
-          ))}
-        </ScrollView>
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2D2F1D" />}
+        />
       )}
-    </View>
+
+      {isGenerating && (
+        <View style={StyleSheet.absoluteFill}>
+          <LoadingOverlay message="AI is styling your outfits..." />
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
+    backgroundColor: '#F2F0E9',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  title: {
+  headerTitle: {
     fontSize: 34,
     fontWeight: '600',
-    color: '#1A1A1A',
     fontStyle: 'italic',
+    color: '#2D2F1D',
+    letterSpacing: -0.5,
   },
-  generateButtonHeader: {
-    backgroundColor: '#8B7355',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  generateTextHeader: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-  },
-  outfitCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  outfitImages: {
+  uploadBtn: {
     flexDirection: 'row',
-    marginBottom: 12,
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#2D2F1D',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    shadowColor: '#2D2F1D',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  outfitImage: {
-    width: 80,
-    height: 100,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    backgroundColor: '#F0EDE8',
-  },
-  outfitInfo: {
-    marginBottom: 12,
-  },
-  badge: {
-    backgroundColor: '#D4C5B0',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  badgeText: {
+  uploadBtnText: {
+    color: '#F2F0E9',
     fontSize: 12,
-    color: '#1A1A1A',
     fontWeight: '500',
-    textTransform: 'capitalize',
+    letterSpacing: 0.3,
   },
-  vibe: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 4,
+  filterBtn: {
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    padding: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(45, 47, 29, 0.1)',
   },
-  reasoning: {
-    fontSize: 14,
-    color: '#6B6B6B',
-  },
-  tryOnButton: {
-    backgroundColor: '#8B7355',
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  tryOnText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#6B6B6B',
+  tagline: {
+    fontSize: 26,
+    fontWeight: '700',
+    fontStyle: 'italic',
+    color: '#2D2F1D',
     textAlign: 'center',
-    marginBottom: 24,
+    lineHeight: 36,
+    marginBottom: 28,
   },
-  generateButton: {
-    backgroundColor: '#8B7355',
-    paddingHorizontal: 32,
-    paddingVertical: 14,
+  cardFan: {
+    width: SCREEN_W * 0.85,
+    height: 400,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  fanCard: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 6,
+    borderColor: '#FFFFFF',
+  },
+  fanCardLeft: {
+    width: 130,
+    height: 180,
+    left: 10,
+    top: 10,
+    transform: [{ rotate: '-8deg' }],
+    opacity: 0.7,
+    backgroundColor: '#EBE7DB',
+  },
+  fanCardRight: {
+    width: 135,
+    height: 190,
+    right: 10,
+    top: 20,
+    transform: [{ rotate: '6deg' }],
+    opacity: 0.7,
+    backgroundColor: '#D8D3C5',
+  },
+  fanCardCenter: {
+    width: 230,
+    height: 310,
+    top: 40,
+    backgroundColor: '#E8E4D9',
+    shadowColor: '#2D2F1D',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 40,
+    elevation: 10,
+  },
+  fanCardLabel: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 12,
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
   },
-  generateButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  fanCardLabelSub: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    color: 'rgba(45, 47, 29, 0.6)',
+    textTransform: 'uppercase',
+  },
+  fanCardLabelTitle: {
+    fontSize: 14,
     fontWeight: '600',
+    fontStyle: 'italic',
+    color: '#2D2F1D',
+    marginTop: 2,
+  },
+  primaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2D2F1D',
+    paddingVertical: 16,
+    borderRadius: 999,
+    gap: 8,
+    shadowColor: '#2D2F1D',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  primaryBtnText: {
+    color: '#F2F0E9',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

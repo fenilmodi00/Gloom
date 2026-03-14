@@ -156,7 +156,7 @@ export default function OnboardingScreen() {
         setUser(profile);
       }
 
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/inspo' as any);
     } catch (error) {
       console.error('Onboarding error:', error);
       Alert.alert('Error', 'Failed to complete onboarding. Please try again.');

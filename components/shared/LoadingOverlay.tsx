@@ -1,44 +1,20 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Modal } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
+import { BlurView } from 'expo-blur';
 
-interface LoadingOverlayProps {
-  visible: boolean;
-  message?: string;
-}
-
-export default function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
-  if (!visible) return null;
-
+export function LoadingOverlay({ message = "Loading..." }: { message?: string }) {
   return (
-    <Modal transparent visible={visible} animationType="fade">
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <ActivityIndicator size="large" color="#8B7355" />
-          {message && <Text style={styles.message}>{message}</Text>}
+    <View className="absolute inset-0 z-50">
+      <BlurView 
+        intensity={30} 
+        tint="light" 
+        className="flex-1 items-center justify-center"
+      >
+        <View className="bg-surface px-8 py-6 rounded-3xl shadow-sm items-center border border-accent-light/30">
+          <ActivityIndicator size="large" color="#8B7355" className="mb-4" />
+          <Text className="text-text-primary font-medium">{message}</Text>
         </View>
-      </View>
-    </Modal>
+      </BlurView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    minWidth: 160,
-  },
-  message: {
-    marginTop: 16,
-    fontSize: 14,
-    color: '#6B6B6B',
-    textAlign: 'center',
-  },
-});

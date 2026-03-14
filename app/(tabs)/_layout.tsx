@@ -1,6 +1,5 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
 import BottomTabBar from '@/components/shared/BottomTabBar';
 
 export default function TabLayout() {
@@ -9,43 +8,70 @@ export default function TabLayout() {
       tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: '#F5F2EE' },
         // Use our custom tab bar for all platforms
-        tabBarStyle: Platform.select({
-          // The custom bar is absolutely positioned, so we hide the native one
-          default: { display: 'none' },
-        }),
+        tabBarStyle: {
+          display: 'none',
+          height: 0,
+          opacity: 0,
+          position: 'absolute',
+          backgroundColor: 'transparent',
+        },
       }}
     >
-      {/* Tab 1 — Inspo */}
+      {/* Tab 1 — Inspo (Home) */}
       <Tabs.Screen
-        name="inspo"
+        name="inspo/index"
         options={{
           title: 'Inspo',
           tabBarLabel: 'Home',
         }}
       />
 
-      {/* Tab 2 — Wardrobe (acts as Search in nav) */}
+      {/* Tab 2 — Wardrobe */}
       <Tabs.Screen
-        name="wardrobe"
+        name="wardrobe/index"
         options={{
           title: 'Wardrobe',
-          tabBarLabel: 'Search',
+          tabBarLabel: 'Wardrobe',
         }}
       />
 
-      {/* Tab 3 — Outfits (active in the Stitch design) */}
+      {/* Tab 3 — Outfits */}
       <Tabs.Screen
-        name="outfits"
+        name="outfits/index"
         options={{
           title: 'Outfits',
           tabBarLabel: 'Outfits',
         }}
       />
 
-      {/* Hide legacy index & two tabs from the Expo template */}
-      <Tabs.Screen name="index" options={{ href: null }} />
-      <Tabs.Screen name="two" options={{ href: null }} />
+      {/* Hidden route — Favorites should not appear as a tab */}
+      <Tabs.Screen
+        name="favorites/index"
+        options={{
+          href: null,
+          title: 'Saved',
+          tabBarLabel: 'Saved',
+        }}
+      />
+
+      {/* Hidden route — nested add item flow */}
+      <Tabs.Screen
+        name="wardrobe/add-item"
+        options={{
+          href: null,
+        }}
+      />
+
+      {/* Tab 4 — Profile */}
+      <Tabs.Screen
+        name="profile/index"
+        options={{
+          title: 'Profile',
+          tabBarLabel: 'Profile',
+        }}
+      />
     </Tabs>
   );
 }

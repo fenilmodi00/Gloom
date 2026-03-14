@@ -1,60 +1,35 @@
 import React from 'react';
 import { ScrollView, Pressable, Text, View } from 'react-native';
-import { Category } from '@/types/wardrobe';
+
+const CATEGORIES = ['All', 'Tops', 'Bottoms', 'Dresses', 'Shoes', 'Bags', 'Accessories'];
 
 interface CategoryFilterProps {
-  categories: Category[];
-  selectedCategory: Category | 'all';
-  onSelect: (category: Category | 'all') => void;
-  counts?: Record<Category | 'all', number>;
+  activeCategory: string;
+  onSelectCategory: (category: string) => void;
 }
 
-const CATEGORY_LABELS: Record<Category | 'all', string> = {
-  all: 'All',
-  upper: 'Tops',
-  lower: 'Bottoms',
-  dress: 'Dresses',
-  shoes: 'Shoes',
-  bag: 'Bags',
-  accessory: 'Accessories',
-};
-
-export function CategoryFilter({
-  categories,
-  selectedCategory,
-  onSelect,
-  counts,
-}: CategoryFilterProps) {
-  const allCategories: (Category | 'all')[] = ['all', ...categories];
-
+export function CategoryFilter({ activeCategory, onSelectCategory }: CategoryFilterProps) {
   return (
-    <View className="bg-surface border-b border-gray-100">
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
-      >
-        {allCategories.map((category) => {
-          const isActive = selectedCategory === category;
-          const count = counts?.[category];
-
+    <View className="mb-4">
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4" contentContainerStyle={{ paddingRight: 32 }}>
+        {CATEGORIES.map((category) => {
+          const isSelected = activeCategory === category;
           return (
             <Pressable
               key={category}
-              onPress={() => onSelect(category)}
-              className={`mr-2 px-4 py-2 rounded-full border transition-colors ${
-                isActive
-                  ? 'bg-accent border-accent'
-                  : 'bg-surface border-gray-200'
+              onPress={() => onSelectCategory(category)}
+              className={`mr-2 px-5 py-2 rounded-full border ${
+                isSelected 
+                  ? 'bg-text-primary border-text-primary' 
+                  : 'bg-surface border-accent-light/50'
               }`}
             >
               <Text
                 className={`text-sm font-medium ${
-                  isActive ? 'text-white' : 'text-text-secondary'
+                  isSelected ? 'text-white' : 'text-text-secondary'
                 }`}
               >
-                {CATEGORY_LABELS[category]}
-                {count !== undefined && ` (${count})`}
+                {category}
               </Text>
             </Pressable>
           );

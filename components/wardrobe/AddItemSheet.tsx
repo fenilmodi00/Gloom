@@ -1,143 +1,65 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  Platform,
-  Alert,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { BlurView } from 'expo-blur';
+import React, { forwardRef, useCallback } from 'react';
+import { View, Text, Pressable } from 'react-native';
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import { Camera, Image as ImageIcon } from 'lucide-react-native';
 
 interface AddItemSheetProps {
-  visible: boolean;
-  onClose: () => void;
-  onImageCaptured: (uri: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSelectMethod: (method: 'camera' | 'gallery') => void;
 }
 
-export function AddItemSheet({
-  visible,
-  onClose,
-  onImageCaptured,
-}: AddItemSheetProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export const AddItemSheet = forwardRef<BottomSheet, AddItemSheetProps>(
+  ({ onSelectMethod }, ref) => {
+    const snapPoints = ['30%'];
 
-  const requestPermissions = async (): Promise<boolean> => {
-    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-    const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (cameraStatus !== 'granted' || mediaStatus !== 'granted') {
-      Alert.alert(
-        'Permissions Required',
-        'Please grant camera and photo library permissions to add items to your wardrobe.',
-        [{ text: 'OK' }]
-      );
-      return false;
-    }
-    return true;
-  };
+    const renderBackdrop = useCallback(
+      (props: any) => (
+        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+      ),
+      []
+    );
 
-  const takePhoto = async () => {
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
-
-    setIsLoading(true);
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        onImageCaptured(result.assets[0].uri);
-        onClose();
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const pickFromGallery = async () => {
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
-
-    setIsLoading(true);
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        onImageCaptured(result.assets[0].uri);
-        onClose();
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <Pressable className="flex-1 justify-end" onPress={onClose}>
-        <BlurView
-          intensity={50}
-          tint="dark"
-          className="absolute inset-0"
-        />
-        <Pressable
-          className={`bg-background rounded-t-3xl p-5 ${Platform.OS === 'ios' ? 'pb-10' : 'pb-5'}`}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View className="w-10 h-1 bg-gray-300 rounded-full self-center mb-5" />
-          <Text className="text-lg font-semibold text-text-primary mb-6 text-center">
-            Add Item
-          </Text>
-
+    return (
+      <BottomSheet
+        ref={ref}
+        index={-1}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        enablePanDownToClose
+        backgroundStyle={{ backgroundColor: '#FFFFFF', borderRadius: 24 }}
+        handleIndicatorStyle={{ backgroundColor: '#D4C5B0', width: 40 }}
+      >
+        <View className="flex-1 p-6 space-y-4">
+          <Text className="text-xl font-bold text-text-primary mb-2">Add to Wardrobe</Text>
+          
           <Pressable
-            onPress={takePhoto}
-            disabled={isLoading}
-            className="flex-row items-center p-4 bg-surface rounded-xl mb-3"
+            onPress={() => onSelectMethod('camera')}
+            className="flex-row items-center w-full bg-background p-4 rounded-xl mb-3"
           >
-            <View className="w-10 h-10 bg-accent-light rounded-full items-center justify-center mr-3">
-              <Text className="text-xl">📷</Text>
+            <View className="w-10 h-10 rounded-full bg-accent/10 items-center justify-center mr-4">
+              <Camera size={20} color="#8B7355" />
             </View>
-            <Text className="text-base text-text-primary">Take a photo</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={pickFromGallery}
-            disabled={isLoading}
-            className="flex-row items-center p-4 bg-surface rounded-xl"
-          >
-            <View className="w-10 h-10 bg-accent-light rounded-full items-center justify-center mr-3">
-              <Text className="text-xl">🖼️</Text>
+            <View>
+              <Text className="text-base font-bold text-text-primary">Take photo</Text>
+              <Text className="text-sm text-text-secondary">Use camera to capture item</Text>
             </View>
-            <Text className="text-base text-text-primary">Choose from gallery</Text>
           </Pressable>
 
           <Pressable
-            onPress={onClose}
-            className="mt-4 p-4"
+            onPress={() => onSelectMethod('gallery')}
+            className="flex-row items-center w-full bg-background p-4 rounded-xl"
           >
-            <Text className="text-center text-text-secondary">Cancel</Text>
+            <View className="w-10 h-10 rounded-full bg-accent/10 items-center justify-center mr-4">
+              <ImageIcon size={20} color="#8B7355" />
+            </View>
+            <View>
+              <Text className="text-base font-bold text-text-primary">Choose from gallery</Text>
+              <Text className="text-sm text-text-secondary">Upload an existing photo</Text>
+            </View>
           </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
+        </View>
+      </BottomSheet>
+    );
+  }
+);

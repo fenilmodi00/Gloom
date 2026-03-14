@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { WardrobeItem, Category } from '../../types';
+import type { WardrobeItem, WardrobeItemInput, Category } from '../../types';
 import { supabase } from '../supabase';
+import { useAuthStore } from './auth.store';
 
 interface WardrobeState {
   items: WardrobeItem[];
@@ -10,12 +11,13 @@ interface WardrobeState {
   
   // Actions
   setItems: (items: WardrobeItem[]) => void;
-  addItem: (item: WardrobeItem) => void;
+  addItem: (item: WardrobeItemInput) => Promise<WardrobeItem>;
+  deleteItem: (id: string) => void;
   removeItem: (id: string) => void;
   setCategory: (category: Category | 'all') => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
-  fetchItems: (userId: string) => Promise<void>;
+  fetchItems: () => Promise<void>;
 }
 
 export const useWardrobeStore = create<WardrobeState>((set, get) => ({
@@ -26,9 +28,34 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   
   setItems: (items) => set({ items }),
   
-  addItem: (item) => 
+  addItem: async (itemInput: WardrobeItemInput) => {
+    const { user } = useAuthStore.getState();
+    if (!user) throw new Error('User not authenticated');
+    
+    const { data, error } = await supabase
+      .from('wardrobe_items')
+      .insert({
+        user_id: user.id,
+        image_url: itemInput.image_url,
+        category: itemInput.category,
+        sub_category: itemInput.sub_category,
+        colors: itemInput.colors || [],
+        style_tags: itemInput.style_tags || [],
+        occasion_tags: itemInput.occasion_tags || [],
+        fabric_guess: itemInput.fabric_guess,
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    set((state) => ({ items: [data, ...state.items] }));
+    return data as WardrobeItem;
+  },
+  
+  deleteItem: (id) => 
     set((state) => ({ 
-      items: [...state.items, item] 
+      items: state.items.filter((item) => item.id !== id) 
     })),
   
   removeItem: (id) => 
@@ -42,13 +69,18 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   
   setError: (error) => set({ error }),
   
-  fetchItems: async (userId: string) => {
+  fetchItems: async () => {
+    const { user } = useAuthStore.getState();
+    if (!user) {
+      set({ isLoading: false, error: 'User not authenticated' });
+      return;
+    }
     set({ isLoading: true, error: null });
     try {
       const { data, error } = await supabase
         .from('wardrobe_items')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;

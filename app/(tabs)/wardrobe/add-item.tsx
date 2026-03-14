@@ -1,306 +1,246 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Pressable, Alert } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/lib/store/auth.store';
+import { X, Camera as CameraIcon, Check } from 'lucide-react-native';
+import { Image } from 'expo-image';
+
+import { Text } from '@/components/ui/text';
+import { Heading } from '@/components/ui/heading';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
+
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
+import { useAuthStore } from '@/lib/store/auth.store';
 import { tagWardrobeItem } from '@/lib/gemini';
+import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
 
 export default function AddItemScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { user } = useAuthStore();
-  const { addItem } = useWardrobeStore();
+  const { method } = useLocalSearchParams<{ method: string }>();
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
   
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Processing...');
+  
+  const { addItem } = useWardrobeStore();
+  const { user } = useAuthStore();
 
-  const pickImage = async (useCamera: boolean) => {
-    const permissionResult = useCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permissionResult.granted) {
-      Alert.alert('Permission Required', 'Please allow access to continue.');
-      return;
+  useEffect(() => {
+    if (method === 'gallery' && !photoUri) {
+      pickImage();
     }
+  }, [method]);
 
-    const result = useCamera
-      ? await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          aspect: [3, 4],
-          quality: 0.8,
-          base64: true,
-        })
-      : await ImagePicker.launchImageLibraryAsync({
-          allowsEditing: true,
-          aspect: [3, 4],
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setPhotoUri(result.assets[0].uri);
+      } else {
+        router.back();
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image from gallery');
+      router.back();
+    }
+  };
+
+  const takePhoto = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
           base64: true,
         });
+        if (photo) {
+          setPhotoUri(photo.uri);
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to take photo');
+      }
+    }
+  };
 
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
+  const handleRetake = () => {
+    setPhotoUri(null);
+    if (method === 'gallery') {
+      pickImage();
     }
   };
 
   const handleSave = async () => {
-    if (!selectedImage || !user) return;
-
-    setUploading(true);
+    if (!photoUri || !user) return;
+    
+    setIsProcessing(true);
+    setLoadingMessage('Uploading image...');
+    
     try {
-      // Upload image to Supabase Storage
+      // 1. Upload to Supabase Storage
       const fileName = `${user.id}/${Date.now()}.jpg`;
-      const response = await fetch(selectedImage);
+      const response = await fetch(photoUri);
       const blob = await response.blob();
-
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('wardrobe-images')
-        .upload(fileName, blob);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get public URL
+        .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
+        .upload(fileName, blob, { contentType: 'image/jpeg' });
+        
+      if (uploadError) throw uploadError;
+      
       const { data: { publicUrl } } = supabase.storage
-        .from('wardrobe-images')
+        .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
         .getPublicUrl(fileName);
-
-      // Tag with Gemini
-      setLoading(true);
-      let tags;
-      try {
-        const base64 = await blobToBase64(blob);
-        tags = await tagWardrobeItem(base64);
-      } catch (tagError) {
-        console.error('Tagging error:', tagError);
-        // Use defaults if tagging fails
-        tags = {
-          category: 'upper' as const,
-          sub_category: 'unknown',
-          colors: [],
-          style_tags: [],
-          occasion_tags: [],
-          fabric_guess: null,
+        
+      setLoadingMessage('Analyzing item with AI...');
+      
+      // We need base64 for Gemini
+      const fileData = await fetch(photoUri);
+      const fileBlob = await fileData.blob();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Extract base64 part
+          const b64 = result.split(',')[1];
+          resolve(b64);
         };
-      }
-
-      // Save to database
-      const { data: item, error: dbError } = await supabase
-        .from('wardrobe_items')
-        .insert({
-          user_id: user.id,
-          image_url: publicUrl,
-          category: tags.category,
-          sub_category: tags.sub_category,
-          colors: tags.colors || [],
-          style_tags: tags.style_tags || [],
-          occasion_tags: tags.occasion_tags || [],
-          fabric_guess: tags.fabric_guess,
-        })
-        .select()
-        .single();
-
-      if (dbError) {
-        throw dbError;
-      }
-
-      if (item) {
-        addItem(item);
-      }
-
-      Alert.alert('Success', 'Item added to your wardrobe!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+        reader.onerror = reject;
+        reader.readAsDataURL(fileBlob);
+      });
+      
+      // 2. Tag with Gemini
+      const tags = await tagWardrobeItem(base64);
+      
+      setLoadingMessage('Saving to wardrobe...');
+      
+      // 3. Save to database
+      await addItem({
+        image_url: publicUrl,
+        category: tags.category,
+        sub_category: tags.sub_category,
+        colors: tags.colors,
+        style_tags: tags.style_tags,
+        occasion_tags: tags.occasion_tags,
+        fabric_guess: tags.fabric_guess,
+      });
+      
+      router.replace('/(tabs)/wardrobe');
     } catch (error) {
-      console.error('Save error:', error);
-      Alert.alert('Error', 'Failed to save item. Please try again.');
-    } finally {
-      setLoading(false);
-      setUploading(false);
+      console.error('Error adding item:', error);
+      Alert.alert('Error', 'Failed to process and save item.');
+      setIsProcessing(false);
     }
   };
 
-  // Helper to convert blob to base64
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
+  if (isProcessing) {
+    return <LoadingOverlay message={loadingMessage} />;
+  }
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.cancelText}>Cancel</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Add Item</Text>
-        <TouchableOpacity
-          onPress={handleSave}
-          disabled={!selectedImage || uploading}
-        >
-          <Text
-            style={[
-              styles.saveText,
-              (!selectedImage || uploading) && styles.saveTextDisabled,
-            ]}
-          >
-            {uploading ? 'Saving...' : 'Save'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+  // Camera permissions
+  if (method === 'camera' && !photoUri) {
+    if (!permission) {
+      return <View className="flex-1 bg-black" />;
+    }
+    if (!permission.granted) {
+      return (
+        <SafeAreaView className="flex-1 bg-background justify-center items-center px-4">
+          <Text className="text-center mb-4">We need your permission to show the camera</Text>
+          <Button onPress={requestPermission} className="bg-accent">
+            <ButtonText>Grant Permission</ButtonText>
+          </Button>
+        </SafeAreaView>
+      );
+    }
 
-      {/* Image Preview */}
-      <View style={styles.imageContainer}>
-        {selectedImage ? (
-          <Image source={{ uri: selectedImage }} style={styles.image} />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderIcon}>📷</Text>
-            <Text style={styles.placeholderText}>
-              Take a photo or choose from gallery
+    return (
+      <View className="flex-1 bg-black">
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <View className="flex-row justify-between items-center px-4 py-2 z-10">
+            <Pressable onPress={() => router.back()} className="p-2">
+              <X size={24} color="white" />
+            </Pressable>
+            <Text className="text-white font-medium">Add to Wardrobe</Text>
+            <View className="w-10" />
+          </View>
+          
+          <View className="flex-1 rounded-3xl overflow-hidden m-4 relative">
+            <CameraView 
+              ref={cameraRef}
+              className="flex-1" 
+              facing="back"
+            />
+            {/* Guide overlay */}
+            <View className="absolute inset-0 border-2 border-white/30 rounded-3xl m-10 border-dashed" />
+            <Text className="absolute bottom-8 w-full text-center text-white/80 font-medium">
+              Position item clearly in frame
             </Text>
           </View>
-        )}
+          
+          <View className="flex-row justify-center items-center pb-12 pt-4">
+            <Pressable 
+              onPress={takePhoto}
+              className="w-20 h-20 rounded-full border-4 border-white/50 items-center justify-center"
+            >
+              <View className="w-16 h-16 rounded-full bg-white" />
+            </Pressable>
+          </View>
+        </SafeAreaView>
       </View>
+    );
+  }
 
-      {/* Loading overlay */}
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#8B7355" />
-          <Text style={styles.loadingText}>
-            Analyzing your item...
-          </Text>
-        </View>
-      )}
+  // Preview screen
+  if (photoUri) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+         <View className="flex-row justify-between items-center px-4 py-2 z-10">
+            <Pressable onPress={() => router.back()} className="p-2">
+              <X size={24} className="text-text-primary" />
+            </Pressable>
+            <Text className="font-medium text-text-primary">Preview</Text>
+            <View className="w-10" />
+          </View>
+          
+          <View className="flex-1 p-4">
+            <View className="flex-1 rounded-3xl overflow-hidden bg-surface shadow-sm mb-6 relative">
+              <Image 
+                source={{ uri: photoUri }} 
+                className="flex-1"
+                contentFit="cover"
+              />
+            </View>
+            
+            <View className="flex-row gap-4 mb-4">
+              <Button 
+                variant="outline" 
+                className="flex-1 border-accent"
+                onPress={handleRetake}
+              >
+                <ButtonText className="text-accent">Retake</ButtonText>
+              </Button>
+              <Button 
+                className="flex-1 bg-accent"
+                onPress={handleSave}
+              >
+                <ButtonText>Analyze & Save</ButtonText>
+                <ButtonIcon as={Check} className="ml-2 w-4 h-4 text-white" />
+              </Button>
+            </View>
+          </View>
+      </SafeAreaView>
+    );
+  }
 
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => pickImage(true)}
-        >
-          <Text style={styles.actionIcon}>📷</Text>
-          <Text style={styles.actionLabel}>Take Photo</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => pickImage(false)}
-        >
-          <Text style={styles.actionIcon}>🖼️</Text>
-          <Text style={styles.actionLabel}>Gallery</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  return null;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F2EE',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  cancelText: {
-    fontSize: 16,
-    color: '#6B6B6B',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  saveText: {
-    fontSize: 16,
-    color: '#8B7355',
-    fontWeight: '600',
-  },
-  saveTextDisabled: {
-    opacity: 0.5,
-  },
-  imageContainer: {
-    flex: 1,
-    marginHorizontal: 16,
-    marginVertical: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  placeholderIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: '#6B6B6B',
-    textAlign: 'center',
-    paddingHorizontal: 32,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(245, 242, 238, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#8B7355',
-    fontWeight: '500',
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 32,
-    paddingVertical: 24,
-    paddingBottom: 40,
-  },
-  actionButton: {
-    alignItems: 'center',
-  },
-  actionIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  actionLabel: {
-    fontSize: 14,
-    color: '#6B6B6B',
-  },
-});

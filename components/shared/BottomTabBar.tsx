@@ -1,56 +1,155 @@
-import React from 'react';
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Platform,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
+import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  interpolateColor,
+  interpolate
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Tab config — map route name → icon (Material Symbols name) + label
-const TAB_CONFIG: Record<string, { icon: string; label: string }> = {
-  inspo: { icon: 'home', label: 'Home' },
-  wardrobe: { icon: 'search', label: 'Search' },
-  outfits: { icon: 'dresser', label: 'Outfits' },
-  favorites: { icon: 'favorite', label: 'Saved' },
-  profile: { icon: 'person', label: 'Profile' },
+// Aesty-inspired color palette
+const COLORS = {
+  navBg: '#F5F3ED',
+  activeHighlight: '#EBE7DB',
+  activeColor: '#8B7355', // Golden accent color
+  inactiveColor: 'rgba(45, 47, 29, 0.35)', // Muted dark for inactive
+  border: 'rgba(45, 47, 29, 0.05)',
+  white: '#FFFFFF',
 };
 
-// We embed Material Symbols as a ligature-based font text on web/Android.
-// On iOS we use expo-symbols; here we use a simple text icon fallback for
-// cross-platform compatibility without adding a new native dependency.
-const EMOJI_FALLBACK: Record<string, string> = {
-  home: '⌂',
-  search: '🔍',
-  dresser: '👗',
-  favorite: '♥',
-  person: '👤',
+const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: string }> = {
+  'inspo/index': { icon: 'home', label: 'Inspo' },
+  'wardrobe/index': { icon: 'grid', label: 'Wardrobe' },
+  'outfits/index': { icon: 'heart', label: 'Outfits' },
+  'profile/index': { icon: 'user', label: 'Profile' },
 };
 
-export default function BottomTabBar({
-  state,
-  descriptors,
-  navigation,
-}: BottomTabBarProps) {
-  const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, 8);
+// Spring config for 60fps smooth animations
+const SPRING_CONFIG = {
+  damping: 15,
+  stiffness: 150,
+  mass: 0.5,
+};
+
+function AnimatedTabItem({
+  route,
+  isFocused,
+  onPress,
+  onLongPress,
+  options
+}: {
+  route: any;
+  isFocused: boolean;
+  onPress: () => void;
+  onLongPress: () => void;
+  options: any;
+}) {
+  const scale = useSharedValue(1);
+  const cfg = TAB_CONFIG[route.name] ?? { icon: 'circle', label: route.name };
+
+  const focusProgress = useSharedValue(isFocused ? 1 : 0);
+
+  React.useEffect(() => {
+    // Smoother, bouncy spring transition
+    focusProgress.value = withSpring(isFocused ? 1 : 0, {
+      damping: 11, // Bouncier to achieve the "10% bounce" causing siblings to shift slightly
+      stiffness: 130,
+      mass: 0.5,
+    });
+  }, [isFocused]);
+
+  const handlePressIn = () => {
+    'worklet';
+    scale.value = withSpring(0.92, SPRING_CONFIG);
+  };
+
+  const handlePressOut = () => {
+    'worklet';
+    scale.value = withSpring(1, SPRING_CONFIG);
+  };
+
+  const containerStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ scale: scale.value }],
+      backgroundColor: interpolateColor(
+        focusProgress.value,
+        [0, 1],
+        ['rgba(235, 231, 219, 0)', COLORS.activeHighlight]
+      ),
+      paddingHorizontal: Math.max(0, interpolate(focusProgress.value, [0, 1], [0, 16])),
+    };
+  });
+
+  const textStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: interpolate(focusProgress.value, [0.3, 1], [0, 1], 'clamp'),
+      maxWidth: Math.max(0, interpolate(focusProgress.value, [0, 1], [0, 100])),
+      marginLeft: Math.max(0, interpolate(focusProgress.value, [0, 1], [0, 8])),
+    };
+  });
 
   return (
-    <View style={[styles.wrapper, { paddingBottom: bottomPad }]}>
-      {/* Frosted glass container using expo-blur */}
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isFocused }}
+      accessibilityLabel={options.tabBarAccessibilityLabel ?? cfg.label}
+      style={styles.pressable}
+    >
+      <Animated.View style={[styles.tabItem, containerStyle]}>
+        <Feather
+          name={cfg.icon}
+          size={22}
+          color={isFocused ? COLORS.activeColor : COLORS.inactiveColor}
+        />
+        <Animated.Text
+          numberOfLines={1}
+          style={[styles.label, textStyle]}
+        >
+          {cfg.label}
+        </Animated.Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+export default function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+
+  const tabRoutes = state.routes.filter((route) => {
+    const routeOptions = descriptors[route.key]?.options as { href?: string | null } | undefined;
+    return route.name in TAB_CONFIG && routeOptions?.href !== null;
+  });
+
+  return (
+    <View
+      style={[
+        styles.outerContainer,
+        { paddingBottom: Math.max(insets.bottom, 8) },
+      ]}
+      pointerEvents="box-none"
+    >
+      {/* Blur background for frosted glass effect */}
       <BlurView
-        intensity={80}
+        intensity={30}
         tint="light"
-        style={styles.blurContainer}
+        style={styles.blurPill}
       >
         <View style={styles.pill}>
-          {state.routes.map((route, index) => {
+          {tabRoutes.map((route) => {
+            const originalIndex = state.routes.findIndex((r) => r.name === route.name);
+            const isFocused = state.index === originalIndex;
             const { options } = descriptors[route.key];
-            const isFocused = state.index === index;
-            const cfg = TAB_CONFIG[route.name] ?? { icon: 'home', label: route.name };
 
             const onPress = () => {
               const event = navigation.emit({
@@ -67,38 +166,15 @@ export default function BottomTabBar({
               navigation.emit({ type: 'tabLongPress', target: route.key });
             };
 
-            if (isFocused) {
-              // Active: pill-within-pill with label
-              return (
-                <TouchableOpacity
-                  key={route.key}
-                  onPress={onPress}
-                  onLongPress={onLongPress}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: true }}
-                  accessibilityLabel={options.tabBarAccessibilityLabel ?? cfg.label}
-                  style={styles.activePill}
-                >
-                  <Text style={styles.activeIcon}>{EMOJI_FALLBACK[cfg.icon] ?? '•'}</Text>
-                  <Text style={styles.activeLabel}>{cfg.label}</Text>
-                </TouchableOpacity>
-              );
-            }
-
             return (
-              <TouchableOpacity
+              <AnimatedTabItem
                 key={route.key}
+                route={route}
+                isFocused={isFocused}
                 onPress={onPress}
                 onLongPress={onLongPress}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityState={{ selected: false }}
-                accessibilityLabel={options.tabBarAccessibilityLabel ?? cfg.label}
-                style={styles.iconBtn}
-              >
-                <Text style={styles.inactiveIcon}>{EMOJI_FALLBACK[cfg.icon] ?? '•'}</Text>
-              </TouchableOpacity>
+                options={options}
+              />
             );
           })}
         </View>
@@ -108,84 +184,53 @@ export default function BottomTabBar({
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  outerContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 6,
     left: 0,
     right: 0,
     alignItems: 'center',
-    // Transparent — pill floats over content
+    zIndex: 50,
     backgroundColor: 'transparent',
-    pointerEvents: 'box-none',
   },
-  blurContainer: {
+  blurPill: {
     borderRadius: 32,
     overflow: 'hidden',
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     width: '90%',
     maxWidth: 380,
+  },
+  pill: {
     backgroundColor: 'rgba(245, 243, 237, 0.85)',
+    borderWidth: 1,
+    borderColor: COLORS.border,
     borderRadius: 32,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    // Subtle border + shadow matching Aesty design
-    borderWidth: 1,
-    borderColor: 'rgba(45,47,29,0.05)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 15 },
-        shadowOpacity: 0.08,
-        shadowRadius: 40,
-      },
-      android: {
-        elevation: 12,
-      },
-    }),
-  },
-  iconBtn: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 24,
-  },
-  inactiveIcon: {
-    fontSize: 20,
-    opacity: 0.4,
-    color: '#2D2F1D',
-  },
-  activePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#EBE7DB',
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    // inner shadow via shadow
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-      },
-      android: { elevation: 2 },
-    }),
+    justifyContent: 'space-between',
+    width: '100%',
+    // NO shadow - removed as requested
   },
-  activeIcon: {
-    fontSize: 18,
-    color: '#2D2F1D',
+  pressable: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  activeLabel: {
+  tabItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    minHeight: 48,
+    minWidth: 48,
+    overflow: 'hidden',
+  },
+  label: {
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.5,
-    color: '#2D2F1D',
+    color: COLORS.activeColor,
+    // Ensure text stays single line
+    includeFontPadding: false,
   },
 });
