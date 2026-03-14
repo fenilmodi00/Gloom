@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, FlatList, Pressable } from 'react-native';
+import {View, Pressable} from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 
@@ -68,7 +69,8 @@ export default function WardrobeScreen() {
             />
           </View>
           
-          <FlatList
+          <FlashList
+            estimatedItemSize={200}
             data={filteredItems}
             keyExtractor={(item) => item.id}
             numColumns={2}

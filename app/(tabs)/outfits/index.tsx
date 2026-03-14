@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { 
-  View, Text, FlatList, TouchableOpacity, RefreshControl, 
-  Alert, Platform, StyleSheet, Dimensions 
-} from 'react-native';
+import {View, Text, TouchableOpacity, RefreshControl,
+  Alert, Platform, StyleSheet, Dimensions} from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -161,7 +160,8 @@ export default function OutfitsScreen() {
       {outfits.length === 0 ? (
         renderEmptyState()
       ) : (
-        <FlatList
+        <FlashList
+          estimatedItemSize={400}
           data={outfits}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <OutfitCard outfit={item} />}
