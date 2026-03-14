@@ -1,71 +1,51 @@
 import React from 'react';
-import { SymbolView } from 'expo-symbols';
-import { Link, Tabs } from 'expo-router';
-import { Platform, Pressable } from 'react-native';
-
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { Tabs } from 'expo-router';
+import { Platform } from 'react-native';
+import BottomTabBar from '@/components/shared/BottomTabBar';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
+      tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        headerShown: false,
+        // Use our custom tab bar for all platforms
+        tabBarStyle: Platform.select({
+          // The custom bar is absolutely positioned, so we hide the native one
+          default: { display: 'none' },
+        }),
+      }}
+    >
+      {/* Tab 1 — Inspo */}
       <Tabs.Screen
-        name="index"
+        name="inspo"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable style={{ marginRight: 15 }}>
-                {({ pressed }) => (
-                  <SymbolView
-                    name={{ ios: 'info.circle', android: 'info', web: 'info' }}
-                    size={25}
-                    tintColor={Colors[colorScheme].text}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          title: 'Inspo',
+          tabBarLabel: 'Home',
         }}
       />
+
+      {/* Tab 2 — Wardrobe (acts as Search in nav) */}
       <Tabs.Screen
-        name="two"
+        name="wardrobe"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
+          title: 'Wardrobe',
+          tabBarLabel: 'Search',
         }}
       />
+
+      {/* Tab 3 — Outfits (active in the Stitch design) */}
+      <Tabs.Screen
+        name="outfits"
+        options={{
+          title: 'Outfits',
+          tabBarLabel: 'Outfits',
+        }}
+      />
+
+      {/* Hide legacy index & two tabs from the Expo template */}
+      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="two" options={{ href: null }} />
     </Tabs>
   );
 }

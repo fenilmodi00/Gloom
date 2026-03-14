@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aesty - Elegant Curation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;family=Dancing+Script:wght@500;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#C4B28B",
+                        "aesty-beige": "#F2F0E9",
+                        "aesty-nav-beige": "#F5F3ED",
+                        "aesty-highlight": "#EBE7DB",
+                        "aesty-olive-dark": "#2D2F1D"
+                    },
+                    fontFamily: {
+                        serif: ["Playfair Display", "serif"],
+                        script: ["Dancing Script", "cursive"],
+                        sans: ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        'custom': '24px'
+                    }
+                }
+            }
+        };
+    </script>
+<style type="text/tailwindcss">
+        .dotted-grid {
+            background-image: radial-gradient(#2D2F1D 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.04;
+        }
+        .card-shadow {
+            box-shadow: 0 20px 40px -15px rgba(45, 47, 29, 0.15);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-aesty-beige font-sans text-aesty-olive-dark antialiased">
+<div class="relative min-h-screen max-w-md mx-auto overflow-hidden flex flex-col">
+<div class="absolute inset-0 dotted-grid pointer-events-none"></div>
+<header class="relative z-10 flex items-center justify-between px-8 pt-10 pb-4">
+<h1 class="text-4xl font-serif italic font-semibold tracking-tight">Outfits</h1>
+<button class="bg-white/50 backdrop-blur-sm border border-aesty-olive-dark/10 p-2.5 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-[24px] block">tune</span>
+</button>
+</header>
+<main class="relative flex-1 z-10 px-6">
+<div class="flex justify-center mt-6">
+<button class="flex items-center gap-2.5 bg-aesty-olive-dark text-aesty-beige px-7 py-3.5 rounded-full font-medium shadow-xl hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="text-sm tracking-wide">Upload outfit</span>
+</button>
+</div>
+<div class="mt-12 mb-12 text-center">
+<p class="font-script text-[28px] leading-relaxed max-w-[280px] mx-auto text-aesty-olive-dark font-bold">
+                    Curated styles for your inspired wardrobe
+                </p>
+</div>
+<div class="relative h-[520px] w-full mt-4 flex justify-center">
+<div class="absolute left-4 top-0 w-[140px] h-[190px] bg-white rounded-custom card-shadow -rotate-[8deg] overflow-hidden border-[6px] border-white z-0 opacity-80">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCejbnGC235JUE_CTSjgs-niMyAqehlq1G5DxSmyT40dWuk8Dw5lJE7ghU5dYWOSN-t4t-J0NcM_eNAd1zbD96uZ7qUYvBBEob6UI4fM_r2vJBDlDhvsJxc3znnd97vAAiXiLJQyWUAnUBmKpn-6ksz2ycufoXSjHyccKGomUiNtJZdkeoL_odGSSPbJfLgbhcMt8bgziBOtv8W0cwGhkNOB8YpVmrGJTgycrdiuvQPNy6xay5tHG6vkwrg88F6-pF2xtF_LYxq79s')"></div>
+</div>
+<div class="absolute right-4 top-4 w-[145px] h-[200px] bg-white rounded-custom card-shadow rotate-[6deg] overflow-hidden border-[6px] border-white z-0 opacity-80">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAzNDsPkhPuiLL27Qoqt_KHNKtCUnmUKxKM5n732Gba8IL-5Uwmq4Giy5HDtekP1Lidx1hHbTwNvdLrjCGKbWe1NioVnumEMKsn9AxofOcQjypaJLYSUZVK1M3oNFmpxP9TYPvmAJRvIti4jAKmbWa0fQLVFNEv6H3m9itBFVTmIySmQ42rDk2hwqx6MK022KWO7irCM-1gWOxyKr_MFHC4AOPKZuRTvfhm9O-20ndcZD2drTLogZa8J2ZwG-YT-yivyPDlJyi09go')"></div>
+</div>
+<div class="absolute top-16 w-[250px] h-[340px] bg-white rounded-custom card-shadow overflow-hidden border-[8px] border-white z-20">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHgBEJF5ez3BeCwZk2bKjVM5952iZTcxLf411-zL4Ir_aJWzXo8qt4V-caqA-f6KYlHtTVeJ_aOXNsN4PRSr3Qr9BQBwZByp3FckWnzkyXXpeyk8Q6aywR1GvjZpy34mrtAEb1ZQezwOSaVwmU-QVtKPkXks8S8rqHg4z0a1Aa4Jk_31QZ7AEGBpuFJvvfmyZ4GomCnFFrkWJxagsUlL40OxATkYwZeVvayAkRhpiNxAfs7lO17nch_W-hbiwuz6D08FzCUVYB5cc')"></div>
+<div class="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md py-3 px-4 rounded-xl shadow-sm">
+<p class="text-[10px] font-bold uppercase tracking-[0.15em] text-aesty-olive-dark/70">Signature Look</p>
+<p class="text-sm font-serif italic text-aesty-olive-dark">Modern Classics</p>
+</div>
+</div>
+<div class="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[220px] h-[160px] bg-white rounded-custom card-shadow rotate-[-2deg] overflow-hidden border-[6px] border-white z-30">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB5FziAzjjX0zhrxCDRzJex_LzUBXhbW2Bk8IGOjm0Xqr6HHjkYZ9VR2WVEgLnzm5t-pjMPf2AOJGwhNViXdUqCCo1J9TOk2BTxPQP63H7Ycr4GjLXGGrrWiiPDwKXwaIoEFyU8WPKrGI1b7USLFuJaig2-HtGJ52-oEw1k6BW7iFcGYhXJwX8I5LnwxmCSl_06i5vyD_sj2KsSFaCpsfY-PaZIoY60OV8kkEIS6yKbO2YDf0kOaFmHasAGwVh2btUne3ls0ORAD74')"></div>
+<div class="absolute inset-0 bg-black/5"></div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-[380px] z-50">
+<nav class="bg-aesty-nav-beige border border-aesty-olive-dark/5 rounded-[32px] py-2.5 px-3 shadow-[0_15px_40px_rgba(0,0,0,0.08)] flex items-center justify-between">
+<a class="w-12 h-12 flex items-center justify-center rounded-full text-aesty-olive-dark/40 hover:text-aesty-olive-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]">home</span>
+</a>
+<a class="w-12 h-12 flex items-center justify-center rounded-full text-aesty-olive-dark/40 hover:text-aesty-olive-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]">search</span>
+</a>
+<a class="flex items-center gap-2.5 bg-aesty-highlight text-aesty-olive-dark px-6 py-3 rounded-full shadow-sm transition-all" href="#">
+<span class="material-symbols-outlined !fill-1 text-[22px]">dresser</span>
+<span class="text-xs font-semibold tracking-wide">Outfits</span>
+</a>
+<a class="w-12 h-12 flex items-center justify-center rounded-full text-aesty-olive-dark/40 hover:text-aesty-olive-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]">favorite</span>
+</a>
+<a class="w-12 h-12 flex items-center justify-center rounded-full text-aesty-olive-dark/40 hover:text-aesty-olive-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[26px]">person</span>
+</a>
+</nav>
+</div>
+<div class="h-32"></div>
+</div>
+
+</body></html>
