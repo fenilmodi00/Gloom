@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
-  View, Text, FlatList, TouchableOpacity, RefreshControl, 
+  View, Text, TouchableOpacity, RefreshControl, 
   Alert, Platform, StyleSheet, Dimensions 
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
@@ -161,7 +161,7 @@ export default function OutfitsScreen() {
       {outfits.length === 0 ? (
         renderEmptyState()
       ) : (
-        <FlatList
+        <FlashList
           data={outfits}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <OutfitCard outfit={item} />}
