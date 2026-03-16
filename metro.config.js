@@ -1,4 +1,4 @@
-// Metro config for React Native with NativeWind v5 and Expo
+// Metro config for React Native with NativeWind v4 and Expo
 const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
 
