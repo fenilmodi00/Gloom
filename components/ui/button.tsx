@@ -1,6 +1,6 @@
 // Button wrapper component
 import React from 'react';
-import { Pressable, PressableProps, Text, View, ActivityIndicator } from 'react-native';
+import { Pressable, PressableProps, View, ActivityIndicator } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
 
 export type ButtonProps = PressableProps & {
@@ -58,9 +58,9 @@ export function Button({
 
 export function ButtonText({ className = '', children }: ButtonTextProps) {
   return (
-    <Text className={`font-medium text-center ${textColorClasses.solid} ${className}`}>
+    <View className={`font-medium text-center ${textColorClasses.solid} ${className}`}>
       {children}
-    </Text>
+    </View>
   );
 }
 

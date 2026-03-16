@@ -1,24 +1,27 @@
-import { createMMKV, type MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Create MMKV instance for general storage
-export const storage: MMKV = createMMKV({ id: 'styleai-storage' });
-
-// Create a separate MMKV instance for sensitive data (encrypted)
-export const secureStorage: MMKV = createMMKV({
-  id: 'styleai-secure',
-  encryptionKey: 'styleai-encryption-key', // TODO: Replace with key from expo-secure-store on first launch
-});
-
-// Zustand-compatible storage adapter for MMKV
-export const zustandMMKVStorage = {
-  getItem: (key: string): string | null => {
-    const value = storage.getString(key);
-    return value ?? null;
+// Create AsyncStorage instance for general storage
+export const storage = {
+  async getItem(key: string): Promise<string | null> {
+    return AsyncStorage.getItem(key);
   },
-  setItem: (key: string, value: string): void => {
-    storage.set(key, value);
+  async setItem(key: string, value: string): Promise<void> {
+    return AsyncStorage.setItem(key, value);
   },
-  removeItem: (key: string): void => {
-    storage.remove(key);
+  async removeItem(key: string): Promise<void> {
+    return AsyncStorage.removeItem(key);
+  },
+};
+
+// Zustand-compatible storage adapter for AsyncStorage
+export const zustandAsyncStorage = {
+  getItem: async (key: string): Promise<string | null> => {
+    return AsyncStorage.getItem(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    return AsyncStorage.setItem(key, value);
+  },
+  removeItem: async (key: string): Promise<void> => {
+    return AsyncStorage.removeItem(key);
   },
 };

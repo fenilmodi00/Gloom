@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { HeroUINativeProvider } from 'heroui-native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -140,11 +139,9 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <HeroUINativeProvider>
         <QueryClientProvider client={queryClient}>
           <RootLayoutNav />
         </QueryClientProvider>
-      </HeroUINativeProvider>
     </GestureHandlerRootView>
   );
 }

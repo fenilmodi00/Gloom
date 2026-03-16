@@ -1,5 +1,165 @@
 # AGENTS.md — StyleAI (AI Fashion App)
 
+## Developer Commands
+
+```bash
+# Development
+npm start              # Start Expo dev server
+npm run android        # Run on Android
+npm run ios            # Run on iOS
+npm run web            # Run on web
+
+# TypeScript
+npx tsc --noEmit      # Type check without emitting files
+npx tsc --noEmit -w   # Watch mode (dev)
+
+# Testing
+npm test              # Run all tests
+npm test -- --testPathPattern="filename"  # Run single test file
+npm test -- --watch   # Watch mode
+npm test -- --coverage # With coverage report
+
+# Build
+npx expo prebuild     # Generate native directories
+npx expo build:android # Build Android APK
+npx expo build:ios    # Build iOS (macOS only)
+
+# Lint/Format (manual - not configured)
+# Run tsc --noEmit before committing
+```
+
+## Code Style Guidelines
+
+### TypeScript
+- **Strict mode enabled** - all TypeScript rules enforced
+- **No `any` types** - use proper interfaces from `types/` directory
+- **Use type inference** - don't annotate where inference works
+- **Export types** - use `export type` for type-only exports
+
+### Imports
+- **Absolute paths** - use `@/` prefix (configured in tsconfig)
+  - `@/lib/supabase` not `../lib/supabase`
+  - `@/components/wardrobe/ItemCard` not `./ItemCard`
+- **Order**: React → external libs → internal imports → types
+- **Named imports** - prefer `{ useState }` over default imports
+
+### Naming Conventions
+- **Components**: PascalCase (`ItemCard.tsx`, `CategoryFilter.tsx`)
+- **Hooks**: camelCase with `use` prefix (`useAuth`, `useWardrobeItems`)
+- **Types/Interfaces**: PascalCase (`WardrobeItem`, `UserProfile`)
+- **Constants**: SCREAMING_SNAKE_CASE (`STORAGE_BUCKETS`)
+- **Files**: kebab-case for non-components (`auth.store.ts`, `gemini.ts`)
+
+### Component Structure
+```tsx
+// 1. Imports (React → libs → internal → types)
+// 2. Type definitions
+// 3. Component definition
+// 4. Helper functions (outside component if possible)
+
+export interface Props {
+  title: string;
+  onPress?: () => void;
+}
+
+export function ItemCard({ title, onPress }: Props) {
+  // Hooks first
+  const { items } = useWardrobe();
+  
+  // State
+  const [isPressed, setIsPressed] = useState(false);
+  
+  // Effects
+  useEffect(() => {}, []);
+  
+  // Handlers
+  const handlePress = () => {};
+  
+  // Render
+  return <View />;
+}
+```
+
+### Error Handling
+- **Never suppress errors** - no `// @ts-ignore`, no `as any`
+- **Use try/catch** - wrap async operations, log errors
+- **User feedback** - show toast/alert for recoverable errors
+- **Type guards** - narrow types before use
+
+### State Management
+- **Zustand** for global state (`lib/store/*.ts`)
+- **React Query** for server state (useQuery/useMutation)
+- **Local state** with useState for UI-only state
+- **MMKV** for persistence (via Zustand persist middleware)
+
+### Styling (NativeWind)
+- **Use className** - `className="text-primary"` not StyleSheet
+- **Tailwind utilities** - leverage existing classes
+- **Custom colors** - use design tokens from this file
+- **No inline styles** - except dynamic values
+
+### Images
+- **Use expo-image** - never `Image` from react-native
+- **Lazy loading** - default behavior in expo-image
+- **Placeholders** - show blurhash or loading state
+
+### Testing
+- **Place tests next to source** - `ItemCard.tsx` → `ItemCard.test.tsx`
+- **Name descriptively** - `describe('ItemCard', () => ...)`
+- **Test behavior** - not implementation details
+- **Mock external deps** - Supabase, async operations
+
+### Git Conventions
+- **Commit messages** - imperative: "Add ItemCard component"
+- **Branch naming** - `feature/description` or `fix/description`
+- **Pre-commit** - run `npx tsc --noEmit` before commit
+
+### HeroUI Native Implementation Rules
+
+When implementing HeroUI Native components, follow these rules:
+
+1. **Research First** - Before implementing ANY HeroUI component:
+   - Search the official docs at `https://v3.heroui.com/docs/native/components/`
+   - Get full context via websearch for the specific component
+   - Understand the API, props, variants, and composition patterns
+
+2. **Check Available Components** - HeroUI Native includes:
+   - **Buttons**: Button, ButtonGroup, CloseButton, ToggleButton
+   - **Forms**: Input, TextField, TextArea, Checkbox, RadioGroup, Select, SearchField, Slider, Switch
+   - **Feedback**: Alert, Spinner, Skeleton, ProgressBar, Meter
+   - **Layout**: Card, Surface, Separator, Toolbar
+   - **Navigation**: Tabs, Accordion, Breadcrumbs, Pagination
+   - **Overlays**: Modal, Drawer, Popover, Toast, Tooltip, AlertDialog
+   - **Data Display**: Chip, Badge, Avatar, Table
+   - **Collections**: Menu, Listbox, TagGroup, BottomSheet
+
+3. **Use Composition Patterns** - HeroUI uses compound components:
+   ```tsx
+   // Correct - use compound components
+   <Button>
+     <Button.Label>Click me</Button.Label>
+   </Button>
+   
+   <Card>
+     <Card.Header>Title</Card.Header>
+     <Card.Body>Content</Card.Body>
+     <Card.Footer>Footer</Card.Footer>
+   </Card>
+   ```
+
+4. **Check Component Exports** - Not all HeroUI web components are available in Native:
+   - Always verify the component exists in `heroui-native` package
+   - Use `cat node_modules/heroui-native/package.json | grep -E '"\./[a-z-]+"'` to list available exports
+
+5. **Styling** - Use nativewind className prop:
+   ```tsx
+   <Button className="bg-accent px-4 py-2 rounded-full">
+     <Button.Label>Label</Button.Label>
+   </Button>
+   ```
+
+---
+
 ## Project Identity
 India-first AI personal stylist app. Users photograph their clothes,
 build a digital wardrobe, and get AI-powered outfit suggestions.

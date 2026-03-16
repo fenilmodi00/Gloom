@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { zustandMMKVStorage } from '../../lib/storage';
+import { zustandAsyncStorage } from '../storage';
 import type { UserProfile } from '../../types';
 
 interface AuthState {
@@ -69,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => zustandMMKVStorage),
+      storage: createJSONStorage(() => zustandAsyncStorage),
       partialize: (state) => ({ 
         user: state.user, 
         session: state.session,
