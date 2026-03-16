@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Image,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -452,7 +452,6 @@ const styles = StyleSheet.create({
   photoPreview: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   photoPlaceholder: {
     flex: 1,

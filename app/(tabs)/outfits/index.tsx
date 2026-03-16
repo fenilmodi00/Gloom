@@ -3,6 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, RefreshControl, 
   Alert, Platform, StyleSheet, Dimensions 
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -15,7 +16,6 @@ import { LoadingOverlay } from '../../../components/shared/LoadingOverlay';
 import { supabase } from '../../../lib/supabase';
 import { generateOutfitSuggestions } from '../../../lib/gemini';
 import { useRouter } from 'expo-router';
-
 const { width: SCREEN_W } = Dimensions.get('window');
 
 export default function OutfitsScreen() {
@@ -165,6 +165,7 @@ export default function OutfitsScreen() {
           data={outfits}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <OutfitCard outfit={item} />}
+          
           contentContainerStyle={{ padding: 20, paddingBottom: Platform.OS === 'ios' ? 120 : 100 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2D2F1D" />}

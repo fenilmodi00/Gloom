@@ -1,4 +1,5 @@
 import "../global.css";
+import "../lib/i18n";
 
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';

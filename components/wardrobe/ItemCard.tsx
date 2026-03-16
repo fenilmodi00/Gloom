@@ -1,37 +1,41 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import type { WardrobeItem } from '@/types/wardrobe';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const ITEM_MARGIN = 8;
+const ITEMS_PER_ROW = 4;
+const ITEM_SIZE = (SCREEN_WIDTH - 32 - ITEM_MARGIN * (ITEMS_PER_ROW - 1)) / ITEMS_PER_ROW;
 
 interface ItemCardProps {
   item: WardrobeItem;
   onPress?: () => void;
+  size?: number;
 }
 
-export function ItemCard({ item, onPress }: ItemCardProps) {
+export function ItemCard({ item, onPress, size }: ItemCardProps) {
+  const cardSize = size || ITEM_SIZE;
+
   return (
     <Pressable
       onPress={onPress}
-      className="w-full bg-surface rounded-2xl overflow-hidden shadow-sm mb-4"
+      style={{
+        width: cardSize,
+        height: cardSize,
+        marginRight: ITEM_MARGIN,
+        marginBottom: ITEM_MARGIN,
+      }}
     >
-      <View className="w-full aspect-square bg-[#F8F8F8]">
-        <Image
-          source={{ uri: item.image_url }}
-          className="w-full h-full"
-          contentFit="cover"
-          transition={200}
-        />
-      </View>
-      <View className="p-3">
-        <Text className="text-sm font-bold text-text-primary capitalize">
-          {item.sub_category || item.category}
-        </Text>
-        {item.colors && item.colors.length > 0 && (
-          <Text className="text-xs text-text-secondary mt-1 capitalize">
-            {item.colors.join(', ')}
-          </Text>
-        )}
-      </View>
+      <Image
+        source={{ uri: item.cutout_url || item.image_url }}
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+        contentFit="contain"
+        transition={200}
+      />
     </Pressable>
   );
 }

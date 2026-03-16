@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -40,7 +41,7 @@ const TRENDING_SECTIONS = [
 function InspoCard({ image, onTryOn }: { image: string; onTryOn: () => void }) {
   return (
     <View style={styles.card}>
-      <Image source={{ uri: image }} style={styles.cardImage} resizeMode="cover" />
+      <Image source={{ uri: image }} style={styles.cardImage} contentFit="cover" />
       <TouchableOpacity style={styles.tryOnButton} onPress={onTryOn}>
         <Text style={styles.tryOnText}>✦ Try On</Text>
       </TouchableOpacity>

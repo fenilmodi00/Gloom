@@ -11,59 +11,53 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@gorhom/bottom-sheet": "^5.2.8",
-    "@hookform/resolvers": "^5.2.2",
-    "@hot-updater/expo": "^0.27.0",
+
+    "@gorhom/bottom-sheet": "^5",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/native": "^7.1.28",
-    "@shopify/flash-list": "^2.3.0",
-    "@shopify/react-native-skia": "^2.5.1",
+
     "@supabase/supabase-js": "^2.99.1",
     "@tanstack/react-query": "^5.90.21",
+
     "expo": "~55.0.6",
     "expo-blur": "^55.0.9",
     "expo-camera": "^55.0.9",
     "expo-constants": "~55.0.7",
+
     "expo-font": "~55.0.4",
     "expo-image": "^55.0.6",
+
     "expo-image-picker": "~55.0.12",
     "expo-linking": "~55.0.7",
-    "expo-localization": "^55.0.8",
+
     "expo-router": "~55.0.5",
     "expo-splash-screen": "~55.0.10",
     "expo-status-bar": "~55.0.4",
+
+
     "expo-web-browser": "~55.0.9",
-    "heroui-native": "^1.0.0-rc.4",
-    "hot-updater": "^0.27.0",
-    "i18next": "^25.8.18",
     "lucide-react-native": "^0.577.0",
-    "nativewind": "^4.2.3",
+    "nativewind": "4.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "react-hook-form": "^7.71.2",
-    "react-i18next": "^16.5.8",
     "react-native": "0.83.2",
-    "react-native-gesture-handler": "^2.30.0",
-    "react-native-mmkv": "^4.2.0",
-    "react-native-reanimated": "^4.2.2",
-    "react-native-safe-area-context": "^5.7.0",
-    "react-native-screens": "^4.24.0",
-    "react-native-svg": "^15.15.3",
+    "react-native-gesture-handler": "~2.30.0",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-screens": "~4.23.0",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "^0.7.4",
-    "tailwind-merge": "^3.5.0",
-    "tailwind-variants": "^3.2.2",
-    "uniwind": "^1.5.0",
-    "zod": "^4.3.6",
+    "react-native-worklets": "0.7.2",
+    "tailwindcss": "3.4",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
     "@types/react-native": "^0.72.8",
+
     "jest-expo": "^55.0.9",
-    "tailwindcss": "3.4",
     "typescript": "~5.9.2"
   },
   "private": true

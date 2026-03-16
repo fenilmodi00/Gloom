@@ -1,0 +1,63 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "done": "Done",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue",
+      "phonePlaceholder": "Enter your phone number",
+      "continue": "Continue",
+      "orContinueWith": "Or continue with",
+      "google": "Google"
+    },
+    "onboarding": {
+      "title": "Let's get started",
+      "subtitle": "Tell us about yourself",
+      "namePlaceholder": "What's your name?",
+      "styleTitle": "Your style preferences",
+      "styleSubtitle": "Select all that apply",
+      "photoTitle": "Add your photo",
+      "photoSubtitle": "This helps us personalize recommendations",
+      "takePhoto": "Take photo",
+      "choosePhoto": "Choose from gallery"
+    }
+  },
+  "tabs": {
+    "inspo": "Inspo",
+    "wardrobe": "Wardrobe",
+    "outfits": "Outfits"
+  },
+  "wardrobe": {
+    "title": "Your Wardrobe",
+    "addItem": "Add Item",
+    "empty": "Your wardrobe is empty",
+    "emptySubtitle": "Add items to get outfit suggestions",
+    "categories": {
+      "all": "All",
+      "tops": "Tops",
+      "bottoms": "Bottoms",
+      "dresses": "Dresses",
+      "shoes": "Shoes",
+      "bags": "Bags",
+      "accessories": "Accessories"
+    }
+  },
+  "outfits": {
+    "title": "Your Outfits",
+    "empty": "No outfits yet",
+    "emptySubtitle": "Add wardrobe items to get suggestions",
+    "tryOn": "Try On",
+    "comingSoon": "Coming Soon"
+  }
+}
