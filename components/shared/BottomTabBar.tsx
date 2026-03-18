@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -158,6 +159,8 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
                 canPreventDefault: true,
               });
               if (!isFocused && !event.defaultPrevented) {
+                // Trigger light haptic feedback on tab change
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
                 navigation.navigate(route.name);
               }
             };

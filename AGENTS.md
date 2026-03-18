@@ -1,537 +1,160 @@
 # AGENTS.md — StyleAI (AI Fashion App)
 
-## Developer Commands
+**Generated:** 2026-03-17
+**Commit:** Current
+**Branch:** main
+
+## OVERVIEW
+
+India-first AI personal stylist app. Users photograph clothes, build digital wardrobe, get AI outfit suggestions. Competitor to Aesty (aesty.ai). Phase 1: Inspo + Wardrobe + Outfits tabs.
+
+## STRUCTURE
+
+```
+app/
+├── (auth)/        # Login + Onboarding screens
+├── (tabs)/        # Main tabs: inspo, wardrobe, outfits (+ extras: favorites, profile)
+└── _layout.tsx    # Root layout, auth gate, providers
+
+components/
+├── ui/            # Base components (button, fab, heading)
+├── wardrobe/      # ItemCard, CategoryFilter, AddItemSheet
+├── outfits/       # OutfitCard, OccasionBadge
+├── shared/        # LoadingOverlay, EmptyState, Toast, BottomTabBar
+└── inspo/         # InspoCard
+
+lib/
+├── store/         # Zustand stores: auth, wardrobe, outfit
+├── supabase.ts    # Supabase client singleton
+├── gemini.ts      # Gemini 2.5 Flash wrapper
+├── storage.ts     # AsyncStorage wrapper for Zustand persist
+└── schemas/       # Zod validation schemas
+
+types/             # TypeScript interfaces: wardrobe, outfit, user, inspo
+```
+
+## WHERE TO LOOK
+
+| Task | Location | Notes |
+|------|----------|-------|
+| Add new screen | `app/(tabs)/` | Follow Expo Router file-based routing |
+| Add UI component | `components/ui/` or `components/shared/` | Use NativeWind className |
+| Modify auth flow | `lib/store/auth.store.ts` + `app/(auth)/` | Zustand + Supabase |
+| Wardrobe state | `lib/store/wardrobe.store.ts` | Zustand store |
+| Outfit suggestions | `lib/gemini.ts` | Gemini 2.5 Flash prompts |
+| Add item flow | `app/(tabs)/wardrobe/add-item.tsx` | Camera + Gemini tagging |
+
+## CONVENTIONS
+
+### TypeScript
+- Strict mode enabled
+- No `any` types — use interfaces from `types/`
+- Absolute imports: `@/lib/...` not `../lib/...`
+- Named imports: `{ useState }` not default
+
+### Naming
+- Components: PascalCase (`ItemCard.tsx`)
+- Hooks: camelCase with `use` prefix (`useAuth`)
+- Stores: `*.store.ts` suffix
+- Types: PascalCase, export from `types/`
+
+### Styling (NativeWind)
+- Use `className` prop, NOT StyleSheet.create
+- Colors from design tokens below
+- No inline styles except dynamic values
+
+### Images
+- Always use `expo-image`, NEVER `Image` from react-native
+- Lazy loading is default
+
+### State
+- Zustand for global state (`lib/store/*.ts`)
+- React Query for server state
+- AsyncStorage for persistence
+
+## ANTI-PATTERNS (THIS PROJECT)
+
+- **NEVER** use `as any`, `// @ts-ignore`, `// @ts-expect-error`
+- **NEVER** use `StyleSheet.create` — use NativeWind className
+- **NEVER** use `Image` from react-native — use expo-image
+- **NEVER** suppress errors with empty catch blocks
+- **NEVER** use heavy shadows — only `shadow-sm`
+- **NEVER** install packages outside tech stack
+- **NEVER** use `npm` — use `bun` for ALL package management
+- **NO** inline styles unless absolutely necessary
+
+## PACKAGE PRIORITY RULES
+
+1. **Expo SDK First** — Always check if Expo provides a native module before adding third-party libs:
+   - `expo-blur` for blur effects (NOT react-native-blur)
+   - `expo-image` for images (NOT react-native-fast-image)
+   - `expo-camera` for camera (NOT react-native-camera)
+   - `expo-image-picker` for gallery (NOT react-native-image-picker)
+   - `expo-linear-gradient` for gradients (NOT react-native-linear-gradient)
+   - `expo-haptics` for haptic feedback (NOT react-native-haptics)
+   - `expo-secure-store` for secure storage (NOT react-native-keychain)
+   - `expo-clipboard` for clipboard (NOT @react-native-clipboard/clipboard)
+
+2. **Third-party Only When** — Expo doesn't provide the functionality:
+   - `react-native-reanimated` — complex animations (expo has basic animations only)
+   - `react-native-gesture-handler` — gesture handling (required by reanimated)
+   - `@shopify/flash-list` — high-performance lists (expo uses FlatList)
+   - `@gorhom/bottom-sheet` — bottom sheets (expo has basic modal only)
+
+3. **Package Manager** — Use `bun` exclusively:
+   - Install: `bun add <package>`
+   - Remove: `bun remove <package>`
+   - Install all: `bun install`
+   - Run scripts: `bun run <script>`
+   - **NEVER** use `npm`, `yarn`, or `pnpm`
+
+## TECH STACK (NON-NEGOTIABLE)
+
+| Category | Technology |
+|----------|------------|
+| Framework | Expo SDK 55 |
+| Runtime | React Native 0.83.1, React 19.2 |
+| Language | TypeScript 5.8 strict mode |
+| Routing | Expo Router v7 |
+| Styling | NativeWind v4.1 + TailwindCSS v3.4 |
+| State | Zustand v5 + React Query v5 |
+| Backend | Supabase (Auth, Storage, PostgreSQL) |
+| AI | Gemini 2.5 Flash |
+| Animations | React Native Reanimated v4 |
+
+## DESIGN TOKENS
+
+```
+background: #F5F2EE    surface: #FFFFFF
+text-primary: #1A1A1A  text-secondary: #6B6B6B
+accent: #8B7355        accent-light: #D4C5B0
+error: #C0392B         success: #27AE60
+```
+
+- Corner radius: `rounded-2xl` (cards), `rounded-full` (pills/buttons)
+- Typography: `font-bold tracking-tight` (headings), `font-normal` (body)
+
+## COMMANDS
 
 ```bash
 # Development
-npm start              # Start Expo dev server
-npm run android        # Run on Android
-npm run ios            # Run on iOS
-npm run web            # Run on web
+bun start           # Start Expo dev server
+bun run android     # Run on Android
+bun run ios         # Run on iOS
 
 # TypeScript
-npx tsc --noEmit      # Type check without emitting files
-npx tsc --noEmit -w   # Watch mode (dev)
+npx tsc --noEmit     # Type check
 
 # Testing
-npm test              # Run all tests
-npm test -- --testPathPattern="filename"  # Run single test file
-npm test -- --watch   # Watch mode
-npm test -- --coverage # With coverage report
+bun test            # Run all tests
 
 # Build
-npx expo prebuild     # Generate native directories
-npx expo build:android # Build Android APK
-npx expo build:ios    # Build iOS (macOS only)
-
-# Lint/Format (manual - not configured)
-# Run tsc --noEmit before committing
+npx expo prebuild   # Generate native directories
 ```
 
-## Code Style Guidelines
-
-### TypeScript
-- **Strict mode enabled** - all TypeScript rules enforced
-- **No `any` types** - use proper interfaces from `types/` directory
-- **Use type inference** - don't annotate where inference works
-- **Export types** - use `export type` for type-only exports
-
-### Imports
-- **Absolute paths** - use `@/` prefix (configured in tsconfig)
-  - `@/lib/supabase` not `../lib/supabase`
-  - `@/components/wardrobe/ItemCard` not `./ItemCard`
-- **Order**: React → external libs → internal imports → types
-- **Named imports** - prefer `{ useState }` over default imports
-
-### Naming Conventions
-- **Components**: PascalCase (`ItemCard.tsx`, `CategoryFilter.tsx`)
-- **Hooks**: camelCase with `use` prefix (`useAuth`, `useWardrobeItems`)
-- **Types/Interfaces**: PascalCase (`WardrobeItem`, `UserProfile`)
-- **Constants**: SCREAMING_SNAKE_CASE (`STORAGE_BUCKETS`)
-- **Files**: kebab-case for non-components (`auth.store.ts`, `gemini.ts`)
-
-### Component Structure
-```tsx
-// 1. Imports (React → libs → internal → types)
-// 2. Type definitions
-// 3. Component definition
-// 4. Helper functions (outside component if possible)
-
-export interface Props {
-  title: string;
-  onPress?: () => void;
-}
-
-export function ItemCard({ title, onPress }: Props) {
-  // Hooks first
-  const { items } = useWardrobe();
-  
-  // State
-  const [isPressed, setIsPressed] = useState(false);
-  
-  // Effects
-  useEffect(() => {}, []);
-  
-  // Handlers
-  const handlePress = () => {};
-  
-  // Render
-  return <View />;
-}
-```
-
-### Error Handling
-- **Never suppress errors** - no `// @ts-ignore`, no `as any`
-- **Use try/catch** - wrap async operations, log errors
-- **User feedback** - show toast/alert for recoverable errors
-- **Type guards** - narrow types before use
-
-### State Management
-- **Zustand** for global state (`lib/store/*.ts`)
-- **React Query** for server state (useQuery/useMutation)
-- **Local state** with useState for UI-only state
-- **MMKV** for persistence (via Zustand persist middleware)
-
-### Styling (NativeWind)
-- **Use className** - `className="text-primary"` not StyleSheet
-- **Tailwind utilities** - leverage existing classes
-- **Custom colors** - use design tokens from this file
-- **No inline styles** - except dynamic values
-
-### Images
-- **Use expo-image** - never `Image` from react-native
-- **Lazy loading** - default behavior in expo-image
-- **Placeholders** - show blurhash or loading state
-
-### Testing
-- **Place tests next to source** - `ItemCard.tsx` → `ItemCard.test.tsx`
-- **Name descriptively** - `describe('ItemCard', () => ...)`
-- **Test behavior** - not implementation details
-- **Mock external deps** - Supabase, async operations
-
-### Git Conventions
-- **Commit messages** - imperative: "Add ItemCard component"
-- **Branch naming** - `feature/description` or `fix/description`
-- **Pre-commit** - run `npx tsc --noEmit` before commit
-
-### HeroUI Native Implementation Rules
-
-When implementing HeroUI Native components, follow these rules:
-
-1. **Research First** - Before implementing ANY HeroUI component:
-   - Search the official docs at `https://v3.heroui.com/docs/native/components/`
-   - Get full context via websearch for the specific component
-   - Understand the API, props, variants, and composition patterns
-
-2. **Check Available Components** - HeroUI Native includes:
-   - **Buttons**: Button, ButtonGroup, CloseButton, ToggleButton
-   - **Forms**: Input, TextField, TextArea, Checkbox, RadioGroup, Select, SearchField, Slider, Switch
-   - **Feedback**: Alert, Spinner, Skeleton, ProgressBar, Meter
-   - **Layout**: Card, Surface, Separator, Toolbar
-   - **Navigation**: Tabs, Accordion, Breadcrumbs, Pagination
-   - **Overlays**: Modal, Drawer, Popover, Toast, Tooltip, AlertDialog
-   - **Data Display**: Chip, Badge, Avatar, Table
-   - **Collections**: Menu, Listbox, TagGroup, BottomSheet
-
-3. **Use Composition Patterns** - HeroUI uses compound components:
-   ```tsx
-   // Correct - use compound components
-   <Button>
-     <Button.Label>Click me</Button.Label>
-   </Button>
-   
-   <Card>
-     <Card.Header>Title</Card.Header>
-     <Card.Body>Content</Card.Body>
-     <Card.Footer>Footer</Card.Footer>
-   </Card>
-   ```
-
-4. **Check Component Exports** - Not all HeroUI web components are available in Native:
-   - Always verify the component exists in `heroui-native` package
-   - Use `cat node_modules/heroui-native/package.json | grep -E '"\./[a-z-]+"'` to list available exports
-
-5. **Styling** - Use nativewind className prop:
-   ```tsx
-   <Button className="bg-accent px-4 py-2 rounded-full">
-     <Button.Label>Label</Button.Label>
-   </Button>
-   ```
-
----
-
-## Project Identity
-India-first AI personal stylist app. Users photograph their clothes,
-build a digital wardrobe, and get AI-powered outfit suggestions.
-Competitor to Aesty (aesty.ai). India-specific: Indian brands,
-occasion wear (weddings, Diwali, Holi), affordable pricing.
-
-## Phase 1 Scope (BUILD THIS ONLY)
-- Tab 1: Inspo screen
-- Tab 2: Wardrobe screen
-- Tab 3: Outfits screen
-- Auth: Supabase (Google + Phone OTP)
-- Onboarding: body photo capture (one-time)
-- NO glasses AR, NO try-on in Phase 1 UI (backend only stubs)
-
-## Tech Stack — NON-NEGOTIABLE, DO NOT DEVIATE
-
-### Frontend
-- expo SDK 55 (NOT 52, NOT 53)
-- react-native 0.83.1
-- react 19.2
-- expo-router v7 (file-based routing, tabs layout)
-- typescript 5.8 strict mode
-- hermes v1 (enable in app.json: "jsEngine": "hermes")
-- New Architecture: enabled by default in SDK 55, keep it
-
-### Styling
-- nativewind v4.1 (NOT v5 — still beta)
-- tailwindcss v3.4 (NOT v4 — nativewind v4 targets TW v3)
-- @gluestack-ui/themed v1.1
-- react-native-reanimated v4.1.0
-- react-native-gesture-handler v2.27.x
-- expo-blur (SDK 55)
-- react-native-safe-area-context v5.x
-
-### Backend & DB
-- @supabase/supabase-js v2
-- Supabase Auth (Google OAuth + Phone OTP)
-- Supabase Storage (wardrobe-images bucket)
-- Supabase Realtime (tryon job status)
-- PostgreSQL via Supabase
-
-### State
-- zustand v5
-- @tanstack/react-query v5
-
-### AI (env vars, just stubs in Phase 1 where noted)
-- GEMINI_API_KEY → Gemini 2.5 Flash (wardrobe tagging)
-- FAL_API_KEY → fal.ai CatVTON (try-on, Phase 2)
-- SUPABASE_URL, SUPABASE_ANON_KEY
-
-## Folder Structure — MUST FOLLOW EXACTLY
-app/
-  (auth)/
-    login.tsx
-    onboarding.tsx          ← body photo capture screen
-  (tabs)/
-    inspo/
-      index.tsx
-    wardrobe/
-      index.tsx
-      add-item.tsx          ← camera + upload flow
-    outfits/
-      index.tsx
-  _layout.tsx               ← root layout, auth gate
-  +not-found.tsx
-
-components/
-  ui/                       ← rn-reusables base components
-  wardrobe/
-    ItemCard.tsx            ← wardrobe grid item
-    CategoryFilter.tsx      ← filter bar (All/Tops/Bottoms/etc)
-    AddItemSheet.tsx        ← bottom sheet: camera or gallery
-  outfits/
-    OutfitCard.tsx          ← AI suggestion card
-    OccasionBadge.tsx
-  inspo/
-    InspoCard.tsx           ← trending look card
-  shared/
-    LoadingOverlay.tsx
-    EmptyState.tsx
-
-lib/
-  supabase.ts               ← supabase client singleton
-  gemini.ts                 ← gemini flash wrapper
-  store/
-    auth.store.ts           ← zustand auth state
-    wardrobe.store.ts       ← wardrobe items state
-    outfit.store.ts         ← outfit suggestions state
-
-supabase/
-  migrations/
-    001_initial_schema.sql
-  functions/
-    tag-wardrobe-item/      ← Gemini 2.5 Flash vision tagger
-    remove-bg/              ← rembg sidecar caller (stub in Phase 1)
-
-types/
-  wardrobe.ts
-  outfit.ts
-  user.ts
-
-## Database Schema
--- profiles
-id uuid PK (references auth.users)
-name text
-avatar_url text
-body_photo_url text
-skin_tone text
-style_tags text[]
-created_at timestamptz
-
--- wardrobe_items
-id uuid PK
-user_id uuid FK → profiles.id
-image_url text           (original)
-cutout_url text          (bg removed, nullable in Phase 1)
-category text            (upper|lower|dress|shoes|bag|accessory)
-sub_category text        (tshirt|shirt|jeans|shorts|sneakers etc)
-colors text[]
-style_tags text[]
-occasion_tags text[]
-fabric_guess text
-created_at timestamptz
-
--- outfits
-id uuid PK
-user_id uuid FK → profiles.id
-item_ids uuid[]
-occasion text
-ai_score float
-cover_image_url text
-vibe text
-color_reasoning text
-created_at timestamptz
-
-## Design System — MUST FOLLOW
-Color palette (Aesty-inspired, warm neutral):
-  background: #F5F2EE   (warm off-white)
-  surface: #FFFFFF
-  text-primary: #1A1A1A
-  text-secondary: #6B6B6B
-  accent: #8B7355        (warm brown — matches Aesty's olive/brown)
-  accent-light: #D4C5B0
-  error: #C0392B
-  success: #27AE60
-
-Typography:
-  headings: font-bold tracking-tight
-  body: font-normal
-  captions: font-light text-sm text-secondary
-
-Corner radius: rounded-2xl for cards, rounded-full for pills/buttons
-Shadows: subtle (shadow-sm), never heavy
-Bottom tab bar: floating, rounded-full container (like Aesty screenshots)
-
-## Screen Specs
-
-### Tab 1 — Inspo
-- Header: "Inspo" title + "Upload outfit" button (top right)
-- Trending sections: each section has a title ("Leather Trench", etc.)
-  and a horizontal scroll of InspoCards
-- Each InspoCard: full image, "✦ Try On" button at bottom (disabled in Phase 1,
-  shows "Coming Soon" toast)
-- Data: hardcode 2-3 trending sections with placeholder images in Phase 1
-
-### Tab 2 — Wardrobe
-- Header: "Wardrobe" title
-- If empty: EmptyState with 3 buttons:
-    "Add item" (opens camera)
-    "Search web" (placeholder toast)
-    "✦ Add items from outfit" (placeholder toast)
-- If has items: CategoryFilter bar + masonry/grid of ItemCards
-- Categories: All | Tops | Bottoms | Dresses | Shoes | Bags | Accessories
-- FAB or "+" button → AddItemSheet (bottom sheet)
-- AddItemSheet: "Take photo" | "Choose from gallery" options
-- After photo taken → calls Gemini 2.5 Flash to tag item
-- Show loading state while tagging
-- Item saved to Supabase → appears in grid
-
-### Tab 3 — Outfits
-- Header: "Outfits" + "Upload outfit" button
-- If no wardrobe items: prompt to add items first
-- If has items: scrollable outfit suggestion cards
-- Each OutfitCard shows: item cutout images stacked, occasion badge,
-  vibe label, "Try On" button (stub for Phase 2)
-- AI generates suggestions using Gemini 2.5 Flash on demand
-- "Refresh suggestions" pull-to-refresh
-
-### Auth / Onboarding
-- login.tsx: Google Sign-In + Phone OTP, warm minimal design
-- onboarding.tsx: 
-    Step 1: Name
-    Step 2: Style preferences (chips: minimalist/streetwear/ethnic/formal/casual)
-    Step 3: Body photo (expo-camera, guidance overlay, full-body)
-    Step 4: Done → navigate to (tabs)
-
-## API Integrations
-
-### Gemini 2.5 Flash — Wardrobe Tagger
-POST to: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
-Input: base64 image + prompt
-Prompt template:
-  "You are a fashion AI. Analyze this clothing item photo and return ONLY valid JSON:
-  {
-    category: 'upper'|'lower'|'dress'|'shoes'|'bag'|'accessory',
-    sub_category: string,
-    colors: string[],
-    style_tags: string[],
-    occasion_tags: string[],
-    fabric_guess: string
-  }
-  No markdown, no explanation, only JSON."
-
-### Gemini 2.5 Flash — Outfit Suggestions
-Input: wardrobe items summary + date + city weather
-Prompt template:
-  "You are an Indian fashion stylist. User has these wardrobe items: [ITEMS_JSON].
-   Today: [DATE]. Weather: [WEATHER]. City: [CITY].
-   Suggest 3 outfit combinations using ONLY items from the wardrobe.
-   Return ONLY valid JSON array:
-   [{
-     item_ids: string[],
-     occasion: string,
-     vibe: string,
-     color_reasoning: string,
-     ai_score: number (0-1)
-   }]"
-
-### OpenMeteo — Weather (free, no key)
-GET https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,weathercode
-
-## Environment Variables (.env.local)
-EXPO_PUBLIC_SUPABASE_URL=
-EXPO_PUBLIC_SUPABASE_ANON_KEY=
-EXPO_PUBLIC_GEMINI_API_KEY=
-EXPO_PUBLIC_FAL_API_KEY=          # stub for Phase 2
-
-## Code Standards
-- All components: functional, typed with TypeScript interfaces
-- No any types — use proper interfaces in types/
-- All API calls: wrapped in React Query hooks (useQuery/useMutation)
-- Errors: caught and shown via toast (expo-toast or simple Animated overlay)
-- Loading states: every async operation shows a skeleton or spinner
-- Images: always use expo-image (not Image from react-native)
-- Tailwind classes: use className prop (nativewind), not StyleSheet.create
-- NO inline styles unless absolutely necessary
-- Reanimated v4 CSS-style animations for screen transitions and card mounts
-
-## What NOT to build in Phase 1
-- Virtual try-on (CatVTON) — stubs only, "Coming Soon" UI
-- Background removal — upload original image, cutout_url = null for now
-- Shopping links / SerpAPI integration
-- Glasses AR — permanently removed from scope
-- pgvector / embeddings — Postgres tag queries only
-- Push notifications
-- Go backend — Gemini called directly from Expo app via env key in Phase 1
-  (Go backend comes in Phase 2 when try-on and bg removal are needed)
-```
-
-***
-
-## Step 2: Supabase Migration File
-Save as `supabase/migrations/001_initial_schema.sql` — agent should run this first:
-
-```sql
--- Enable UUID
-create extension if not exists "uuid-ossp";
-
--- Profiles
-create table profiles (
-  id uuid references auth.users on delete cascade primary key,
-  name text,
-  avatar_url text,
-  body_photo_url text,
-  skin_tone text,
-  style_tags text[] default '{}',
-  created_at timestamptz default now()
-);
-alter table profiles enable row level security;
-create policy "Users own their profile"
-  on profiles for all using (auth.uid() = id);
-
--- Wardrobe Items
-create table wardrobe_items (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references profiles(id) on delete cascade not null,
-  image_url text not null,
-  cutout_url text,
-  category text not null
-    check (category in ('upper','lower','dress','shoes','bag','accessory')),
-  sub_category text,
-  colors text[] default '{}',
-  style_tags text[] default '{}',
-  occasion_tags text[] default '{}',
-  fabric_guess text,
-  created_at timestamptz default now()
-);
-alter table wardrobe_items enable row level security;
-create policy "Users own their wardrobe"
-  on wardrobe_items for all using (auth.uid() = user_id);
-create index on wardrobe_items(user_id, category);
-
--- Outfits
-create table outfits (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references profiles(id) on delete cascade not null,
-  item_ids uuid[] default '{}',
-  occasion text,
-  vibe text,
-  color_reasoning text,
-  ai_score float default 0.0,
-  cover_image_url text,
-  created_at timestamptz default now()
-);
-alter table outfits enable row level security;
-create policy "Users own their outfits"
-  on outfits for all using (auth.uid() = user_id);
-
--- Storage buckets
-insert into storage.buckets (id, name, public)
-  values ('wardrobe-images', 'wardrobe-images', true);
-create policy "Users upload their own images"
-  on storage.objects for insert
-  with check (auth.uid()::text = (storage.foldername(name)) [expo](https://expo.dev/changelog/sdk-55));
-create policy "Public read wardrobe images"
-  on storage.objects for select using (bucket_id = 'wardrobe-images');
-```
-
-***
-
-## Step 3: Give This to the Agent
-
-Paste this **exactly** into your oh-my-openagent session to kick off with Prometheus planning first, then full execution:
-
-```
-/start-work
-
-I am building an India-first AI fashion stylist mobile app called StyleAI.
-Full project context is in AGENTS.md at the project root — read it completely
-before doing anything.
-
-PHASE 1 TASK: Build the complete React Native Expo app for Phase 1 scope only.
-
-SETUP ORDER (follow exactly):
-1. Read AGENTS.md thoroughly
-2. Run: npx create-expo-app@latest StyleAI --template tabs
-3. Install ALL dependencies from the tech stack in AGENTS.md
-4. Configure: nativewind v4 + tailwindcss v3.4, hermes v1 in app.json,
-   New Architecture enabled, TypeScript strict mode
-5. Run /init-deep to generate hierarchical AGENTS.md files
-6. Build in this order:
-   a. lib/supabase.ts client + types/
-   b. Auth screens (login + onboarding 4 steps)
-   c. Root layout with auth gate
-   d. Tab navigation with custom floating tab bar
-   e. Wardrobe screen + add item camera flow + Gemini tagging
-   f. Inspo screen with hardcoded trending data
-   g. Outfits screen with Gemini AI suggestions
-   h. Shared components (EmptyState, LoadingOverlay, etc.)
-
-DESIGN: Warm neutral palette as specified in AGENTS.md.
-Aesty app screenshots are the visual reference — clean, minimal,
-rounded cards, floating tab bar.
-
-USE:
-- Hephaestus for deep implementation of each screen
-- visual-engineering category for all UI components
-- After each screen: run lsp_diagnostics to check for TypeScript errors
-- Commit after each completed screen with git-master
-
-DO NOT build anything outside Phase 1 scope in AGENTS.md.
-DO NOT install any packages not in the tech stack.
-DO NOT use StyleSheet.create — use nativewind className only.
-DO NOT use the built-in Image component — use expo-image everywhere.
-```
+## NOTES
+
+- Auth bypassed in dev (see `app/_layout.tsx` RootLayoutNav)
+- Storage: AsyncStorage (NOT MMKV — native module issues)
+- Extra tabs (favorites, profile) not in Phase 1 scope
+- Template files to remove: `modal.tsx`, `EditScreenInfo.tsx`, `ExternalLink.tsx`

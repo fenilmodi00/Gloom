@@ -1,23 +1,21 @@
-import React, { useState, useMemo } from 'react';
-import { View, ScrollView, Pressable, Dimensions, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Plus, ChevronRight, Shirt } from 'lucide-react-native';
-import { Text } from '@/components/ui/text';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useWardrobeStore } from '@/lib/store/wardrobe.store';
-import { ItemCard } from '@/components/wardrobe/ItemCard';
-import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
+import { Text } from '@/components/ui/text';
+import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
+import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
+import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
+import { FlashList } from '@shopify/flash-list';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { ChevronRight, Plus, Shirt } from 'lucide-react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const ITEM_MARGIN = 8;
-const ITEMS_PER_ROW = 4;
-const ITEM_SIZE = (SCREEN_WIDTH - 32 - ITEM_MARGIN * (ITEMS_PER_ROW - 1)) / ITEMS_PER_ROW;
-
-// Category display config — matches the Aesty closet screenshot
-const CATEGORY_CONFIG: { key: Category | 'all'; label: string }[] = [
+// Category configuration
+const CATEGORY_CONFIG: { key: Category; label: string }[] = [
   { key: 'upper', label: 'upper body' },
   { key: 'lower', label: 'lower body' },
   { key: 'dress', label: 'dresses' },
@@ -26,60 +24,97 @@ const CATEGORY_CONFIG: { key: Category | 'all'; label: string }[] = [
   { key: 'accessory', label: 'accessories' },
 ];
 
+// Vertical gradient colors for each category (top to bottom)
+const GRADIENT_START = '#F5F2EE';
+const GRADIENT_END = '#F0EACC';
+
+// Aesty-inspired color palette
+const COLORS = {
+  primary: '#8B7355',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#6B6B6B',
+};
+
+// Card dimensions - increased size by 25%
+const CARD_WIDTH = 120;
+const CARD_HEIGHT = 150;
+
+// Category section with its own vertical gradient
 interface CategorySectionProps {
   label: string;
   items: WardrobeItem[];
+  index: number;
   onSeeAll?: () => void;
 }
 
+// Memoized card renderer
+const CategoryCard = ({ item }: { item: WardrobeItem }) => (
+  <View style={styles.cardContainer}>
+    <Image
+      source={
+        typeof item.image_url === 'string' && item.image_url.startsWith('http')
+          ? { uri: item.cutout_url || item.image_url }
+          : item.image_url
+      }
+      style={styles.cardImage}
+      contentFit="contain"
+      transition={200}
+    />
+  </View>
+);
+
 function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
+  const renderItem = useCallback(
+    ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
+    []
+  );
+
   if (items.length === 0) return null;
 
-  // Chunk items into rows of ITEMS_PER_ROW
-  const rows: WardrobeItem[][] = [];
-  for (let i = 0; i < items.length; i += ITEMS_PER_ROW) {
-    rows.push(items.slice(i, i + ITEMS_PER_ROW));
-  }
-
   return (
-    <View style={styles.section}>
-      {/* Section header */}
-      <Pressable
-        onPress={onSeeAll}
-        style={styles.sectionHeader}
-      >
-        <Text style={styles.sectionLabel}>{label}</Text>
-        <ChevronRight size={16} color="#6B6B6B" />
-      </Pressable>
-
-      {/* Items grid — show rows inline */}
-      <View style={styles.sectionItems}>
-        {rows.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.itemRow}>
-            {row.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                size={ITEM_SIZE}
-                onPress={() => console.log('View item', item.id)}
-              />
-            ))}
-          </View>
-        ))}
+    <LinearGradient
+      colors={[GRADIENT_START, GRADIENT_END]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.gradientSection}
+    >
+      {/* Section header with chevron */}
+      <View style={styles.sectionHeaderRow}>
+        <Pressable onPress={onSeeAll} style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>{label}</Text>
+          <ChevronRight size={16} color={COLORS.textSecondary} />
+        </Pressable>
       </View>
-    </View>
+
+      {/* Horizontal scrolling items */}
+      <FlashList
+        data={items}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        estimatedItemSize={CARD_WIDTH + 12}
+        contentContainerStyle={styles.sectionContent}
+      />
+    </LinearGradient>
   );
 }
 
 export default function WardrobeScreen() {
   const router = useRouter();
-  const { items, isLoading, fetchItems } = useWardrobeStore();
+  const insets = useSafeAreaInsets();
+  const { items: storeItems, isLoading, fetchItems } = useWardrobeStore();
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
+  // Use mock data if store is empty
+  const items = useMemo(() => {
+    return storeItems.length > 0 ? storeItems : getMockWardrobeItemsWithAssets();
+  }, [storeItems]);
+
   // Initial fetch
-  React.useEffect(() => {
+  useEffect(() => {
     fetchItems();
-  }, []);
+  }, [fetchItems]);
 
   // Group items by category
   const groupedItems = useMemo(() => {
@@ -89,6 +124,11 @@ export default function WardrobeScreen() {
     });
     return groups;
   }, [items]);
+
+  // Sections to render
+  const sections = useMemo(() => {
+    return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
+  }, [groupedItems]);
 
   const handleEmptyAdd = () => {
     setIsAddSheetOpen(true);
@@ -102,150 +142,216 @@ export default function WardrobeScreen() {
     });
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header — "Closet" + circular "+" */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Closet</Text>
-        <Pressable
-          onPress={() => setIsAddSheetOpen(true)}
-          style={styles.addButton}
-        >
-          <Plus size={24} color="#1A1A1A" />
-        </Pressable>
-      </View>
+  // First category card renderer
+  const firstCategoryRenderItem = useCallback(
+    ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
+    []
+  );
 
-      {isLoading && items.length === 0 ? (
-        <LoadingOverlay message="Loading wardrobe..." />
-      ) : items.length === 0 ? (
+  // Render item for FlashList - header + first category together as ONE continuous gradient
+  const renderItem = useCallback(
+    ({ item, index }: { item: typeof CATEGORY_CONFIG[0] | 'header'; index: number }) => {
+      // Header is rendered with first category - continuous gradient
+      if (item === 'header') {
+        return (
+          <LinearGradient
+            colors={[GRADIENT_START, GRADIENT_END]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[styles.headerWithFirstCategory, { paddingTop: insets.top - 59 }]}
+          >
+            {/* Header row */}
+            <View style={styles.headerRow}>
+              <Text style={styles.headerTitle}>Closet</Text>
+              <Pressable onPress={() => setIsAddSheetOpen(true)} style={styles.addButton}>
+                <Plus size={24} color="#FFFFFF" />
+              </Pressable>
+            </View>
+
+            {/* First category section - part of same gradient */}
+            {sections.length > 0 && (
+              <>
+                <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
+                  <Pressable style={styles.sectionHeader}>
+                    <Text style={styles.sectionLabel}>{sections[0].label}</Text>
+                    <ChevronRight size={16} color={COLORS.textSecondary} />
+                  </Pressable>
+                </View>
+                <FlashList
+                  data={groupedItems[sections[0].key] || []}
+                  keyExtractor={(item) => item.id}
+                  renderItem={firstCategoryRenderItem}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  estimatedItemSize={CARD_WIDTH + 12}
+                  contentContainerStyle={styles.sectionContent}
+                />
+              </>
+            )}
+          </LinearGradient>
+        );
+      }
+
+      // Skip first category (already rendered with header)
+      const sectionIndex = sections.findIndex(s => s.key === item.key);
+      if (sectionIndex === 0) return null;
+
+      return (
+        <CategorySection
+          label={item.label}
+          items={groupedItems[item.key] || []}
+          index={index}
+        />
+      );
+    },
+    [groupedItems, sections, insets.top, firstCategoryRenderItem]
+  );
+
+  // Data for FlashList: header + sections
+  const listData = useMemo(() => {
+    return ['header', ...sections] as (typeof sections[0] | 'header')[];
+  }, [sections]);
+
+  if (isLoading && items.length === 0) {
+    return <LoadingOverlay message="Loading wardrobe..." />;
+  }
+
+  if (items.length === 0) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <EmptyState
           title="Your closet is empty"
           description="Start building your digital closet to get personalized outfit suggestions."
           buttonTitle="Add item"
           onPress={handleEmptyAdd}
-          onSearchPress={() => Alert.alert('Coming Soon', 'Search web will be available in a future update.')}
-          onOutfitPress={() => Alert.alert('Coming Soon', 'Add items from outfit will be available soon.')}
+          onSearchPress={() =>
+            Alert.alert('Coming Soon', 'Search web will be available in a future update.')
+          }
+          onOutfitPress={() =>
+            Alert.alert('Coming Soon', 'Add items from outfit will be available soon.')
+          }
         />
-      ) : (
-        <View style={styles.content}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {CATEGORY_CONFIG.map(({ key, label }) => (
-              <CategorySection
-                key={key}
-                label={label}
-                items={groupedItems[key] || []}
-              />
-            ))}
+        <AddItemSheet
+          isOpen={isAddSheetOpen}
+          onClose={() => setIsAddSheetOpen(false)}
+          onSelectMethod={navigateToAddItem}
+        />
+      </View>
+    );
+  }
 
-            {/* Spacer for bottom bar + Make outfits button */}
-            <View style={{ height: 120 }} />
-          </ScrollView>
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Main content - scrollable with header + categories */}
+      <FlashList
+        data={listData}
+        keyExtractor={(item, index) => (item === 'header' ? 'header' : item.key)}
+        renderItem={renderItem}
+        estimatedItemSize={180}
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
+        showsVerticalScrollIndicator={false}
+        decelerationRate="fast"
+      />
 
-          {/* "Make outfits" floating button */}
-          <View style={styles.makeOutfitsContainer}>
-            <Pressable
-              style={styles.makeOutfitsButton}
-              onPress={() => router.push('/(tabs)/outfits' as any)}
-            >
-              <Shirt size={18} color="#1A1A1A" />
-              <Text style={styles.makeOutfitsText}>Make outfits</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
+      {/* "Make outfits" floating button */}
+      <View style={[styles.makeOutfitsContainer, { bottom: 88 + insets.bottom, right: 16 }]}>
+        <Pressable
+          style={styles.makeOutfitsButton}
+          onPress={() => router.push('/(tabs)/outfits' as any)}
+        >
+          <Shirt size={16} color="#1A1A1A" />
+          <Text style={styles.makeOutfitsText}>Make outfits</Text>
+        </Pressable>
+      </View>
 
       <AddItemSheet
         isOpen={isAddSheetOpen}
         onClose={() => setIsAddSheetOpen(false)}
         onSelectMethod={navigateToAddItem}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
+    backgroundColor: 'transparent',
   },
-  header: {
+  headerWithFirstCategory: {
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  headerGradient: {
+    paddingTop: 6,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: COLORS.textPrimary,
     letterSpacing: -0.5,
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
+  gradientSection: {
+    paddingVertical: 16,
     paddingHorizontal: 16,
   },
-  section: {
+  sectionHeaderRow: {
     marginBottom: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    justifyContent: 'space-between',
   },
   sectionLabel: {
     fontSize: 15,
-    fontWeight: '400',
-    color: '#6B6B6B',
-    marginRight: 4,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
   },
-  sectionItems: {
-    // Items laid out in rows
+  sectionContent: {
+    gap: 12,
   },
-  itemRow: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
+  cardContainer: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    marginRight: 12,
+    backgroundColor: 'transparent',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'transparent',
+    borderRadius: 12,
   },
   makeOutfitsContainer: {
     position: 'absolute',
-    bottom: 80,
-    right: 16,
   },
   makeOutfitsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    gap: 6,
   },
   makeOutfitsText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#1A1A1A',
   },
