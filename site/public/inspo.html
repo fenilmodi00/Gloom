@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inspo - Fashion Try-on App</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Serif for Headings, Sans for UI -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style data-purpose="typography">
+    h1, h2, .serif {
+      font-family: 'Playfair Display', serif;
+    }
+    body, .sans {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+<style data-purpose="custom-layout">
+    /* Glassmorphism Effect for Buttons and Nav */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Custom Scrollbar Hide */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Mannequin Silhouette Centering */
+    .mannequin-container {
+      height: 35vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+  </style>
+</head>
+<body class="bg-[#F2F0E9] h-full overflow-hidden flex flex-col text-[#333]">
+<!-- BEGIN: Top Navigation Bar -->
+<header class="px-6 pt-12 pb-4 flex justify-between items-center bg-[#F2F0E9] z-10" data-purpose="app-header">
+<h1 class="text-3xl font-semibold tracking-tight">Inspo</h1>
+<button class="bg-white px-5 py-2.5 rounded-full text-sm font-medium shadow-sm border border-stone-200 transition-active active:scale-95">
+      Upload outfit
+    </button>
+</header>
+<!-- END: Top Navigation Bar -->
+<!-- BEGIN: Background Layer (Mannequin) -->
+<main class="flex-1 relative overflow-hidden" data-purpose="main-canvas">
+<div class="mannequin-container w-full opacity-60">
+<!-- Mannequin Placeholder SVG -->
+<svg class="text-stone-400" fill="none" height="240" viewbox="0 0 100 120" width="180" xmlns="http://www.w3.org/2000/svg">
+<path d="M50 10C56.6274 10 62 15.3726 62 22C62 28.6274 56.6274 34 50 34C43.3726 34 38 28.6274 38 22C38 15.3726 43.3726 10 50 10Z" fill="currentColor"></path>
+<path d="M25 45C25 45 35 38 50 38C65 38 75 45 75 45L80 120H20L25 45Z" fill="currentColor"></path>
+</svg>
+</div>
+<!-- BEGIN: Foreground Layer (Bottom Sheet) -->
+<section class="absolute bottom-0 left-0 right-0 bg-[#F5F3ED] rounded-t-[40px] shadow-2xl overflow-hidden flex flex-col" data-purpose="content-sheet" style="height: 65vh;">
+<!-- Drag Handle -->
+<div class="flex justify-center py-4">
+<div class="w-12 h-1.5 bg-stone-300 rounded-full"></div>
+</div>
+<div class="px-6 pb-24 overflow-y-auto no-scrollbar flex-1">
+<h2 class="text-2xl font-semibold mb-1">Trending ideas</h2>
+<!-- SECTION: Leather Trench -->
+<div class="mt-6">
+<p class="text-stone-500 font-medium text-sm mb-4">Leather Trench</p>
+<div class="grid grid-cols-2 gap-4">
+<!-- Card 1 -->
+<div class="relative rounded-3xl overflow-hidden aspect-[3/4] shadow-md">
+<img alt="Leather Trench Outfit 1" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv4W05IXtM9jmewLLPf321ZhbJjmdfPDEqE9Tk0OrAWD7O3DkL7oI6-qa9n2pq_N2Z01tuvtdBaeaUnvnntG_JOzGy5AKIgmN_l6PxC28gc3XYakAEJXUsNpW1WUGiegjiuIAIIzbF_YqbIFogsDPlcKPbsBfFMamF_iXrFRAyXnVpQgezs4TGVokojv2YGnU5q8mpE4tEwk5LCpSC-ZFCzXAiuX1-phpMWNfpKcrOYKlWEM6-jJlUnqGkR4jJ6pTL5jz4ldysmoQ"/>
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2">
+<button class="glass-effect px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 text-stone-800">
+<span class="text-xs">✦</span> Try on
+                </button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="relative rounded-3xl overflow-hidden aspect-[3/4] shadow-md">
+<img alt="Leather Trench Outfit 2" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-XzB0AVZhV_dRu7pOf3EhGurrD5SGAAMP8adxnPJ8HlIpI3lgMrZKDD71Sy9kijhetw3-VxvMh11zK9Ej6YM44kRkgKjrWVo1zhSjDAMALv-Mwftqd0Z5qDr8-JKVTTadAFH9YCs4P5Wv1yEZEUlwWVCiJXWLMCev5Y8cZ7M5_GXCETnWMGWNLjCWWvO1XA6mX84L6sVg1hCfmuRgMnnaiK0P5R2vB-nlDHZmg3posksVElZ0oY69FzkJWot34ulyceZI5q6dFyk"/>
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2">
+<button class="glass-effect px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 text-stone-800">
+<span class="text-xs">✦</span> Try on
+                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION: Lace Renaissance -->
+<div class="mt-8">
+<p class="text-stone-500 font-medium text-sm mb-4">Lace Renaissance</p>
+<div class="grid grid-cols-2 gap-4">
+<!-- Card 3 -->
+<div class="relative rounded-3xl overflow-hidden aspect-[3/4] shadow-md">
+<img alt="Lace Renaissance Outfit 1" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSWVflPuxbxTxUrIJR6XuTQuDei8XpLvWkMIA28Dp97t4FsJO9foESUeHQmDTeQUzQTV3cqTZ0Vpc5aeQjh9tz0jdvXuRi4mw53KdPXVsgX4eBvNOB98GOyypfr8NYr2kUok8LW4d6USUV7O1V6clqCrh89RRm9r500WAXLFq7HoMwHX2xhMPDUyQAZD4B_oNMjNlPDuhXJhgJhuQcTNhllNEdzGPNwlXOabIGTMUmqym-nZgsC6rImNMRrY9IKGeUQKh2vrdiexA"/>
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2">
+<button class="glass-effect px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 text-stone-800">
+<span class="text-xs">✦</span> Try on
+                </button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="relative rounded-3xl overflow-hidden aspect-[3/4] shadow-md">
+<img alt="Lace Renaissance Outfit 2" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8-ojdyQAKFNBwY4cNe6561hbO9OJMry1ANCubT9xhyLqomcyqRXGsfHnR9NKUeidRZjVHZnDRv0rgdrndA0S9zVZLvGrOvATzb7VdZ_-64Z9EQKBUJv7o1n0tPjvnWzTFTmBf453HAJXQBpW6csusGDohU72EVORPq3fLxQukMFCuv1O-8aVOlAteO2JTnpVpiZ9BukIjXo5ob3qYlK0EnI_aWA6h5IVqX-TFs81UbKYi-6a3Msrqk8eIUBNUlyFIO1qjvP7XjnE"/>
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2">
+<button class="glass-effect px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 text-stone-800">
+<span class="text-xs">✦</span> Try on
+                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Foreground Layer -->
+</main>
+<!-- BEGIN: Bottom Navigation Bar -->
+<nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-30" data-purpose="floating-nav">
+<div class="glass-effect bg-[#F5F3ED]/80 backdrop-blur-xl rounded-[32px] px-2 py-2 flex items-center justify-between shadow-lg border border-white/50">
+<!-- Nav Item: Inspo (Active) -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 rounded-2xl bg-white/50 shadow-sm border border-stone-200/50" href="#">
+<div class="p-1 rounded-lg">
+<svg class="h-6 w-6 text-stone-800" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<span class="text-[10px] font-bold mt-0.5 text-stone-800 uppercase tracking-widest">Inspo</span>
+</a>
+<!-- Nav Item: Outfits -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 opacity-60" href="#">
+<svg class="h-6 w-6 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold mt-0.5 text-stone-600 uppercase tracking-widest">Outfits</span>
+</a>
+<!-- Nav Item: Wardrobe -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 opacity-60" href="#">
+<svg class="h-6 w-6 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold mt-0.5 text-stone-600 uppercase tracking-widest">Wardrobe</span>
+</a>
+<!-- Nav Item: Profile -->
+<a class="flex flex-col items-center justify-center flex-1 py-1 opacity-60" href="#">
+<svg class="h-6 w-6 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold mt-0.5 text-stone-600 uppercase tracking-widest">Profile</span>
+</a>
+<!-- Floating Chat Circle -->
+<div class="absolute right-[-4px] top-[-10px] -translate-y-full flex flex-col gap-4">
+<button class="w-14 h-14 rounded-full glass-effect shadow-xl flex items-center justify-center text-stone-800 transition-active active:scale-90">
+<svg class="h-6 w-6" fill="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path>
+</svg>
+</button>
+</div>
+</div>
+</nav>
+<!-- END: Bottom Navigation Bar -->
+</body></html>

@@ -30,6 +30,12 @@ const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: s
   'profile/index': { icon: 'user', label: 'Profile' },
 };
 
+// Routes where the tab bar should be hidden
+const HIDDEN_TAB_BAR_ROUTES = [
+  'wardrobe/add-item',
+  'favorites/index',
+];
+
 // Spring config for 60fps smooth animations
 const SPRING_CONFIG = {
   damping: 15,
@@ -62,7 +68,7 @@ function AnimatedTabItem({
       stiffness: 130,
       mass: 0.5,
     });
-  }, [isFocused]);
+  }, [isFocused, focusProgress]);
 
   const handlePressIn = () => {
     'worklet';
@@ -126,6 +132,14 @@ function AnimatedTabItem({
 
 export default function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+
+  // Get the current route name to check if we should hide the tab bar
+  const currentRoute = state.routes[state.index]?.name;
+
+  // Don't render the tab bar on hidden routes
+  if (HIDDEN_TAB_BAR_ROUTES.includes(currentRoute)) {
+    return null;
+  }
 
   const tabRoutes = state.routes.filter((route) => {
     const routeOptions = descriptors[route.key]?.options as { href?: string | null } | undefined;

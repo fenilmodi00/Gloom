@@ -1,15 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Pressable, Alert } from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { X, Camera as CameraIcon, Check } from 'lucide-react-native';
+import { X, Camera as CameraIcon, Check, Image as ImageIcon } from 'lucide-react-native';
 import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import Animated, { 
+  FadeIn, 
+  FadeInDown, 
+  FadeInUp, 
+  FadeOut, 
+} from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
@@ -17,31 +22,47 @@ import { useAuthStore } from '@/lib/store/auth.store';
 import { tagWardrobeItem } from '@/lib/gemini';
 import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
 
+// Design tokens from Stitch
+const COLORS = {
+  brand: '#D0BB95',
+  brandLight: '#f5f1e8',
+  surface: '#FCF9F5',
+  textPrimary: '#1c1917',
+  textSecondary: '#78716c',
+  white: '#FFFFFF',
+  border: '#e7e5e4',
+};
+
 export default function AddItemScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { method } = useLocalSearchParams<{ method: string }>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  
+
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Processing...');
-  
+
   const { addItem } = useWardrobeStore();
   const { user } = useAuthStore();
 
+  // Show upload screen first (Stitch design)
+  const [showUploadScreen, setShowUploadScreen] = useState(method !== 'camera');
+
   useEffect(() => {
-    if (method === 'gallery' && !photoUri) {
+    if (method === 'gallery' && !photoUri && !showUploadScreen) {
       pickImage();
     }
-  }, [method]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [method, showUploadScreen]);
 
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
-        aspect: [4, 5],
+        aspect: [3, 4],
         quality: 0.8,
         base64: true,
       });
@@ -49,16 +70,20 @@ export default function AddItemScreen() {
       if (!result.canceled && result.assets[0]) {
         setPhotoUri(result.assets[0].uri);
       } else {
-        router.back();
+        setShowUploadScreen(true);
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to pick image from gallery');
-      router.back();
+    } catch {
+      setShowUploadScreen(true);
     }
+  };
+
+  const openCamera = () => {
+    setShowUploadScreen(false);
   };
 
   const takePhoto = async () => {
     if (cameraRef.current) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       try {
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
@@ -67,64 +92,57 @@ export default function AddItemScreen() {
         if (photo) {
           setPhotoUri(photo.uri);
         }
-      } catch (error) {
-        Alert.alert('Error', 'Failed to take photo');
+      } catch {
+        // Handle error silently
       }
     }
   };
 
   const handleRetake = () => {
     setPhotoUri(null);
-    if (method === 'gallery') {
-      pickImage();
-    }
+    setShowUploadScreen(true);
   };
 
   const handleSave = async () => {
     if (!photoUri || !user) return;
-    
+
     setIsProcessing(true);
     setLoadingMessage('Uploading image...');
-    
+
     try {
-      // 1. Upload to Supabase Storage
       const fileName = `${user.id}/${Date.now()}.jpg`;
       const response = await fetch(photoUri);
       const blob = await response.blob();
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
+
+      const { error: uploadError } = await supabase.storage
         .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
         .upload(fileName, blob, { contentType: 'image/jpeg' });
-        
+
       if (uploadError) throw uploadError;
-      
+
       const { data: { publicUrl } } = supabase.storage
         .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
         .getPublicUrl(fileName);
-        
+
       setLoadingMessage('Analyzing item with AI...');
-      
-      // We need base64 for Gemini
+
       const fileData = await fetch(photoUri);
       const fileBlob = await fileData.blob();
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          // Extract base64 part
           const b64 = result.split(',')[1];
           resolve(b64);
         };
         reader.onerror = reject;
         reader.readAsDataURL(fileBlob);
       });
-      
-      // 2. Tag with Gemini
+
       const tags = await tagWardrobeItem(base64);
-      
+
       setLoadingMessage('Saving to wardrobe...');
-      
-      // 3. Save to database
+
       await addItem({
         image_url: publicUrl,
         category: tags.category,
@@ -134,11 +152,12 @@ export default function AddItemScreen() {
         occasion_tags: tags.occasion_tags,
         fabric_guess: tags.fabric_guess,
       });
-      
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)/wardrobe');
     } catch (error) {
       console.error('Error adding item:', error);
-      Alert.alert('Error', 'Failed to process and save item.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setIsProcessing(false);
     }
   };
@@ -147,100 +166,430 @@ export default function AddItemScreen() {
     return <LoadingOverlay message={loadingMessage} />;
   }
 
-  // Camera permissions
-  if (method === 'camera' && !photoUri) {
+  // Stitch-inspired Upload Screen with animated transitions
+  if (showUploadScreen && !photoUri) {
+    return (
+      <Animated.View 
+        entering={FadeIn.duration(300)} 
+        exiting={FadeOut.duration(200)}
+        style={[styles.uploadContainer, { paddingTop: insets.top }]}
+      >
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.uploadHeader}>
+          <Pressable onPress={() => router.replace('/(tabs)/wardrobe')} style={styles.backButton}>
+            <X size={24} color={COLORS.textPrimary} />
+          </Pressable>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.uploadContent}>
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.illustrationCard}>
+            <View style={styles.illustrationImage}>
+              <CameraIcon size={48} color={COLORS.brand} />
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.textSection}>
+            <Text style={styles.uploadTitle}>Add to your Wardrobe</Text>
+            <Text style={styles.uploadSubtitle}>
+              Snap a photo or choose from your library to start styling your next look.
+            </Text>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.actionButtons}>
+            <Pressable
+              style={styles.captureButton}
+              onPress={openCamera}
+            >
+              <CameraIcon size={20} color="#1c1917" />
+              <Text style={styles.captureButtonText}>Capture</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.galleryButton}
+              onPress={pickImage}
+            >
+              <ImageIcon size={20} color={COLORS.textPrimary} />
+              <Text style={styles.galleryButtonText}>Upload from Gallery</Text>
+            </Pressable>
+          </Animated.View>
+        </Animated.View>
+
+        <View style={{ height: insets.bottom + 32 }} />
+      </Animated.View>
+    );
+  }
+
+  // Camera Screen with animated transitions
+  if (!showUploadScreen && !photoUri) {
     if (!permission) {
-      return <View className="flex-1 bg-black" />;
+      return <View style={styles.cameraContainer} />;
     }
     if (!permission.granted) {
       return (
-        <SafeAreaView className="flex-1 bg-background justify-center items-center px-4">
-          <Text className="text-center mb-4">We need your permission to show the camera</Text>
-          <Button onPress={requestPermission} className="bg-accent">
-            <ButtonText>Grant Permission</ButtonText>
-          </Button>
-        </SafeAreaView>
+        <Animated.View 
+          entering={FadeIn.duration(300)}
+          style={[styles.permissionContainer, { paddingTop: insets.top }]}
+        >
+          <Text style={styles.permissionText}>We need your permission to show the camera</Text>
+          <Pressable style={styles.permissionButton} onPress={requestPermission}>
+            <Text style={styles.permissionButtonText}>Grant Permission</Text>
+          </Pressable>
+        </Animated.View>
       );
     }
 
     return (
-      <View className="flex-1 bg-black">
-        <SafeAreaView className="flex-1" edges={['top']}>
-          <View className="flex-row justify-between items-center px-4 py-2 z-10">
-            <Pressable onPress={() => router.back()} className="p-2">
-              <X size={24} color="white" />
-            </Pressable>
-            <Text className="text-white font-medium">Add to Wardrobe</Text>
-            <View className="w-10" />
-          </View>
-          
-          <View className="flex-1 rounded-3xl overflow-hidden m-4 relative">
-            <CameraView 
-              ref={cameraRef}
-              className="flex-1" 
-              facing="back"
-            />
-            {/* Guide overlay */}
-            <View className="absolute inset-0 border-2 border-white/30 rounded-3xl m-10 border-dashed" />
-            <Text className="absolute bottom-8 w-full text-center text-white/80 font-medium">
-              Position item clearly in frame
-            </Text>
-          </View>
-          
-          <View className="flex-row justify-center items-center pb-12 pt-4">
-            <Pressable 
-              onPress={takePhoto}
-              className="w-20 h-20 rounded-full border-4 border-white/50 items-center justify-center"
-            >
-              <View className="w-16 h-16 rounded-full bg-white" />
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </View>
+      <Animated.View 
+        entering={FadeIn.duration(300)} 
+        exiting={FadeOut.duration(200)}
+        style={styles.cameraContainer}
+      >
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.cameraHeader, { paddingTop: insets.top }]}>
+          <Pressable onPress={() => setShowUploadScreen(true)} style={styles.headerButton}>
+            <X size={24} color="white" />
+          </Pressable>
+          <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
+          <View style={styles.headerButton} />
+        </Animated.View>
+
+        <Animated.View entering={FadeIn.delay(200)} style={styles.cameraPreview}>
+          <CameraView ref={cameraRef} style={styles.cameraView} facing="back" />
+          <Animated.View entering={FadeIn.delay(400)} style={styles.guideOverlay} />
+          <Animated.Text entering={FadeIn.delay(500)} style={styles.guideText}>Position item clearly in frame</Animated.Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(300).springify()} style={[styles.cameraControls, { paddingBottom: insets.bottom + 24 }]}>
+          <Pressable style={styles.captureButtonOuter} onPress={takePhoto}>
+            <View style={styles.captureButtonInner} />
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
     );
   }
 
-  // Preview screen
+  // Preview Screen with animated transitions
   if (photoUri) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-         <View className="flex-row justify-between items-center px-4 py-2 z-10">
-            <Pressable onPress={() => router.back()} className="p-2">
-              <X size={24} className="text-text-primary" />
-            </Pressable>
-            <Text className="font-medium text-text-primary">Preview</Text>
-            <View className="w-10" />
-          </View>
-          
-          <View className="flex-1 p-4">
-            <View className="flex-1 rounded-3xl overflow-hidden bg-surface shadow-sm mb-6 relative">
-              <Image 
-                source={{ uri: photoUri }} 
-                className="flex-1"
-                contentFit="cover"
-              />
-            </View>
-            
-            <View className="flex-row gap-4 mb-4">
-              <Button 
-                variant="outline" 
-                className="flex-1 border-accent"
-                onPress={handleRetake}
-              >
-                <ButtonText className="text-accent">Retake</ButtonText>
-              </Button>
-              <Button 
-                className="flex-1 bg-accent"
-                onPress={handleSave}
-              >
-                <ButtonText>Analyze & Save</ButtonText>
-                <ButtonIcon as={Check} className="ml-2 w-4 h-4 text-white" />
-              </Button>
-            </View>
-          </View>
-      </SafeAreaView>
+      <Animated.View 
+        entering={FadeIn.duration(300)} 
+        exiting={FadeOut.duration(200)}
+        style={[styles.previewContainer, { paddingTop: insets.top }]}
+      >
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.previewHeader}>
+          <Pressable onPress={() => router.replace("/(tabs)/wardrobe")} style={styles.headerButton}>
+            <X size={24} color={COLORS.textPrimary} />
+          </Pressable>
+          <Text style={styles.previewTitle}>Preview</Text>
+          <View style={styles.headerButton} />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.previewImageContainer}>
+          <Image source={{ uri: photoUri }} style={styles.previewImage} contentFit="cover" />
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(300).springify()} style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>
+          <Pressable style={styles.retakeButton} onPress={handleRetake}>
+            <Text style={styles.retakeButtonText}>Retake</Text>
+          </Pressable>
+          <Pressable style={styles.saveButton} onPress={handleSave}>
+            <Check size={18} color="white" />
+            <Text style={styles.saveButtonText}>Analyze & Save</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
     );
   }
 
   return null;
 }
+
+const styles = StyleSheet.create({
+  // Upload Screen (Stitch-inspired)
+  uploadContainer: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+  },
+  uploadHeader: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+    borderRadius: 999,
+  },
+  uploadContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  illustrationCard: {
+    width: '100%',
+    maxWidth: 280,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  illustrationImage: {
+    width: '100%',
+    aspectRatio: 3 / 4,
+    borderRadius: 12,
+    backgroundColor: COLORS.brandLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  uploadTitle: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  uploadSubtitle: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    maxWidth: 280,
+    lineHeight: 24,
+  },
+  actionButtons: {
+    width: '100%',
+    maxWidth: 320,
+    gap: 16,
+  },
+  captureButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: COLORS.brand,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 999,
+    shadowColor: COLORS.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  captureButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1c1917',
+  },
+  galleryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  galleryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+
+  // Camera Screen
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  permissionContainer: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  permissionText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  permissionButton: {
+    backgroundColor: COLORS.brand,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 999,
+  },
+  permissionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1c1917',
+  },
+  cameraHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  headerButton: {
+    padding: 8,
+    width: 40,
+    alignItems: 'center',
+  },
+  cameraTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'white',
+  },
+  cameraPreview: {
+    flex: 1,
+    margin: 16,
+    borderRadius: 24,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  cameraView: {
+    flex: 1,
+  },
+  guideOverlay: {
+    position: 'absolute',
+    top: 40,
+    left: 40,
+    right: 40,
+    bottom: 40,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderStyle: 'dashed',
+    borderRadius: 16,
+  },
+  guideText: {
+    position: 'absolute',
+    bottom: 32,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  cameraControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  captureButtonOuter: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureButtonInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'white',
+  },
+
+  // Preview Screen
+  previewContainer: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  previewTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+  },
+  previewImageContainer: {
+    flex: 1,
+    margin: 16,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: COLORS.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  previewImage: {
+    flex: 1,
+  },
+  previewActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    minHeight: 56,
+  },
+  retakeButton: {
+    flex: 1,
+    minHeight: 48,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: COLORS.brand,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    flexShrink: 1,
+  },
+  retakeButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.brand,
+    textAlign: 'center',
+  },
+  saveButton: {
+    flex: 1,
+    minHeight: 48,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.brand,
+    borderRadius: 24,
+    shadowColor: COLORS.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 4,
+    flexShrink: 1,
+  },
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.white,
+    textAlign: 'center',
+  },
+});

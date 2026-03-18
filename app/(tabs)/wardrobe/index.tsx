@@ -163,7 +163,12 @@ export default function WardrobeScreen() {
             {/* Header row */}
             <View style={styles.headerRow}>
               <Text style={styles.headerTitle}>Closet</Text>
-              <Pressable onPress={() => setIsAddSheetOpen(true)} style={styles.addButton}>
+              <Pressable 
+                onPress={() => {
+                  router.push('/(tabs)/wardrobe/add-item');
+                }} 
+                style={styles.addButton}
+              >
                 <Plus size={24} color="#FFFFFF" />
               </Pressable>
             </View>
