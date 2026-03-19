@@ -1,22 +1,12 @@
 /**
- * ModelCarousel - Parallax Carousel with react-native-reanimated-carousel
- *
- * Features:
- * - Takes up exactly the top 60% of the device screen
- * - Shows 3 images: main center + peeking sides
- * - Uses mode="parallax" for smooth side animations
- * - Center image: scale 1, side images: scale 0.85
- * - Smooth animated transitions on swipe
+ * ModelCarousel - Parallax Carousel with 3 visible images
+ * 
+ * Shows 3 images: center one full size, side ones 60% visible and scaled to 0.85
+ * Uses react-native-reanimated-carousel v4 with parallax mode
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Pressable, ImageSourcePropType } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  interpolate,
-  Extrapolation,
-  SharedValue,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import Carousel from 'react-native-reanimated-carousel';
 import { Image } from 'expo-image';
 
@@ -26,14 +16,11 @@ import type { ModelCard as ModelCardType } from '@/types/inspo';
 // Constants
 // ============================================================================
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Carousel takes exactly 60% of screen height
-const CAROUSEL_HEIGHT = SCREEN_HEIGHT * 0.6;
-
-// Card dimensions - main card fills most of the carousel height
-const CARD_WIDTH = SCREEN_WIDTH * 0.75;
-const CARD_HEIGHT = CAROUSEL_HEIGHT * 0.85;
+// Card dimensions - center card takes 65% of screen width
+const CARD_WIDTH = SCREEN_WIDTH * 0.65;
+const CARD_HEIGHT = SCREEN_WIDTH * 1.5;
 
 // Parallax configuration
 const PARALLAX_ADJACENT_SCALE = 0.85;
@@ -59,19 +46,6 @@ export function ModelCarousel({
   onCardChange,
   onCardPress,
 }: ModelCarouselProps) {
-  const progress = useSharedValue(initialIndex);
-
-  const handleProgressChange = useCallback(
-    (offsetProgress: number, absoluteProgress: number) => {
-      // Round to nearest index
-      const currentIndex = Math.round(absoluteProgress);
-      if (onCardChange) {
-        onCardChange(currentIndex);
-      }
-    },
-    [onCardChange]
-  );
-
   const handleCardPress = useCallback(
     (model: ModelCardType, index: number) => {
       if (onCardPress) {
@@ -87,33 +61,40 @@ export function ModelCarousel({
         <CarouselItem
           item={item}
           index={index}
-          progress={progress}
           onPress={() => handleCardPress(item, index)}
         />
       );
     },
-    [progress, handleCardPress]
+    [handleCardPress]
   );
+
+  // Window size determines how many items are visible at once
+  // We want 3 items visible: 1 full center + 2 partial sides
+  const windowSize = 3;
 
   return (
     <View style={styles.container}>
       <Carousel
-        width={SCREEN_WIDTH}
-        height={CAROUSEL_HEIGHT}
+        width={CARD_WIDTH}
+        height={CARD_HEIGHT}
         data={models}
         defaultIndex={initialIndex}
         renderItem={renderItem}
-        onProgressChange={handleProgressChange}
         mode="parallax"
         modeConfig={{
           parallaxScrollingScale: 1,
-          parallaxScrollingOffset: 50,
+          parallaxScrollingOffset: 0.5,
           parallaxAdjacentItemScale: PARALLAX_ADJACENT_SCALE,
         }}
-        loop={models.length > 1}
-        scrollAnimationDuration={400}
-        pagingEnabled
+        loop={models.length > 2}
         snapEnabled
+        pagingEnabled
+        onSnapToItem={(index) => {
+          if (onCardChange) {
+            onCardChange(index);
+          }
+        }}
+        windowSize={windowSize}
       />
     </View>
   );
@@ -126,36 +107,10 @@ export function ModelCarousel({
 interface CarouselItemProps {
   item: ModelCardType;
   index: number;
-  progress: SharedValue<number>;
   onPress: () => void;
 }
 
-function CarouselItem({ item, index, progress, onPress }: CarouselItemProps) {
-  const animatedStyle = useAnimatedStyle(() => {
-    // Calculate scale based on position
-    // When this item is at center (progress.value ≈ index), scale = 1
-    // When this item is on sides, scale = PARALLAX_ADJACENT_SCALE
-    const scale = interpolate(
-      progress.value,
-      [index - 1, index, index + 1],
-      [PARALLAX_ADJACENT_SCALE, 1, PARALLAX_ADJACENT_SCALE],
-      Extrapolation.CLAMP
-    );
-
-    // Opacity for depth effect
-    const opacity = interpolate(
-      progress.value,
-      [index - 1, index, index + 1],
-      [0.6, 1, 0.6],
-      Extrapolation.CLAMP
-    );
-
-    return {
-      transform: [{ scale }],
-      opacity,
-    };
-  });
-
+function CarouselItem({ item, onPress }: CarouselItemProps) {
   // Handle both URL strings and require() assets
   const imageSource: ImageSourcePropType = typeof item.imageUrl === 'string'
     ? { uri: item.imageUrl }
@@ -163,11 +118,11 @@ function CarouselItem({ item, index, progress, onPress }: CarouselItemProps) {
 
   return (
     <Pressable onPress={onPress} style={styles.itemContainer}>
-      <Animated.View style={[styles.card, animatedStyle]}>
+      <View style={styles.card}>
         <Image
           source={imageSource}
           style={styles.image}
-          contentFit="cover"
+          contentFit="contain"
           transition={200}
         />
         {/* Optional: Model name overlay */}
@@ -187,7 +142,7 @@ function CarouselItem({ item, index, progress, onPress }: CarouselItemProps) {
             </View>
           </View>
         )}
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -198,12 +153,10 @@ function CarouselItem({ item, index, progress, onPress }: CarouselItemProps) {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: CAROUSEL_HEIGHT,
-    zIndex: 1,
+    width: '100%',
+    height: CARD_HEIGHT + 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemContainer: {
     flex: 1,
@@ -218,9 +171,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 24,
-    elevation: 12,
+    elevation: 8,
   },
   image: {
     width: '100%',
