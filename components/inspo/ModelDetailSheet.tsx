@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { View, Text, Pressable, Dimensions } from 'react-native';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView, useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet';
 import Carousel from 'react-native-reanimated-carousel';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
@@ -27,6 +27,13 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
   const bottomSheetRef = useRef<BottomSheet>(null);
   const scrollX = useSharedValue(0);
   const insets = useSafeAreaInsets();
+
+  // v5 requires animationConfigs to be a function from useBottomSheetSpringConfigs
+  const animationConfigs = useBottomSheetSpringConfigs({
+    damping: 18,
+    stiffness: 180,
+    mass: 0.8,
+  });
 
   const handleSheetChange = useCallback((index: number) => {
     if (index === -1) {
@@ -75,16 +82,13 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
       ref={bottomSheetRef}
       index={0}
       snapPoints={[SHEET_HEIGHT]}
+      enableDynamicSizing={false}
       enablePanDownToClose
       onChange={handleSheetChange}
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: '#F5F2EE', borderRadius: 24 }}
       handleIndicatorStyle={{ backgroundColor: '#D4C5B0', width: 40 }}
-      animationConfigs={{
-        damping: 18,
-        stiffness: 180,
-        mass: 0.8,
-      }}
+      animationConfigs={animationConfigs}
     >
       <BottomSheetView style={{ flex: 1 }}>
         {/* Header */}
