@@ -49,9 +49,9 @@ export interface OutfitItem {
 }
 
 export const MOCK_CLOTH_ITEMS: OutfitItem[] = [
-  { image: require('@assets/modalCloth/0013_00_top.png'), label: 'Top' },
-  { image: require('@assets/modalCloth/0003_04_bottom.png'), label: 'Bottom' },
-  { image: require('@assets/modalCloth/0011_05_shoes.png'), label: 'Shoes' },
-  { image: require('@assets/modalCloth/0009_02_accessories.png'), label: 'Accessories' },
+  { image: require('../assets/modalCloth/0013_00_top.png'), label: 'Top' },
+  { image: require('../assets/modalCloth/0003_04_bottom.png'), label: 'Bottom' },
+  { image: require('../assets/modalCloth/0011_05_shoes.png'), label: 'Shoes' },
+  { image: require('../assets/modalCloth/0009_02_accessories.png'), label: 'Accessories' },
 ];
 
