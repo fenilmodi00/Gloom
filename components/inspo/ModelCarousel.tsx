@@ -58,8 +58,20 @@ export function ModelCarousel({
   // Ensure at least 3 items so layout always works
   const carouselData = useMemo(() => {
     if (models.length >= 3) return models;
-    if (models.length === 2) return [models[0], models[1], models[0]];
-    if (models.length === 1) return [models[0], models[0], models[0]];
+    if (models.length === 2) {
+      return [
+        models[0],
+        models[1],
+        { ...models[0], id: `${models[0].id}-dup-2` },
+      ];
+    }
+    if (models.length === 1) {
+      return [
+        models[0],
+        { ...models[0], id: `${models[0].id}-dup-2` },
+        { ...models[0], id: `${models[0].id}-dup-3` },
+      ];
+    }
     return [];
   }, [models]);
 

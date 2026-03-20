@@ -1,7 +1,7 @@
 /**
  * InspoScreen - Fashion Inspiration Feed
  * 
- * Layer 1 (Bottom): Full-screen horizontally swipeable background images
+ * Layer 1 (Bottom): Top-aligned model carousel
  * Layer 2 (Middle): Absolute floating header
  * Layer 3 (Overlay): Bottom sheet with trending ideas
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
@@ -20,7 +20,6 @@ import type { TrendingSection, TrendingItem, ModelCard } from '@/types/inspo';
 // Constants & Data
 // ============================================================================
 
-// Use modal.png as mock data, loaded 4 times for carousel
 const MODAL_MODEL_IMAGE = require('../../../assets/modal.png');
 
 const MODEL_CARDS: ModelCard[] = [
@@ -68,7 +67,7 @@ const COLORS = {
   background: '#F5F2EE',
   surface: '#FFFFFF',
   textPrimary: '#1A1A1A',
-  buttonBg: '#FFFFFF',
+  accent: '#8B7355',
 };
 
 // ============================================================================
@@ -85,12 +84,12 @@ export default function InspoScreen() {
     bottomSheetRef.current?.snapToIndex(0);
   }, []);
 
-    const handleUploadPress = useCallback(() => {
-      router.push({
-        pathname: '/(tabs)/wardrobe/add-item',
-        params: { origin: 'inspo' },
-      });
-    }, [router]);
+  const handleUploadPress = useCallback(() => {
+    router.push({
+      pathname: '/(tabs)/wardrobe/add-item',
+      params: { origin: 'inspo' },
+    });
+  }, [router]);
 
   const handleTryOnPress = useCallback((item: TrendingItem) => {
     console.log('Try on pressed for:', item.id);
@@ -101,8 +100,8 @@ export default function InspoScreen() {
       {/* ======================================== */}
       {/* Layer 1: Top-aligned model carousel */}
       {/* ======================================== */}
-      <ModelCarousel 
-        models={MODEL_CARDS} 
+      <ModelCarousel
+        models={MODEL_CARDS}
         onCardPress={handleModelPress}
       />
 
@@ -120,10 +119,10 @@ export default function InspoScreen() {
       {/* Layer 3: Overlay Bottom Sheet            */}
       {/* ======================================== */}
       <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none" className="z-30">
-        <InspoBottomSheet 
-          ref={bottomSheetRef} 
-          sections={TRENDING_SECTIONS} 
-          onTryOnPress={handleTryOnPress} 
+        <InspoBottomSheet
+          ref={bottomSheetRef}
+          sections={TRENDING_SECTIONS}
+          onTryOnPress={handleTryOnPress}
         />
       </View>
     </View>
@@ -137,7 +136,7 @@ export default function InspoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE', // App theme background
+    backgroundColor: COLORS.background,
   },
   header: {
     position: 'absolute',
@@ -148,28 +147,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '600',
-    color: COLORS.surface, // Use white text against image background
+    color: COLORS.textPrimary,
+    fontStyle: 'italic',
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   uploadButton: {
-    backgroundColor: COLORS.buttonBg,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   uploadText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.surface,
   },
 });
