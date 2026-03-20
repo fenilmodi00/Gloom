@@ -38,8 +38,7 @@ Hidden `BottomTabBar` while sheet is open.
   - Animation tied to scroll offset via `interpolate()`
 - **Action buttons row** (horizontal, full width):
   - "Save" — outline/secondary button
-  - "Shop This Look" — filled primary button (#8B7355 background)
-  - "Share" — outline/secondary button
+  - "Share" — filled primary button (#8B7355 background)
   - Safe area bottom padding via `useSafeAreaInsets().bottom`
 
 ### Slide 1 — Model View
