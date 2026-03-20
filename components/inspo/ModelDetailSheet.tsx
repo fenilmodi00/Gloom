@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Text, Pressable, Dimensions } from 'react-native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import Carousel from 'react-native-reanimated-carousel';
@@ -21,20 +21,12 @@ interface ModelDetailSheetProps {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.9;
-const CAROUSEL_HEIGHT = SHEET_HEIGHT - 180; // leave room for header + footer
+const CAROUSEL_HEIGHT = SHEET_HEIGHT - 180;
 
 export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDetailSheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const scrollX = useSharedValue(0);
   const insets = useSafeAreaInsets();
-
-  useEffect(() => {
-    if (isOpen) {
-      bottomSheetRef.current?.snapToIndex(0);
-    } else {
-      bottomSheetRef.current?.close();
-    }
-  }, [isOpen]);
 
   const handleSheetChange = useCallback((index: number) => {
     if (index === -1) {
@@ -57,7 +49,7 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
   const renderCarouselItem = useCallback(({ index }: { index: number }) => {
     if (index === 0 && model) {
       return (
-        <View className="flex-1 w-full h-full">
+        <View style={{ flex: 1 }}>
           <Image
             source={model.imageUrl}
             style={{ width: SCREEN_WIDTH, height: CAROUSEL_HEIGHT }}
@@ -75,10 +67,13 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
     }
   }, [model, clothItems]);
 
+  // Only render when open to avoid gesture handler conflicts with InspoBottomSheet
+  if (!isOpen || !model) return null;
+
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={-1}
+      index={0}
       snapPoints={[SHEET_HEIGHT]}
       enablePanDownToClose
       onChange={handleSheetChange}
@@ -91,15 +86,15 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
         mass: 0.8,
       }}
     >
-      <BottomSheetView className="flex-1">
+      <BottomSheetView style={{ flex: 1 }}>
         {/* Header */}
-        <View className="flex-row items-center justify-end px-4 py-2" style={{ height: 44 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 16, paddingVertical: 8, height: 44 }}>
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               bottomSheetRef.current?.close();
             }}
-            className="w-11 h-11 items-center justify-center bg-white rounded-full shadow-sm"
+            style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', borderRadius: 22 }}
           >
             <Feather name="x" size={24} color="#1A1A1A" />
           </Pressable>
@@ -123,31 +118,28 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
         </View>
 
         {/* Footer */}
-        <View 
-          className="flex-1 justify-between px-6 pt-4 pb-2"
-          style={{ paddingBottom: Math.max(insets.bottom, 16) }}
-        >
+        <View style={{ flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 16, paddingBottom: Math.max(insets.bottom, 16) }}>
           <PaginationIndicator
-            currentIndex={0} // not really used by indicator, it relies on scrollX
+            currentIndex={0}
             totalSlides={2}
             scrollX={scrollX}
           />
 
-          <View className="flex-row items-center justify-between gap-4 mt-4">
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 16 }}>
             <Pressable
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
-              className="flex-1 flex-row items-center justify-center py-4 rounded-full border border-accent bg-transparent gap-2"
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 999, borderWidth: 1.5, borderColor: '#8B7355', gap: 8 }}
             >
               <Feather name="bookmark" size={20} color="#8B7355" />
-              <Text className="text-accent font-bold text-base">Save</Text>
+              <Text style={{ color: '#8B7355', fontWeight: '700', fontSize: 16 }}>Save</Text>
             </Pressable>
 
             <Pressable
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
-              className="flex-1 flex-row items-center justify-center py-4 rounded-full bg-accent gap-2"
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 999, backgroundColor: '#8B7355', gap: 8 }}
             >
               <Feather name="share" size={20} color="#FFFFFF" />
-              <Text className="text-white font-bold text-base">Share</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>Share</Text>
             </Pressable>
           </View>
         </View>

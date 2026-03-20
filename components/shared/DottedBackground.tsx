@@ -1,6 +1,5 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
 
 export interface DottedBackgroundProps {
   children: React.ReactNode;
@@ -18,33 +17,46 @@ export function DottedBackground({
   backgroundColor = '#EBEBEB',
 }: DottedBackgroundProps) {
   return (
-    <View className="flex-1 w-full h-full relative" style={{ backgroundColor }}>
-      <View className="absolute inset-0">
-        <Svg width="100%" height="100%">
-          <Defs>
-            <Pattern
-              id="dottedPattern"
-              x="0"
-              y="0"
-              width={spacing}
-              height={spacing}
-              patternUnits="userSpaceOnUse"
+    <View style={{ flex: 1, width: '100%', height: '100%', backgroundColor }}>
+      {/* Dot pattern overlay using small View circles */}
+      <View
+        style={{
+          position: 'absolute',
+          inset: 0,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+        }}
+      >
+        {Array.from({ length: Math.ceil(800 / spacing) }).map((_, i) => {
+          const dotId = `dot-${String(i).padStart(4, '0')}`;
+          return (
+            <View
+              key={dotId}
+              style={{
+                width: spacing,
+                height: spacing,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <Circle
-                cx={spacing / 2}
-                cy={spacing / 2}
-                r={dotRadius}
-                fill={dotColor}
-                fillOpacity={0.05}
+              <View
+                style={{
+                  width: dotRadius * 2,
+                  height: dotRadius * 2,
+                  borderRadius: dotRadius,
+                  backgroundColor: dotColor,
+                  opacity: 0.05,
+                }}
               />
-            </Pattern>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#dottedPattern)" />
-        </Svg>
+            </View>
+          );
+        })}
       </View>
-      <View className="relative flex-1 z-10">
+      {/* Content layer */}
+      <View style={{ position: 'relative', flex: 1, zIndex: 10 }}>
         {children}
       </View>
     </View>
   );
 }
+
