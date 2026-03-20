@@ -12,19 +12,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import type BottomSheet from '@gorhom/bottom-sheet';
 
-import { InspoBackgroundPager } from '@/components/inspo/InspoBackgroundPager';
+import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
-import type { TrendingSection, TrendingItem } from '@/types/inspo';
+import type { TrendingSection, TrendingItem, ModelCard } from '@/types/inspo';
 
 // ============================================================================
 // Constants & Data
 // ============================================================================
 
-const PAGER_IMAGES = [
-  'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800',
-  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800',
-  'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800',
-  'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=800',
+// Use modal.png as mock data, loaded 4 times for carousel
+const MODAL_MODEL_IMAGE = require('../../../assets/modal.png');
+
+const MODEL_CARDS: ModelCard[] = [
+  { id: 'model-1', imageUrl: MODAL_MODEL_IMAGE, name: 'Style 1' },
+  { id: 'model-2', imageUrl: MODAL_MODEL_IMAGE, name: 'Style 2' },
+  { id: 'model-3', imageUrl: MODAL_MODEL_IMAGE, name: 'Style 3' },
+  { id: 'model-4', imageUrl: MODAL_MODEL_IMAGE, name: 'Style 4' },
 ];
 
 const TRENDING_SECTIONS: TrendingSection[] = [
@@ -77,9 +80,17 @@ export default function InspoScreen() {
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const handleUploadPress = useCallback(() => {
-    router.push('/(tabs)/wardrobe/add-item');
-  }, [router]);
+  const handleModelPress = useCallback(() => {
+    // Snap bottom sheet to minimum (34% - index 0) when model image is clicked
+    bottomSheetRef.current?.snapToIndex(0);
+  }, []);
+
+    const handleUploadPress = useCallback(() => {
+      router.push({
+        pathname: '/(tabs)/wardrobe/add-item',
+        params: { origin: 'inspo' },
+      });
+    }, [router]);
 
   const handleTryOnPress = useCallback((item: TrendingItem) => {
     console.log('Try on pressed for:', item.id);
@@ -88,9 +99,12 @@ export default function InspoScreen() {
   return (
     <View style={styles.container}>
       {/* ======================================== */}
-      {/* Layer 1: Full-Screen Background Pager    */}
+      {/* Layer 1: Top-aligned model carousel */}
       {/* ======================================== */}
-      <InspoBackgroundPager images={PAGER_IMAGES} />
+      <ModelCarousel 
+        models={MODEL_CARDS} 
+        onCardPress={handleModelPress}
+      />
 
       {/* ======================================== */}
       {/* Layer 2: Floating Header                 */}
@@ -123,7 +137,7 @@ export default function InspoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000', // Black background to prevent white flashes during scroll
+    backgroundColor: '#F5F2EE', // App theme background
   },
   header: {
     position: 'absolute',

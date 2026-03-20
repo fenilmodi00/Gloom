@@ -9,23 +9,30 @@ import type { TrendingSection, TrendingItem } from '@/types/inspo';
 export interface InspoBottomSheetProps {
   sections: TrendingSection[];
   onTryOnPress?: (item: TrendingItem) => void;
+  onIndexChange?: (index: number) => void;
 }
 
 export const InspoBottomSheet = forwardRef<BottomSheet, InspoBottomSheetProps>(
-  ({ sections, onTryOnPress }, ref) => {
+  ({ sections, onTryOnPress, onIndexChange }, ref) => {
     const insets = useSafeAreaInsets();
     
     // Bottom sheet snap points
-    const snapPoints = useMemo(() => ['20%', '50%', '85%'], []);
+    const snapPoints = useMemo(() => ['34%', '60%', '80%'], []);
 
     return (
       <BottomSheet
         ref={ref}
-        index={1} // Start at 50%
+        index={1} // Start at 60%
         snapPoints={snapPoints}
         enablePanDownToClose={false}
+        topInset={insets.top + 65}
+        onChange={(index) => {
+          if (onIndexChange) {
+            onIndexChange(index);
+          }
+        }}
         backgroundStyle={{
-          backgroundColor: '#F5F3ED',
+          backgroundColor: '#F5F3EC',
           borderTopLeftRadius: 32,
           borderTopRightRadius: 32,
         }}

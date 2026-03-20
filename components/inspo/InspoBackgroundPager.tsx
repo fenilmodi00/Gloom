@@ -1,41 +1,70 @@
-import React, { useRef } from 'react';
-import { View, FlatList, Dimensions, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
+/**
+ * InspoBackgroundPager - Model carousel wrapper
+ *
+ * Uses ModelCarousel for 3-model peeking parallax effect
+ * Takes 70% of screen from top, with padding below header
+ */
+import React, { useMemo } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { ModelCarousel } from './ModelCarousel';
+import type { ModelCard } from '@/types/inspo';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Height: 70% of screen for the model carousel area
+const CAROUSEL_HEIGHT = SCREEN_HEIGHT * 0.70;
+
+// ============================================================================
+// Types
+// ============================================================================
 
 export interface InspoBackgroundPagerProps {
-  images: string[];
+  images: (string | number)[];
+  initialIndex?: number;
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// ============================================================================
+// Component
+// ============================================================================
 
-export function InspoBackgroundPager({ images }: InspoBackgroundPagerProps) {
-  const renderItem = ({ item }: { item: string }) => (
-    <View style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}>
-      <Image
-        source={{ uri: item }}
-        style={StyleSheet.absoluteFillObject}
-        contentFit="cover"
-        transition={200}
-      />
-      {/* Dark overlay to ensure text/UI visibility if needed, or subtle gradient */}
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
-    </View>
-  );
+export function InspoBackgroundPager({
+  images,
+  initialIndex = 1, // Start with middle model in focus
+}: InspoBackgroundPagerProps) {
+  // Convert images to ModelCard format
+  const modelCards: ModelCard[] = useMemo(() => {
+    return images.map((img, index) => ({
+      id: `model-${index}`,
+      imageUrl: img,
+    }));
+  }, [images]);
 
   return (
-    <View style={StyleSheet.absoluteFillObject} className="z-0">
-      <FlatList
-        data={images}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => `${item}-${index}`}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        bounces={false}
-        initialNumToRender={2}
-        maxToRenderPerBatch={2}
-        windowSize={3}
+    <View style={styles.container}>
+      <ModelCarousel
+        models={modelCards}
+        initialIndex={initialIndex}
       />
     </View>
   );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: CAROUSEL_HEIGHT,
+    backgroundColor: '#F5F2EE',
+    zIndex: 0,
+  },
+});

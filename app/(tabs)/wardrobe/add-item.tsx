@@ -36,7 +36,7 @@ const COLORS = {
 export default function AddItemScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { method } = useLocalSearchParams<{ method: string }>();
+  const { method, origin } = useLocalSearchParams<{ method: string; origin?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
@@ -49,6 +49,20 @@ export default function AddItemScreen() {
 
   // Show upload screen first (Stitch design)
   const [showUploadScreen, setShowUploadScreen] = useState(method !== 'camera');
+
+  // Map origin keys to tab paths — deterministic, no navigation stack dependency
+  const ORIGIN_PATHS: Record<string, string> = {
+    wardrobe: '/(tabs)/wardrobe',
+    inspo: '/(tabs)/inspo',
+    outfits: '/(tabs)/outfits',
+  };
+
+  // Close: use origin param to directly navigate to the correct tab.
+  // This bypasses Expo Router's broken back-stack for hidden tab routes.
+  const closeScreen = () => {
+    const dest = origin ? ORIGIN_PATHS[origin] : ORIGIN_PATHS.wardrobe;
+    router.replace(dest as any);
+  };
 
   useEffect(() => {
     if (method === 'gallery' && !photoUri && !showUploadScreen) {
@@ -154,7 +168,7 @@ export default function AddItemScreen() {
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(tabs)/wardrobe');
+      closeScreen();
     } catch (error) {
       console.error('Error adding item:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -174,10 +188,10 @@ export default function AddItemScreen() {
         exiting={FadeOut.duration(200)}
         style={[styles.uploadContainer, { paddingTop: insets.top }]}
       >
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.uploadHeader}>
-          <Pressable onPress={() => router.replace('/(tabs)/wardrobe')} style={styles.backButton}>
-            <X size={24} color={COLORS.textPrimary} />
-          </Pressable>
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.uploadHeader}>
+            <Pressable onPress={closeScreen} style={styles.backButton}>
+              <X size={24} color={COLORS.textPrimary} />
+            </Pressable>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.uploadContent}>
@@ -243,13 +257,13 @@ export default function AddItemScreen() {
         exiting={FadeOut.duration(200)}
         style={styles.cameraContainer}
       >
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.cameraHeader, { paddingTop: insets.top }]}>
-          <Pressable onPress={() => setShowUploadScreen(true)} style={styles.headerButton}>
-            <X size={24} color="white" />
-          </Pressable>
-          <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
-          <View style={styles.headerButton} />
-        </Animated.View>
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.cameraHeader, { paddingTop: insets.top }]}>
+            <Pressable onPress={closeScreen} style={styles.headerButton}>
+              <X size={24} color="white" />
+            </Pressable>
+            <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
+            <View style={styles.headerButton} />
+          </Animated.View>
 
         <Animated.View entering={FadeIn.delay(200)} style={styles.cameraPreview}>
           <CameraView ref={cameraRef} style={styles.cameraView} facing="back" />

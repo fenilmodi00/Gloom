@@ -115,15 +115,20 @@ export default function OutfitsScreen() {
 
       {/* CTAs */}
       <View className="w-full px-4 mt-8 gap-3">
-        {wardrobeItems.length === 0 ? (
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={() => router.push('/(tabs)/wardrobe/add-item')}
-            activeOpacity={0.85}
-          >
-            <Feather name="plus" size={18} color="#F2F0E9" />
-            <Text style={styles.primaryBtnText}>Add items to wardrobe</Text>
-          </TouchableOpacity>
+           {wardrobeItems.length === 0 ? (
+             <TouchableOpacity
+               style={styles.primaryBtn}
+               onPress={() =>
+                 router.push({
+                   pathname: '/(tabs)/wardrobe/add-item',
+                   params: { origin: 'outfits' },
+                 })
+               }
+               activeOpacity={0.85}
+             >
+               <Feather name="plus" size={18} color="#F2F0E9" />
+               <Text style={styles.primaryBtnText}>Add items to wardrobe</Text>
+             </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.primaryBtn} onPress={generateSuggestions} activeOpacity={0.85}>
             <Text style={styles.primaryBtnText}>✦ Generate Outfits</Text>

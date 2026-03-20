@@ -134,13 +134,13 @@ export default function WardrobeScreen() {
     setIsAddSheetOpen(true);
   };
 
-  const navigateToAddItem = (method: 'camera' | 'gallery') => {
-    setIsAddSheetOpen(false);
-    router.push({
-      pathname: '/(tabs)/wardrobe/add-item',
-      params: { method },
-    });
-  };
+   const navigateToAddItem = (method: 'camera' | 'gallery') => {
+     setIsAddSheetOpen(false);
+     router.push({
+       pathname: '/(tabs)/wardrobe/add-item',
+       params: { method, origin: 'wardrobe' },
+     });
+   };
 
   // First category card renderer
   const firstCategoryRenderItem = useCallback(
@@ -162,15 +162,18 @@ export default function WardrobeScreen() {
           >
             {/* Header row */}
             <View style={styles.headerRow}>
-              <Text style={styles.headerTitle}>Closet</Text>
-              <Pressable 
-                onPress={() => {
-                  router.push('/(tabs)/wardrobe/add-item');
-                }} 
-                style={styles.addButton}
-              >
-                <Plus size={24} color="#FFFFFF" />
-              </Pressable>
+               <Text style={styles.headerTitle}>Closet</Text>
+               <Pressable 
+                 onPress={() => {
+                   router.push({
+                     pathname: '/(tabs)/wardrobe/add-item',
+                     params: { origin: 'wardrobe' },
+                   });
+                 }} 
+                 style={styles.addButton}
+               >
+                 <Plus size={24} color="#FFFFFF" />
+               </Pressable>
             </View>
 
             {/* First category section - part of same gradient */}
