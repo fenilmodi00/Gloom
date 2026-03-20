@@ -6,7 +6,7 @@
  * Layer 3 (Overlay): Bottom sheet with trending ideas
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
  */
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,9 @@ import type BottomSheet from '@gorhom/bottom-sheet';
 
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
+import { ModelDetailSheet } from '@/components/inspo/ModelDetailSheet';
 import type { TrendingSection, TrendingItem, ModelCard } from '@/types/inspo';
+import { MOCK_CLOTH_ITEMS } from '@/types/inspo';
 
 // ============================================================================
 // Constants & Data
@@ -79,9 +81,12 @@ export default function InspoScreen() {
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const handleModelPress = useCallback(() => {
-    // Snap bottom sheet to minimum (34% - index 0) when model image is clicked
-    bottomSheetRef.current?.snapToIndex(0);
+  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelCard | null>(null);
+
+  const handleModelPress = useCallback((model: ModelCard) => {
+    setSelectedModel(model);
+    setIsDetailSheetOpen(true);
   }, []);
 
   const handleUploadPress = useCallback(() => {
@@ -102,7 +107,7 @@ export default function InspoScreen() {
       {/* ======================================== */}
       <ModelCarousel
         models={MODEL_CARDS}
-        onCardPress={handleModelPress}
+        onCardPress={(model) => handleModelPress(model)}
       />
 
       {/* ======================================== */}
@@ -123,6 +128,12 @@ export default function InspoScreen() {
           ref={bottomSheetRef}
           sections={TRENDING_SECTIONS}
           onTryOnPress={handleTryOnPress}
+        />
+        <ModelDetailSheet
+          model={selectedModel}
+          isOpen={isDetailSheetOpen}
+          clothItems={MOCK_CLOTH_ITEMS}
+          onClose={() => setIsDetailSheetOpen(false)}
         />
       </View>
     </View>

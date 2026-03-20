@@ -34,6 +34,7 @@ const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: s
 const HIDDEN_TAB_BAR_ROUTES = [
   'wardrobe/add-item',
   'favorites/index',
+  'inspo/model-detail',
 ];
 
 // Spring config for 60fps smooth animations
