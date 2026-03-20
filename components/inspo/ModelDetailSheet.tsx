@@ -1,10 +1,8 @@
 import React, { useCallback, useRef } from 'react';
 import { View, Text, Pressable, Dimensions } from 'react-native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView, useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet';
-import Carousel from 'react-native-reanimated-carousel';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
-import { useSharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,11 +19,10 @@ interface ModelDetailSheetProps {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.9;
-const CAROUSEL_HEIGHT = SHEET_HEIGHT - 180;
+const CONTENT_HEIGHT = SHEET_HEIGHT - 180;
 
 export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDetailSheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const scrollX = useSharedValue(0);
   const insets = useSafeAreaInsets();
 
   // v5 requires animationConfigs to be a function from useBottomSheetSpringConfigs
@@ -53,28 +50,7 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
     []
   );
 
-  const renderCarouselItem = useCallback(({ index }: { index: number }) => {
-    if (index === 0 && model) {
-      return (
-        <View style={{ flex: 1 }}>
-          <Image
-            source={model.imageUrl}
-            style={{ width: SCREEN_WIDTH, height: CAROUSEL_HEIGHT }}
-            contentFit="cover"
-            transition={200}
-          />
-        </View>
-      );
-    } else {
-      return (
-        <View style={{ width: SCREEN_WIDTH, height: CAROUSEL_HEIGHT }}>
-          <OutfitGrid items={clothItems} />
-        </View>
-      );
-    }
-  }, [model, clothItems]);
-
-  // Only render when open to avoid gesture handler conflicts with InspoBottomSheet
+  // Only render when open to avoid gesture conflicts
   if (!isOpen || !model) return null;
 
   return (
@@ -104,31 +80,24 @@ export function ModelDetailSheet({ model, isOpen, clothItems, onClose }: ModelDe
           </Pressable>
         </View>
 
-        {/* Carousel */}
-        <View style={{ height: CAROUSEL_HEIGHT }}>
-          <Carousel
-            loop={false}
-            width={SCREEN_WIDTH}
-            height={CAROUSEL_HEIGHT}
-            data={[0, 1]}
-            renderItem={renderCarouselItem}
-            pagingEnabled
-            snapEnabled
-            onProgressChange={(_, absoluteProgress) => {
-              'worklet';
-              scrollX.value = absoluteProgress * SCREEN_WIDTH;
-            }}
+        {/* Content: Model image */}
+        <View style={{ height: CONTENT_HEIGHT }}>
+          <Image
+            source={model.imageUrl}
+            style={{ width: SCREEN_WIDTH, height: CONTENT_HEIGHT }}
+            contentFit="cover"
+            transition={200}
           />
         </View>
 
-        {/* Footer */}
+        {/* Footer: Pagination + Buttons */}
         <View style={{ flex: 1, justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 16, paddingBottom: Math.max(insets.bottom, 16) }}>
-          <PaginationIndicator
-            currentIndex={0}
-            totalSlides={2}
-            scrollX={scrollX}
-          />
+          {/* Page indicator */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 20 }}>
+            <View style={{ width: 30, height: 2, backgroundColor: '#8B7355', borderRadius: 1 }} />
+          </View>
 
+          {/* Action Buttons */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 16 }}>
             <Pressable
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
