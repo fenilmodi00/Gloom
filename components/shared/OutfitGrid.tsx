@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
-import { DottedBackground } from './DottedBackground';
+
 import { SkeletonImage } from './SkeletonImage';
 import type { OutfitItem } from '@/types/inspo';
 
@@ -40,12 +40,12 @@ export function OutfitGrid({ items }: OutfitGridProps) {
   const gridItems = items.slice(0, 4);
 
   return (
-    <DottedBackground>
-      <View className="flex-1 flex-row flex-wrap p-6 gap-2 justify-center content-center">
-      {gridItems.map((item) => (
-        <OutfitGridCell key={item.id} item={item} />
-      ))}
+    <View style={{ flex: 1, backgroundColor: '#EBEBEB', padding: 24, gap: 8 }}>
+      <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignContent: 'center' }}>
+        {gridItems.map((item) => (
+          <OutfitGridCell key={item.id} item={item} />
+        ))}
       </View>
-    </DottedBackground>
+    </View>
   );
 }
