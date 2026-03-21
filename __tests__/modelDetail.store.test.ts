@@ -12,6 +12,7 @@ const mockModelCard = (overrides: Partial<ModelCard> = {}): ModelCard => ({
 
 // Helper to create an OutfitItem mock
 const mockOutfitItem = (overrides: Partial<OutfitItem> = {}): OutfitItem => ({
+  id: 'item-1',
   image: { uri: 'https://example.com/item.jpg' },
   label: 'Top',
   ...overrides,

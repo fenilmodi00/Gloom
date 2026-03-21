@@ -44,14 +44,15 @@ export interface TrendingItem {
 }
 
 export interface OutfitItem {
+  id: string;
   image: ImageSourcePropType;
   label: 'Top' | 'Bottom' | 'Shoes' | 'Accessories';
 }
 
 export const MOCK_CLOTH_ITEMS: OutfitItem[] = [
-  { image: require('../assets/modalCloth/0013_00_top.png'), label: 'Top' },
-  { image: require('../assets/modalCloth/0003_04_bottom.png'), label: 'Bottom' },
-  { image: require('../assets/modalCloth/0011_05_shoes.png'), label: 'Shoes' },
-  { image: require('../assets/modalCloth/0009_02_accessories.png'), label: 'Accessories' },
+  { id: 'top-1', image: require('../assets/modalCloth/0013_00_top.png'), label: 'Top' },
+  { id: 'bottom-1', image: require('../assets/modalCloth/0003_04_bottom.png'), label: 'Bottom' },
+  { id: 'shoes-1', image: require('../assets/modalCloth/0011_05_shoes.png'), label: 'Shoes' },
+  { id: 'accessories-1', image: require('../assets/modalCloth/0009_02_accessories.png'), label: 'Accessories' },
 ];
 

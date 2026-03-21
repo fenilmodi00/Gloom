@@ -42,9 +42,9 @@ export function OutfitGrid({ items }: OutfitGridProps) {
   return (
     <DottedBackground>
       <View className="flex-1 flex-row flex-wrap p-6 gap-2 justify-center content-center">
-        {gridItems.map((item) => (
-          <OutfitGridCell key={item.label} item={item} />
-        ))}
+      {gridItems.map((item) => (
+        <OutfitGridCell key={item.id} item={item} />
+      ))}
       </View>
     </DottedBackground>
   );
