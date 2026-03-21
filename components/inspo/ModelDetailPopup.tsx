@@ -26,6 +26,7 @@ import * as Haptics from 'expo-haptics';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
+import { Asset } from 'expo-asset';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -41,25 +42,47 @@ import type { ModelCard, OutfitItem } from '@/types/inspo';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Save model image to gallery
-async function handleSave(imageUrl: string | number) {
+async function handleSave(imageSource: any) {
   try {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Please allow access to save images.');
       return;
     }
-    const uri = typeof imageUrl === 'string' ? imageUrl : Image.resolveAssetSource(imageUrl).uri;
+    
+    let uri: string;
+    if (typeof imageSource === 'string') {
+      uri = imageSource;
+    } else if (imageSource.uri) {
+      uri = imageSource.uri;
+    } else {
+      // Handle asset from require()
+      const asset = await Asset.fromModule(imageSource).downloadAsync();
+      uri = asset.localUri || asset.uri;
+    }
+    
     await MediaLibrary.saveToLibraryAsync(uri);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch (err) {
+    console.error('Save error:', err);
     Alert.alert('Error', 'Failed to save image.');
   }
 }
 
 // Share model image
-async function handleShare(imageUrl: string | number) {
+async function handleShare(imageSource: any) {
   try {
-    const uri = typeof imageUrl === 'string' ? imageUrl : Image.resolveAssetSource(imageUrl).uri;
+    let uri: string;
+    if (typeof imageSource === 'string') {
+      uri = imageSource;
+    } else if (imageSource.uri) {
+      uri = imageSource.uri;
+    } else {
+      // Handle asset from require()
+      const asset = await Asset.fromModule(imageSource).downloadAsync();
+      uri = asset.localUri || asset.uri;
+    }
+    
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) {
       Alert.alert('Error', 'Sharing is not available on this device.');
@@ -67,6 +90,7 @@ async function handleShare(imageUrl: string | number) {
     }
     await Sharing.shareAsync(uri);
   } catch (err) {
+    console.error('Share error:', err);
     Alert.alert('Error', 'Failed to share image.');
   }
 }
@@ -362,21 +386,17 @@ export function ModelDetailPopup({
 
           {/* Save + Share */}
           <View style={styles.actions}>
-            <Pressable
-              style={styles.saveBtn}
-              onPress={() =>
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-              }
-            >
-              <Feather name="bookmark" size={18} color={COLORS.accent} />
-              <Text style={styles.saveBtnText}>Save</Text>
-            </Pressable>
+<Pressable
+  style={styles.saveBtn}
+  onPress={() => handleSave(imageSource)}
+>
+  <Feather name="bookmark" size={18} color={COLORS.accent} />
+  <Text style={styles.saveBtnText}>Save</Text>
+</Pressable>
 
             <Pressable
               style={styles.shareBtn}
-              onPress={() =>
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-              }
+              onPress={() => handleShare(imageSource)}
             >
               <Feather name="share" size={18} color={COLORS.surface} />
               <Text style={styles.shareBtnText}>Share</Text>
