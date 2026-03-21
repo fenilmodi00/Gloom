@@ -61,6 +61,7 @@ export function ModelDetailPopup({
   onClose,
 }: ModelDetailPopupProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const isGestureTriggered = useRef(false);
 
   // ── Pop-up animation values (scale + fade, not slide-up) ──
   const scale = useSharedValue(0.88);
@@ -321,8 +322,8 @@ const styles = {
     position: 'absolute' as const,
     top: SCREEN_HEIGHT * 0.10,
     bottom: SCREEN_HEIGHT * 0.10,
-    left: 16,
-    right: 16,
+    left: 0,
+    right: 0,
     zIndex: 2,
     backgroundColor: COLORS.background,
     borderRadius: 28,
@@ -332,6 +333,7 @@ const styles = {
     shadowOpacity: 0.12,
     shadowRadius: 20,
     elevation: 8,
+    overflow: 'hidden' as const,
   } as ViewStyle,
 
   header: {
@@ -432,6 +434,8 @@ const styles = {
     paddingTop: 14,
     paddingBottom: 28,
     backgroundColor: COLORS.surface,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     gap: 14,
   } as ViewStyle,
   pagination: {
