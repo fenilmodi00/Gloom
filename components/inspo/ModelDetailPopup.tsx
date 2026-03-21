@@ -129,6 +129,14 @@ export function ModelDetailPopup({
   // ── Swipe animation value ──
   const translateX = useSharedValue(0);
 
+  // ── Worklet-safe slide index (avoids stale closure in gesture callbacks) ──
+  const currentSlideShared = useSharedValue(0);
+
+  // ── Sync shared value with React state ──
+  useEffect(() => {
+    currentSlideShared.value = currentSlide;
+  }, [currentSlide, currentSlideShared]);
+
   // ── Sync translateX with currentSlide (skip if gesture triggered) ──
   useEffect(() => {
     if (isGestureTriggered.current) {
@@ -226,23 +234,23 @@ export function ModelDetailPopup({
       const drag = e.translationX;
       const velocity = e.velocityX;
 
-      let targetSlide = currentSlide;
-      if (currentSlide === 0 && (drag < -threshold || velocity < -500)) {
+      // Use shared value for worklet-safe state access
+      const currentIdx = currentSlideShared.value;
+      let targetSlide = currentIdx;
+
+      if (currentIdx === 0 && (drag < -threshold || velocity < -500)) {
         // Swipe left → outfit grid
         targetSlide = 1;
-      } else if (currentSlide === 1 && (drag > threshold || velocity > 500)) {
+      } else if (currentIdx === 1 && (drag > threshold || velocity > 500)) {
         // Swipe right → model
         targetSlide = 0;
       }
-      
+
       const targetTranslateX = -targetSlide * SCREEN_WIDTH;
       translateX.value = withSpring(targetTranslateX, { damping: 22, stiffness: 220 });
-      
-      if (targetSlide !== currentSlide) {
-        runOnJS(() => {
-          isGestureTriggered.current = true;
-          setCurrentSlide(targetSlide);
-        })();
+
+      if (targetSlide !== currentIdx) {
+        runOnJS(setSlideIndex)(targetSlide);
       }
     });
 
