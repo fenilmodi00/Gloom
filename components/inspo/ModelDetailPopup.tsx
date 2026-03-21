@@ -30,7 +30,7 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { OutfitGrid } from '@/components/shared/OutfitGrid';
 import type { ModelCard, OutfitItem } from '@/types/inspo';
@@ -70,6 +70,18 @@ export function ModelDetailPopup({
 
   // ── Swipe animation value ──
   const translateX = useSharedValue(0);
+
+  // ── Sync translateX with currentSlide (skip if gesture triggered) ──
+  useEffect(() => {
+    if (isGestureTriggered.current) {
+      isGestureTriggered.current = false;
+      return;
+    }
+    translateX.value = withSpring(-currentSlide * SCREEN_WIDTH, {
+      damping: 22,
+      stiffness: 220,
+    });
+  }, [currentSlide, translateX]);
 
   // ── Entry animation ──
   useEffect(() => {
@@ -130,10 +142,21 @@ export function ModelDetailPopup({
     setCurrentSlide(index);
   }, []);
 
+  // ── Programmatic slide navigation (updates both state and translateX) ──
+  const navigateToSlide = useCallback((index: number) => {
+    setCurrentSlide(index);
+    translateX.value = withSpring(-index * SCREEN_WIDTH, {
+      damping: 22,
+      stiffness: 220,
+    });
+  }, [translateX]);
+
   // ── Horizontal swipe gesture ──
   // GestureDetector wraps ONLY the slide content — not the whole card
   // This keeps header/footer buttons pressable
   const swipeGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-20, 20])
     .onUpdate((e) => {
       'worklet';
       // Apply drag directly to slide transform (visual swipe)
@@ -145,15 +168,24 @@ export function ModelDetailPopup({
       const drag = e.translationX;
       const velocity = e.velocityX;
 
+      let targetSlide = currentSlide;
       if (currentSlide === 0 && (drag < -threshold || velocity < -500)) {
         // Swipe left → outfit grid
-        runOnJS(setSlideIndex)(1);
+        targetSlide = 1;
       } else if (currentSlide === 1 && (drag > threshold || velocity > 500)) {
         // Swipe right → model
-        runOnJS(setSlideIndex)(0);
+        targetSlide = 0;
       }
-      // Spring back to neutral
-      translateX.value = withSpring(0, { damping: 22, stiffness: 220 });
+      
+      const targetTranslateX = -targetSlide * SCREEN_WIDTH;
+      translateX.value = withSpring(targetTranslateX, { damping: 22, stiffness: 220 });
+      
+      if (targetSlide !== currentSlide) {
+        runOnJS(() => {
+          isGestureTriggered.current = true;
+          setCurrentSlide(targetSlide);
+        })();
+      }
     });
 
   // ── Animated styles ──
@@ -186,24 +218,26 @@ export function ModelDetailPopup({
       onRequestClose={safeClose}
       statusBarTranslucent
     >
-      {/* ── Backdrop: full-screen blur, inspo screen stays live behind ── */}
-      <Animated.View style={[styles.backdrop, backdropStyle]}>
-        <BlurView
-          intensity={70}
-          tint="dark"
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Tap backdrop to close */}
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={safeClose}
-        />
-      </Animated.View>
+      <GestureHandlerRootView style={styles.gestureRoot}>
+        {/* ── Backdrop: full-screen blur, inspo screen stays live behind ── */}
+        <Animated.View style={[styles.backdrop, backdropStyle]} pointerEvents="box-none">
+          <BlurView
+            intensity={70}
+            tint="dark"
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          {/* Tap backdrop to close */}
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={safeClose}
+          />
+        </Animated.View>
 
-      {/* ── Popup card: centered, scale+fade animation ── */}
-      <Animated.View style={[styles.popupCard, popupStyle]}>
-        {/* Header */}
-        <View style={styles.header}>
+        {/* ── Popup card: centered, scale+fade animation ── */}
+        <Animated.View style={[styles.popupCard, popupStyle]}>
+          {/* Header */}
+          <View style={styles.header}>
           <View style={styles.headerSpacer} />
           <Pressable onPress={safeClose} style={styles.closeButton}>
             <Feather name="x" size={20} color={COLORS.textPrimary} />
@@ -245,7 +279,7 @@ export function ModelDetailPopup({
               <View style={styles.slide}>
                 <View style={styles.outfitHeader}>
                   <Pressable
-                    onPress={() => setSlideIndex(0)}
+                    onPress={() => navigateToSlide(0)}
                     style={styles.backButton}
                   >
                     <Feather name="arrow-left" size={18} color={COLORS.textPrimary} />
@@ -308,11 +342,16 @@ export function ModelDetailPopup({
           </View>
         </View>
       </Animated.View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
 
 const styles = {
+  gestureRoot: {
+    flex: 1,
+  } as ViewStyle,
+
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
