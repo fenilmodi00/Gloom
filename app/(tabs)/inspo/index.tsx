@@ -6,7 +6,7 @@
  * Layer 3 (Overlay): Bottom sheet with trending ideas
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
  */
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,7 @@ import type BottomSheet from '@gorhom/bottom-sheet';
 
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
+import { ModelDetailPopup } from '@/components/inspo/ModelDetailPopup';
 import type { TrendingSection, TrendingItem, ModelCard } from '@/types/inspo';
 import { MOCK_CLOTH_ITEMS } from '@/types/inspo';
 import { useModelDetailStore } from '@/lib/store/modelDetail.store';
@@ -81,12 +82,18 @@ export default function InspoScreen() {
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const { openModelDetail } = useModelDetailStore();
+  // Inline popup state — keeps inspo screen alive behind the blur backdrop
+  const [activeModel, setActiveModel] = useState<ModelCard | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleModelPress = useCallback((model: ModelCard) => {
-    openModelDetail(model, MOCK_CLOTH_ITEMS);
-    router.push('/(tabs)/inspo/model-detail');
-  }, [openModelDetail, router]);
+    setActiveModel(model);
+  }, []);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handlePopupClose = useCallback(() => {
+    setActiveModel(null);
+  }, []);
 
   const handleUploadPress = useCallback(() => {
     router.push({
@@ -129,6 +136,16 @@ export default function InspoScreen() {
           onTryOnPress={handleTryOnPress}
         />
       </View>
+
+      {/* ======================================== */}
+      {/* Layer 4: Inline popup overlay             */}
+      {/* ======================================== */}
+      <ModelDetailPopup
+        visible={activeModel !== null}
+        model={activeModel}
+        clothItems={MOCK_CLOTH_ITEMS}
+        onClose={handlePopupClose}
+      />
     </View>
   );
 }

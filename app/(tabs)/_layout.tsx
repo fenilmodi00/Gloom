@@ -63,14 +63,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Hidden route — model detail modal */}
-      <Tabs.Screen
-        name="inspo/model-detail"
-        options={{
-          href: null,
-        }}
-      />
-
       {/* Tab 4 — Profile */}
       <Tabs.Screen
         name="profile/index"

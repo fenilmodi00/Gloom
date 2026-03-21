@@ -16,6 +16,7 @@ module.exports = function (api) {
       // NativeWind v4 does NOT use babel plugin - configured via metro.config.js
       // 'nativewind/babel', // Removed - incompatible with Metro in v4
       'react-native-reanimated/plugin',
+      'react-native-worklets/plugin',
     ],
   };
 };
