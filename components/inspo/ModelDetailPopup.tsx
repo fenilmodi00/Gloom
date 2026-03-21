@@ -319,14 +319,13 @@ const styles = {
 
   popupCard: {
     position: 'absolute' as const,
-    top: 60,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: SCREEN_HEIGHT * 0.10,
+    bottom: SCREEN_HEIGHT * 0.10,
+    left: 16,
+    right: 16,
     zIndex: 2,
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderRadius: 28,
     // Card shadow
     shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: -4 },
