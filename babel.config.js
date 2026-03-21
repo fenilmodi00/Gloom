@@ -15,7 +15,8 @@ module.exports = function (api) {
     plugins: [
       // NativeWind v4 does NOT use babel plugin - configured via metro.config.js
       // 'nativewind/babel', // Removed - incompatible with Metro in v4
-      'react-native-reanimated/plugin',
+      // For Reanimated v4 with worklets, use ONLY the worklets plugin
+      // react-native-reanimated/plugin is included automatically by babel-preset-expo
       'react-native-worklets/plugin',
     ],
   };
