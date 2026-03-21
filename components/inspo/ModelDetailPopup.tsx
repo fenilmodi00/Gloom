@@ -23,6 +23,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import { Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -36,6 +39,37 @@ import { OutfitGrid } from '@/components/shared/OutfitGrid';
 import type { ModelCard, OutfitItem } from '@/types/inspo';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Save model image to gallery
+async function handleSave(imageUrl: string | number) {
+  try {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to save images.');
+      return;
+    }
+    const uri = typeof imageUrl === 'string' ? imageUrl : Image.resolveAssetSource(imageUrl).uri;
+    await MediaLibrary.saveToLibraryAsync(uri);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (err) {
+    Alert.alert('Error', 'Failed to save image.');
+  }
+}
+
+// Share model image
+async function handleShare(imageUrl: string | number) {
+  try {
+    const uri = typeof imageUrl === 'string' ? imageUrl : Image.resolveAssetSource(imageUrl).uri;
+    const canShare = await Sharing.isAvailableAsync();
+    if (!canShare) {
+      Alert.alert('Error', 'Sharing is not available on this device.');
+      return;
+    }
+    await Sharing.shareAsync(uri);
+  } catch (err) {
+    Alert.alert('Error', 'Failed to share image.');
+  }
+}
 
 // Design tokens
 const COLORS = {
@@ -219,13 +253,25 @@ export function ModelDetailPopup({
       statusBarTranslucent
     >
       <GestureHandlerRootView style={styles.gestureRoot}>
-        {/* ── Backdrop: full-screen gradient overlay, inspo screen stays live behind ── */}
+        {/* ── Backdrop: frosted glass effect ── */}
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={safeClose}
         >
+          {/* Dark tint layer */}
           <LinearGradient
-            colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.5)']}
+            colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)']}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Frost overlay: white light from top, fading down */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)']}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Subtle inner glow at edges */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.08)', 'transparent', 'transparent', 'rgba(0,0,0,0.1)']}
+            locations={[0, 0.15, 0.85, 1]}
             style={StyleSheet.absoluteFill}
           />
         </Pressable>
