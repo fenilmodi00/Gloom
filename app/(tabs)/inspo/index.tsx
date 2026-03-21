@@ -6,7 +6,7 @@
  * Layer 3 (Overlay): Bottom sheet with trending ideas
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
  */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,9 +14,9 @@ import type BottomSheet from '@gorhom/bottom-sheet';
 
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
-import { ModelDetailSheet } from '@/components/inspo/ModelDetailSheet';
 import type { TrendingSection, TrendingItem, ModelCard } from '@/types/inspo';
 import { MOCK_CLOTH_ITEMS } from '@/types/inspo';
+import { useModelDetailStore } from '@/lib/store/modelDetail.store';
 
 // ============================================================================
 // Constants & Data
@@ -81,13 +81,12 @@ export default function InspoScreen() {
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<ModelCard | null>(null);
+  const { openModelDetail } = useModelDetailStore();
 
   const handleModelPress = useCallback((model: ModelCard) => {
-    setSelectedModel(model);
-    setIsDetailSheetOpen(true);
-  }, []);
+    openModelDetail(model, MOCK_CLOTH_ITEMS);
+    router.push('/(tabs)/inspo/model-detail');
+  }, [openModelDetail, router]);
 
   const handleUploadPress = useCallback(() => {
     router.push({
@@ -107,7 +106,7 @@ export default function InspoScreen() {
       {/* ======================================== */}
       <ModelCarousel
         models={MODEL_CARDS}
-        onCardPress={(model) => handleModelPress(model)}
+        onCardPress={handleModelPress}
       />
 
       {/* ======================================== */}
@@ -128,12 +127,6 @@ export default function InspoScreen() {
           ref={bottomSheetRef}
           sections={TRENDING_SECTIONS}
           onTryOnPress={handleTryOnPress}
-        />
-        <ModelDetailSheet
-          model={selectedModel}
-          isOpen={isDetailSheetOpen}
-          clothItems={MOCK_CLOTH_ITEMS}
-          onClose={() => setIsDetailSheetOpen(false)}
         />
       </View>
     </View>
