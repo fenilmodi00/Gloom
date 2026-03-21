@@ -19,7 +19,7 @@ import {
   type TextStyle,
   type ImageStyle,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -219,20 +219,16 @@ export function ModelDetailPopup({
       statusBarTranslucent
     >
       <GestureHandlerRootView style={styles.gestureRoot}>
-        {/* ── Backdrop: full-screen blur, inspo screen stays live behind ── */}
-        <Animated.View style={[styles.backdrop, backdropStyle]} pointerEvents="box-none">
-          <BlurView
-            intensity={70}
-            tint="dark"
+        {/* ── Backdrop: full-screen gradient overlay, inspo screen stays live behind ── */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={safeClose}
+        >
+          <LinearGradient
+            colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.5)']}
             style={StyleSheet.absoluteFill}
-            pointerEvents="none"
           />
-          {/* Tap backdrop to close */}
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={safeClose}
-          />
-        </Animated.View>
+        </Pressable>
 
         {/* ── Popup card: centered, scale+fade animation ── */}
         <Animated.View style={[styles.popupCard, popupStyle]}>
