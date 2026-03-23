@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { useRouter } from 'expo-router';
+import Colors from '@/constants/Colors';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -61,7 +62,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
+    backgroundColor: Colors.light.bgCanvas,
   },
   header: {
     paddingHorizontal: 16,
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: Colors.light.textPrimary,
     fontStyle: 'italic',
   },
   content: {
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#8B7355',
+    backgroundColor: Colors.light.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -91,23 +92,23 @@ const styles = StyleSheet.create({
   avatar: {
     fontSize: 32,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.light.bgSurface,
   },
   name: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: Colors.light.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B6B6B',
+    color: Colors.light.textSecondary,
     marginBottom: 32,
     textAlign: 'center',
   },
   menu: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.light.bgSurface,
     borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 24,
@@ -115,11 +116,11 @@ const styles = StyleSheet.create({
   menuItem: {
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0EDE8',
+    borderBottomColor: Colors.light.bgMuted,
   },
   menuText: {
     fontSize: 16,
-    color: '#1A1A1A',
+    color: Colors.light.textPrimary,
   },
   signOutButton: {
     paddingVertical: 16,
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
   },
   signOutText: {
     fontSize: 16,
-    color: '#C0392B',
+    color: Colors.light.stateError,
     fontWeight: '500',
   },
 });

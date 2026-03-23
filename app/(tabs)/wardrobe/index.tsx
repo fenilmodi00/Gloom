@@ -26,15 +26,13 @@ const CATEGORY_CONFIG: { key: Category; label: string }[] = [
 ];
 
 // Vertical gradient colors for each category (top to bottom)
-const GRADIENT_START = '#F5F2EE';
-const GRADIENT_END = '#F0EBE3';
+import Colors from '@/constants/Colors';
 
-// Aesty-inspired color palette
-const COLORS = {
-  primary: '#8B7355',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-};
+// ... existing code ...
+
+// Category section colors
+const GRADIENT_START = Colors.light.bgCanvas;
+const GRADIENT_END = Colors.light.bgSurfaceRaised;
 
 // Card dimensions - increased size by 25%
 const CARD_WIDTH = 120;
@@ -83,7 +81,7 @@ function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
       <View style={styles.sectionHeaderRow}>
         <Pressable onPress={onSeeAll} style={styles.sectionHeader}>
           <Text style={styles.sectionLabel}>{label}</Text>
-          <ChevronRight size={16} color={COLORS.textSecondary} />
+          <ChevronRight size={16} color={Colors.light.textSecondary} />
         </Pressable>
       </View>
 
@@ -193,7 +191,7 @@ export default function WardrobeScreen() {
                 <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
                   <Pressable style={styles.sectionHeader}>
                     <Text style={styles.sectionLabel}>{sections[0].label}</Text>
-                    <ChevronRight size={16} color={COLORS.textSecondary} />
+                    <ChevronRight size={16} color={Colors.light.textSecondary} />
                   </Pressable>
                 </View>
                 <ScrollView
@@ -317,14 +315,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: Colors.light.textPrimary,
     letterSpacing: -0.5,
   },
   addButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.primary,
+    backgroundColor: Colors.light.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -343,7 +341,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 15,
     fontWeight: '500',
-    color: COLORS.textSecondary,
+    color: Colors.light.textSecondary,
   },
   sectionContent: {
     gap: 12,
@@ -375,7 +373,7 @@ const styles = StyleSheet.create({
   makeOutfitsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(253, 250, 246, 0.85)', // bgSurface
+    backgroundColor: Colors.light.bgSurface,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 999,
@@ -384,10 +382,10 @@ const styles = StyleSheet.create({
   makeOutfitsText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: Colors.light.textPrimary,
   },
   uploadButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: Colors.light.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -395,6 +393,6 @@ const styles = StyleSheet.create({
   uploadText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FDFAF6',
+    color: Colors.light.textOnDark,
   },
 });

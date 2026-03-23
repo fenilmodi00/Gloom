@@ -13,8 +13,7 @@ lib/store/
 ├── auth.store.ts         # User authentication & session state
 ├── wardrobe.store.ts     # User's digital closet (items, filtering)
 ├── outfit.store.ts       # Generated and saved outfits
-├── outfit-builder.store.ts # Temporary creator UI state
-└── modelDetail.store.ts  # Focus/selection state for AI inspection
+└── outfit-builder.store.ts # Temporary creator UI state
 ```
 
 ## WHERE TO LOOK

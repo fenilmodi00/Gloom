@@ -12,15 +12,16 @@ import Animated, {
   interpolate
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Colors from '@/constants/Colors';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 
-// Premium Brand Palette
+// Premium Brand Palette derived from Colors.ts
 const COLORS = {
-  navBg: '#F5F2EE',            // bgCanvas
-  activeHighlight: '#F0EBE3',  // bgSurfaceRaised
-  activeColor: '#8B7355',      // primary
-  inactiveColor: '#A89880',    // textTertiary
-  border: '#EAE4DA',          // bgMuted
+  navBg: Colors.light.bgCanvas,
+  activeHighlight: Colors.light.bgSurfaceRaised,
+  activeColor: Colors.light.primary,
+  inactiveColor: Colors.light.textTertiary,
+  border: Colors.light.bgMuted,
   white: '#FFFFFF',
 };
 

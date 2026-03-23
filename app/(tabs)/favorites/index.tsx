@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Colors from '@/constants/Colors';
 
 export default function FavoritesScreen() {
   const insets = useSafeAreaInsets();
@@ -24,7 +25,7 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
+    backgroundColor: Colors.light.bgCanvas,
   },
   header: {
     paddingHorizontal: 16,
@@ -33,7 +34,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: Colors.light.textPrimary,
     fontStyle: 'italic',
   },
   content: {
@@ -45,12 +46,12 @@ const styles = StyleSheet.create({
   emoji: {
     fontSize: 64,
     marginBottom: 16,
-    color: '#2D2F1D',
+    color: Colors.light.textPrimary,
     opacity: 0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B6B6B',
+    color: Colors.light.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },

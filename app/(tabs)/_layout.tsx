@@ -1,4 +1,5 @@
 import BottomTabBar from '@/components/shared/BottomTabBar';
+import Colors from '@/constants/Colors';
 import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
@@ -7,7 +8,7 @@ export default function TabLayout() {
       tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: '#F5F2EE' },
+        sceneStyle: { backgroundColor: Colors.light.bgCanvas },
         // Use our custom tab bar for all platforms
         tabBarStyle: {
           display: 'none',

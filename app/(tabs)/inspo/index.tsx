@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Colors from '@/constants/Colors';
 
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
@@ -71,13 +72,7 @@ const TRENDING_SECTIONS: TrendingSection[] = [
   },
 ];
 
-// Colors matching the design system
-const COLORS = {
-  background: '#F5F2EE',
-  surface: '#FDFAF6',
-  textPrimary: '#1A1A1A',
-  accent: '#8B7355',
-};
+// No longer needed, using Colors.ts directly
 
 // ============================================================================
 // Component
@@ -185,7 +180,7 @@ export default function InspoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: Colors.light.bgCanvas,
   },
   header: {
     position: 'absolute',
@@ -198,7 +193,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: Colors.light.textPrimary,
     fontStyle: 'italic',
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -206,7 +201,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   uploadButton: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: Colors.light.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -214,6 +209,6 @@ const styles = StyleSheet.create({
   uploadText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.surface,
+    color: Colors.light.bgSurface,
   },
 });
