@@ -224,8 +224,15 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
   return (
     <ScrollView 
       style={styles.scrollView}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 120 }]}
+      contentContainerStyle={[
+        styles.scrollContent, 
+        { 
+          paddingBottom: insets.bottom + 140,
+          paddingTop: 8,
+        }
+      ]}
       showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="automatic"
     >
       {/* First category with header */}
       {renderFirstSection()}
@@ -239,7 +246,7 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     flexGrow: 1,

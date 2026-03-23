@@ -2,7 +2,7 @@ import "../global.css";
 import "../lib/i18n";
 
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -168,6 +168,21 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(auth)/onboarding" options={{ presentation: 'modal' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        {/* Outfit builder modal - slide up from bottom with platform-specific animation */}
+        {/* iOS: slide_from_bottom opens and closes (reverse animation) */}
+        {/* Android: fade_from_bottom opens and closes (reverse animation) */}
+        <Stack.Screen 
+          name="(tabs)/wardrobe/outfit-builder" 
+          options={{ 
+            presentation: 'modal',
+            animation: Platform.OS === 'ios' ? 'slide_from_bottom' : 'fade_from_bottom',
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+            ...(Platform.OS === 'android' && {
+              animationDuration: 300,
+            }),
+          }} 
+        />
       </Stack>
     </ThemeProvider>
   );

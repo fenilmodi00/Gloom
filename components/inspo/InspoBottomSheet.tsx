@@ -51,17 +51,16 @@ export const InspoBottomSheet = forwardRef<BottomSheetRef, InspoBottomSheetProps
           paddingBottom: 8,
         }}
       >
-        <BottomSheetScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingTop: 8,
-            paddingBottom: insets.bottom + 120
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          <TrendingGrid sections={sections} onTryOnPress={onTryOnPress} />
-        </BottomSheetScrollView>
+<BottomSheetScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{
+        paddingTop: 8,
+        paddingBottom: insets.bottom + 120
+      }}
+      showsVerticalScrollIndicator={false}
+    >
+      <TrendingGrid sections={sections} onTryOnPress={onTryOnPress} />
+    </BottomSheetScrollView>
       </BottomSheet>
     );
   }

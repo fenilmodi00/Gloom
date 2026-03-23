@@ -2,9 +2,8 @@ import React, { useCallback, useMemo } from 'react';
 import { View, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
-import { X, Sparkles } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { X, Sparkles, Plus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/components/ui/text';
@@ -15,14 +14,18 @@ import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useSelectedItemsArray, useSelectedStyle } from '@/lib/store/outfit-builder.store';
 
-// Design tokens
+// Design tokens from AGENTS.md
 const COLORS = {
-  brand: '#D0BB95',
-  surface: '#FCF9F5',
-  textPrimary: '#1c1917',
-  textSecondary: '#78716c',
-  white: '#FFFFFF',
   primary: '#8B7355',
+  background: '#F5F2EE',
+  surface: '#FFFFFF',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#6B6B6B',
+  brand: '#8B7355',
+  brandLight: '#D4C5B0',
+  white: '#FFFFFF',
+  error: '#C0392B',
+  success: '#27AE60',
 };
 
 export default function OutfitBuilderScreen() {
@@ -40,6 +43,11 @@ export default function OutfitBuilderScreen() {
   // Close screen - navigate back to wardrobe
   const closeScreen = useCallback(() => {
     router.replace('/(tabs)/wardrobe');
+  }, [router]);
+
+  // Navigate to add-item screen
+  const navigateToAddItem = useCallback(() => {
+    router.push('/(tabs)/wardrobe/add-item');
   }, [router]);
 
   // Handle generate outfit - placeholder for now
@@ -60,68 +68,51 @@ export default function OutfitBuilderScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Transparent top area to show wardrobe index underneath */}
-      <View style={styles.backgroundTop} />
-      
-      {/* Blurred background for content area - overlays wardrobe underneath */}
-      <BlurView intensity={25} tint="light" style={styles.backgroundBlur} />
-
-      {/* Close button - outside the rounded card area */}
-      <Animated.View entering={FadeInDown.delay(80).springify()} style={[styles.closeButtonContainer, { top: insets.top + 8 }]}>
-        <Pressable onPress={closeScreen} style={styles.closeButton}>
-          <X size={22} color={COLORS.textPrimary} />
-        </Pressable>
+      {/* Header */}
+      <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.header, { paddingTop: insets.top + 6 }]}>
+        <View style={styles.headerLeft} />
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Build Outfit</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <View style={styles.actionPill}>
+            <Pressable onPress={navigateToAddItem} style={styles.pillButton}>
+              <Plus size={20} color={COLORS.white} />
+            </Pressable>
+            <View style={styles.pillDivider} />
+            <Pressable onPress={closeScreen} style={styles.pillButton}>
+              <X size={20} color={COLORS.white} />
+            </Pressable>
+          </View>
+        </View>
       </Animated.View>
 
-      {/* Content with rounded edges - like overlay card, using full width */}
+      {/* Main content - scrollable item selection */}
+      <View style={styles.mainContent}>
+        <SelectItemsSection items={items} />
+      </View>
+
+      {/* Floating Style Selector - bottom center */}
+      <StyleSelector />
+
+      {/* Floating SelectedItemsBar - bottom left */}
+      <SelectedItemsBar />
+
+      {/* Floating Generate Button - right side bottom */}
       <Animated.View 
-        entering={FadeIn.duration(250)} 
-        exiting={FadeOut.duration(200)}
-        style={[
-          styles.content,
-          {
-            marginHorizontal: 0,
-            marginTop: 48, // Space for close button
-            marginBottom: 0, // Attached to bottom
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-          }
-        ]}
+        entering={FadeInUp.delay(150).springify()} 
+        style={[styles.generateButtonContainer, { bottom: insets.bottom || 16, right: 16 }]}
       >
-        {/* Header */}
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-          <View style={styles.headerSpacer} />
-          <Text style={styles.headerTitle}>Build Outfit</Text>
-          <View style={styles.headerSpacer} />
-        </Animated.View>
-
-        {/* Main content - scrollable item selection */}
-        <View style={styles.mainContent}>
-          <SelectItemsSection items={items} />
-        </View>
-
-        {/* Floating Style Selector - bottom center */}
-        <StyleSelector />
-
-        {/* Floating Selected Items Bar - bottom left */}
-        <SelectedItemsBar />
-
-        {/* Floating Generate Button - right side bottom */}
-        <Animated.View 
-          entering={FadeInUp.delay(150).springify()} 
-          style={[styles.generateButtonContainer, { bottom: insets.bottom + 16, right: 16 }]}
+        <Pressable
+          style={[
+            styles.generateButton,
+            selectedItems.length === 0 && styles.generateButtonDisabled,
+          ]}
+          onPress={handleGenerateOutfit}
+          disabled={selectedItems.length === 0}
         >
-          <Pressable
-            style={[
-              styles.generateButton,
-              selectedItems.length === 0 && styles.generateButtonDisabled,
-            ]}
-            onPress={handleGenerateOutfit}
-            disabled={selectedItems.length === 0}
-          >
-            <Sparkles size={18} color={selectedItems.length > 0 ? COLORS.white : COLORS.textSecondary} />
-          </Pressable>
-        </Animated.View>
+          <Sparkles size={20} color={selectedItems.length > 0 ? COLORS.white : COLORS.textSecondary} />
+        </Pressable>
       </Animated.View>
     </View>
   );
@@ -130,61 +121,55 @@ export default function OutfitBuilderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
-  },
-  backgroundTop: {
-    height: 48, // Same height as close button area for consistency
-  },
-  backgroundBlur: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  closeButtonContainer: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 200,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  content: {
-    flex: 1,
-    marginTop: 48, // Space for close button
-    marginBottom: 0, // Will be set dynamically in JSX
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    backgroundColor: COLORS.surface,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
     paddingBottom: 8,
   },
-  headerSpacer: {
-    width: 36,
+  headerLeft: {
+    flex: 1,
+  },
+  headerCenter: {
+    flex: 2,
+    alignItems: 'center',
+  },
+  headerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: COLORS.textPrimary,
+  },
+  actionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  pillButton: {
+    width: 44,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+  },
+  pillDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginHorizontal: 0,
   },
   mainContent: {
     flex: 1,
@@ -194,9 +179,9 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   generateButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: COLORS.brand,
     alignItems: 'center',
     justifyContent: 'center',
@@ -207,7 +192,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   generateButtonDisabled: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     shadowOpacity: 0,
     elevation: 0,
   },

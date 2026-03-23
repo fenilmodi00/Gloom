@@ -5,7 +5,8 @@
  * Single selection with visual feedback.
  */
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text as RNText, Pressable, StyleSheet } from 'react-native';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -15,13 +16,13 @@ import { useOutfitBuilderStore, OUTFIT_STYLES, type OutfitStyle } from '@/lib/st
 
 const COLORS = {
   primary: '#8B7355',
-  textPrimary: '#1A1A1A',
+  textPrimary: '#4A3F2C',
   textSecondary: '#6B6B6B',
   surface: '#FFFFFF',
-  surfaceBg: 'rgba(255, 255, 255, 0.95)',
+  surfaceBg: 'rgba(255, 255, 255, 0.98)',
+  surfaceGlass: 'rgba(255, 255, 255, 0.85)',
 };
 
-// Style labels for display
 const STYLE_LABELS: Record<OutfitStyle, string> = {
   casual: 'Casual',
   streetwear: 'Streetwear',
@@ -35,68 +36,82 @@ export const StyleSelector = () => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedStyle = useOutfitBuilderStore((s) => s.selectedStyle);
   const setSelectedStyle = useOutfitBuilderStore((s) => s.setSelectedStyle);
-
   const insets = useSafeAreaInsets();
 
   const handleSelect = (style: OutfitStyle | null) => {
-    Haptics.selectionAsync();
-    if (style === selectedStyle) {
-      setSelectedStyle(null);
-    } else {
-      setSelectedStyle(style);
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedStyle(style);
     setIsOpen(false);
   };
 
   const toggleOpen = () => {
-    Haptics.selectionAsync();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsOpen(!isOpen);
   };
 
   return (
-    <View style={[styles.container, { bottom: insets.bottom + 16 }]}>
+    <View style={[styles.container, { bottom: insets.bottom + 80 }]}>
+      {/* Dropdown options - solid white glassmorphism */}
+      {isOpen && (
+        <Animated.View 
+          entering={FadeInDown.springify()} 
+          exiting={FadeOutDown.duration(200)}
+          style={styles.dropdownWrapper}
+        >
+          <View style={styles.dropdown}>
+            <Pressable 
+              onPress={() => handleSelect(null)}
+              style={({ pressed }) => [
+                styles.option, 
+                !selectedStyle && styles.optionSelected,
+                pressed && styles.optionPressed
+              ]}
+            >
+              <RNText style={[styles.optionText, !selectedStyle && styles.optionTextSelected]}>Any Style</RNText>
+              {!selectedStyle && <Check size={16} color={COLORS.primary} strokeWidth={3} />}
+            </Pressable>
+            {OUTFIT_STYLES.map((style) => (
+              <Pressable
+                key={style}
+                onPress={() => handleSelect(style)}
+                style={({ pressed }) => [
+                  styles.option, 
+                  selectedStyle === style && styles.optionSelected,
+                  pressed && styles.optionPressed
+                ]}
+              >
+                <RNText style={[styles.optionText, selectedStyle === style && styles.optionTextSelected]}>
+                  {STYLE_LABELS[style]}
+                </RNText>
+                {selectedStyle === style && <Check size={16} color={COLORS.primary} strokeWidth={3} />}
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+      )}
+
       {/* Trigger Button */}
       <Pressable 
         onPress={toggleOpen} 
-        style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}
+        style={({ pressed }) => [
+          styles.trigger, 
+          isOpen && styles.triggerActive,
+          pressed && styles.triggerPressed
+        ]}
       >
-        <Text style={styles.label}>Style</Text>
-        <View style={styles.valueContainer}>
-          <Text style={[styles.value, selectedStyle && styles.valueSelected]}>
-            {selectedStyle ? STYLE_LABELS[selectedStyle] : 'Any'}
-          </Text>
-          {isOpen ? (
-            <ChevronUp size={18} color={COLORS.textSecondary} />
-          ) : (
-            <ChevronDown size={18} color={COLORS.textSecondary} />
-          )}
+        <View style={styles.triggerContent}>
+          <RNText style={styles.triggerText}>
+            {selectedStyle ? STYLE_LABELS[selectedStyle] : 'Any Style'}
+          </RNText>
+          <View style={styles.iconContainer}>
+            {isOpen ? (
+              <ChevronUp size={14} color={COLORS.primary} strokeWidth={3} />
+            ) : (
+              <ChevronDown size={14} color={COLORS.textSecondary} strokeWidth={3} />
+            )}
+          </View>
         </View>
       </Pressable>
-      
-      {/* Dropdown options */}
-      {isOpen && (
-        <BlurView intensity={100} tint="light" style={styles.dropdown}>
-          <Pressable 
-            onPress={() => handleSelect(null)}
-            style={[styles.option, !selectedStyle && styles.optionSelected]}
-          >
-            <Text style={[styles.optionText, !selectedStyle && styles.optionTextSelected]}>Any</Text>
-            {!selectedStyle && <Check size={16} color={COLORS.primary} />}
-          </Pressable>
-          {OUTFIT_STYLES.map((style) => (
-            <Pressable
-              key={style}
-              onPress={() => handleSelect(style)}
-              style={[styles.option, selectedStyle === style && styles.optionSelected]}
-            >
-              <Text style={[styles.optionText, selectedStyle === style && styles.optionTextSelected]}>
-                {STYLE_LABELS[style]}
-              </Text>
-              {selectedStyle === style && <Check size={16} color={COLORS.primary} />}
-            </Pressable>
-          ))}
-        </BlurView>
-      )}
     </View>
   );
 };
@@ -105,71 +120,86 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     left: 16,
-    right: 80, // Leave space for generate button
     zIndex: 150,
+    alignItems: 'flex-start',
   },
   trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: COLORS.surfaceBg,
     borderRadius: 20,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(45, 47, 29, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  triggerActive: {
+    borderColor: COLORS.primary,
   },
   triggerPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    transform: [{ scale: 0.97 }],
+    opacity: 0.9,
   },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-    textTransform: 'uppercase',
-  },
-  valueContainer: {
+  triggerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: COLORS.surfaceGlass,
   },
-  value: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: COLORS.textPrimary,
-  },
-  valueSelected: {
-    color: COLORS.primary,
+  triggerText: {
+    fontSize: 14,
     fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginRight: 8,
   },
-  dropdown: {
+  iconContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownWrapper: {
     position: 'absolute',
     bottom: '100%',
     left: 0,
-    right: 0,
+    width: 180,
     marginBottom: 8,
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(45, 47, 29, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  dropdown: {
+    backgroundColor: COLORS.surface,
+    padding: 6,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 16,
+    marginBottom: 2,
+    backgroundColor: COLORS.surface,
+  },
+  optionPressed: {
+    backgroundColor: 'rgba(139, 115, 85, 0.1)',
   },
   optionSelected: {
-    backgroundColor: 'rgba(139, 115, 85, 0.1)',
+    backgroundColor: 'rgba(139, 115, 85, 0.15)',
   },
   optionText: {
     fontSize: 15,
-    fontWeight: '500',
-    color: COLORS.textPrimary,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   optionTextSelected: {
-    color: COLORS.primary,
+    color: COLORS.textPrimary,
     fontWeight: '700',
   },
 });

@@ -163,7 +163,7 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
       {/* Blur background for frosted glass effect */}
       <BlurView
         intensity={30}
-        tint="light"
+        tint="prominent"
         style={styles.blurPill}
       >
         <View style={styles.pill}>

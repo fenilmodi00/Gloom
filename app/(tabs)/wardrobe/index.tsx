@@ -94,8 +94,7 @@ function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
         renderItem={renderItem}
         horizontal
         showsHorizontalScrollIndicator={false}
-        estimatedItemSize={CARD_WIDTH + 12}
-        contentContainerStyle={styles.sectionContent}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
       />
     </LinearGradient>
   );
@@ -180,7 +179,11 @@ export default function WardrobeScreen() {
             {/* Header row */}
             <View style={styles.headerRow}>
                <Text style={styles.headerTitle}>Closet</Text>
-               <View style={styles.headerSpacer} />
+               <HeaderActionButton 
+                 isExpanded={isAddSheetOpen}
+                 onOpen={() => setIsAddSheetOpen(true)}
+                 onClose={() => setIsAddSheetOpen(false)}
+               />
             </View>
 
             {/* First category section - part of same gradient */}
@@ -262,8 +265,7 @@ export default function WardrobeScreen() {
         data={listData}
         keyExtractor={(item, index) => (item === 'header' ? 'header' : item.key)}
         renderItem={renderItem}
-        estimatedItemSize={180}
-        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
         decelerationRate="fast"
       />

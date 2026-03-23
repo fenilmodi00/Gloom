@@ -1,14 +1,16 @@
 /**
  * SelectedItemsBar
  * 
- * Shows selected items in a 2-column grid with frosted glass effect.
- * Used in the full-screen outfit builder - floating at bottom left.
+ * Shows selected items as a row of cutouts with frosted glass effect.
+ * "PNGs only" style for a more visual, premium feel.
  */
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView, Text as RNText } from 'react-native';
+import Animated, { FadeInRight, FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { WardrobeItem } from '@/types/wardrobe';
@@ -17,95 +19,60 @@ import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit
 // Design tokens
 const COLORS = {
   primary: '#8B7355',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  surface: 'rgba(245, 243, 237, 0.9)',
+  surface: 'rgba(255, 255, 255, 0.9)',
+  border: 'rgba(139, 115, 85, 0.2)',
+  textPrimary: '#4A3F2C',
+  white: '#FFFFFF',
 };
 
-// Category labels for display
-const CATEGORY_LABELS: Record<string, string> = {
-  upper: 'Top',
-  lower: 'Bottom',
-  dress: 'Dress',
-  shoes: 'Shoes',
-  bag: 'Bag',
-  accessory: 'Acc.',
-};
-
-// Pill for a single selected item - larger size (20% increase)
-interface SelectedItemPillProps {
-  item: WardrobeItem;
-  onRemove: () => void;
-}
-
-const SelectedItemPill = React.memo(({ item, onRemove }: SelectedItemPillProps) => (
-  <View style={styles.pill}>
-    <Image
-      source={
-        typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? { uri: item.cutout_url || item.image_url }
-          : item.image_url
-      }
-      style={styles.pillImage}
-      contentFit="cover"
-      transition={150}
-    />
-    <Text style={styles.pillLabel} numberOfLines={1}>
-      {CATEGORY_LABELS[item.category] || item.category}
-    </Text>
-    <Pressable onPress={onRemove} style={styles.removeButton} hitSlop={8}>
-      <X size={12} color={COLORS.textSecondary} />
-    </Pressable>
-  </View>
-));
+const ITEM_SIZE = 48;
 
 export const SelectedItemsBar = () => {
   const selectedItems = useSelectedItemsArray();
-  const removeItem = useOutfitBuilderStore((s) => s.removeItem);
-  const getSelectedCount = useOutfitBuilderStore((s) => s.getSelectedCount);
-
   const insets = useSafeAreaInsets();
 
-  // Don't render if no items selected
-  if (selectedItems.length === 0) {
-    return null;
-  }
-
-  // Split items into 2 columns
-  const column1 = selectedItems.slice(0, 3);
-  const column2 = selectedItems.slice(3, 6);
+  if (selectedItems.length === 0) return null;
 
   return (
-    <BlurView intensity={35} tint="light" style={[styles.container, { bottom: insets.bottom + 16 }]}>
-      <View style={styles.content}>
-        {/* Left side - 2 columns of items */}
-        <View style={styles.columnsContainer}>
-          <View style={styles.column}>
-            {column1.map((item) => (
-              <SelectedItemPill
-                key={item.id}
-                item={item}
-                onRemove={() => removeItem(item.category)}
+    <Animated.View 
+      entering={FadeInDown.delay(300).springify()} 
+      style={[styles.container, { bottom: insets.bottom + 16 }]}
+    >
+      <BlurView intensity={70} tint="light" style={styles.blurContainer}>
+        <View style={styles.stackContainer}>
+          {selectedItems.slice(0, 4).map((item, index) => (
+            <Animated.View
+              key={item.id}
+              entering={FadeInRight.delay(index * 100).springify()}
+              style={[
+                styles.itemImageContainer,
+                { marginLeft: index === 0 ? 0 : -24, zIndex: 10 - index }
+              ]}
+            >
+              <Image
+                source={
+                  typeof item.image_url === 'string' && item.image_url.startsWith('http')
+                    ? { uri: item.cutout_url || item.image_url }
+                    : item.image_url
+                }
+                style={styles.itemImage}
+                contentFit="contain"
               />
-            ))}
-          </View>
-          <View style={styles.column}>
-            {column2.map((item) => (
-              <SelectedItemPill
-                key={item.id}
-                item={item}
-                onRemove={() => removeItem(item.category)}
-              />
-            ))}
-          </View>
+            </Animated.View>
+          ))}
+          {selectedItems.length > 4 && (
+            <View style={styles.moreBadge}>
+              <RNText style={styles.moreText}>+{selectedItems.length - 4}</RNText>
+            </View>
+          )}
+          {selectedItems.length > 0 && (
+            <View style={styles.countBadge}>
+              <RNText style={styles.countText}>{selectedItems.length}</RNText>
+            </View>
+          )}
         </View>
-        
-        {/* Count badge on right */}
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{getSelectedCount()}</Text>
-        </View>
-      </View>
-    </BlurView>
+      </BlurView>
+    </Animated.View>
   );
 };
 
@@ -113,72 +80,67 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     left: 16,
-    right: 80, // Leave space for generate button on right
-    alignItems: 'flex-start',
+    zIndex: 100,
   },
-  content: {
+  blurContainer: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    padding: 6,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Slight overlay for glassmorphism
+  },
+  stackContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(45, 47, 29, 0.12)',
-    gap: 10,
-  },
-  columnsContainer: {
-    flexDirection: 'row',
-    flex: 1,
-    gap: 8,
-  },
-  column: {
-    flex: 1,
-    gap: 8,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 12,
-    paddingLeft: 4,
     paddingRight: 8,
-    paddingVertical: 4,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 115, 85, 0.2)',
   },
-  pillImage: {
-    width: 40, // 20% larger than 32
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#F0EDE8',
-  },
-  pillLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    flex: 1,
-  },
-  removeButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  itemImageContainer: {
+    width: ITEM_SIZE,
+    height: ITEM_SIZE,
+    borderRadius: ITEM_SIZE / 2,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  countBadge: {
+  itemImage: {
+    width: '85%',
+    height: '85%',
+  },
+  moreBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    minWidth: 28,
+    marginLeft: -12,
+    zIndex: 20,
+    justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  moreText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  countBadge: {
+    marginLeft: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(26, 26, 26, 0.05)',
+    borderRadius: 12,
   },
   countText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.surface,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
 });
 

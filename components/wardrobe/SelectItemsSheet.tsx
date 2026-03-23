@@ -257,8 +257,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '500',
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
   },
