@@ -1,7 +1,7 @@
 # AGENTS.md — StyleAI (AI Fashion App)
 
-**Generated:** 2026-03-17
-**Commit:** Current
+**Generated:** 2026-03-23
+**Commit:** 078aade
 **Branch:** main
 
 ## OVERVIEW
