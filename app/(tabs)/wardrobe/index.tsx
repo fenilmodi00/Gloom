@@ -2,6 +2,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
+import { HeaderActionButton } from '@/components/ui/HeaderActionButton';
 import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
@@ -9,9 +10,9 @@ import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Plus, Shirt } from 'lucide-react-native';
+import { ChevronRight, Shirt, Plus } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Category configuration
@@ -142,6 +143,22 @@ export default function WardrobeScreen() {
      });
    };
 
+  // Navigate to outfit builder screen
+  const navigateToOutfitBuilder = useCallback(() => {
+    router.push('/(tabs)/wardrobe/outfit-builder');
+  }, [router]);
+
+  // Handler for SelectItemsSheet - now just opens the screen
+  const handleOpenSelectSheet = useCallback(() => {
+    console.log('[Wardrobe] Opening outfit builder screen');
+    navigateToOutfitBuilder();
+  }, [navigateToOutfitBuilder]);
+
+  // Handle close - not needed for full screen
+  const handleCloseSelectSheet = useCallback(() => {
+    // Full screen handles its own close
+  }, []);
+
   // First category card renderer
   const firstCategoryRenderItem = useCallback(
     ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
@@ -163,17 +180,7 @@ export default function WardrobeScreen() {
             {/* Header row */}
             <View style={styles.headerRow}>
                <Text style={styles.headerTitle}>Closet</Text>
-               <Pressable 
-                 onPress={() => {
-                   router.push({
-                     pathname: '/(tabs)/wardrobe/add-item',
-                     params: { origin: 'wardrobe' },
-                   });
-                 }} 
-                 style={styles.addButton}
-               >
-                 <Plus size={24} color="#FFFFFF" />
-               </Pressable>
+               <View style={styles.headerSpacer} />
             </View>
 
             {/* First category section - part of same gradient */}
@@ -185,15 +192,15 @@ export default function WardrobeScreen() {
                     <ChevronRight size={16} color={COLORS.textSecondary} />
                   </Pressable>
                 </View>
-                <FlashList
-                  data={groupedItems[sections[0].key] || []}
-                  keyExtractor={(item) => item.id}
-                  renderItem={firstCategoryRenderItem}
+                <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  estimatedItemSize={CARD_WIDTH + 12}
                   contentContainerStyle={styles.sectionContent}
-                />
+                >
+                  {(groupedItems[sections[0].key] || []).map((item) => (
+                    <CategoryCard key={item.id} item={item} />
+                  ))}
+                </ScrollView>
               </>
             )}
           </LinearGradient>
@@ -212,7 +219,7 @@ export default function WardrobeScreen() {
         />
       );
     },
-    [groupedItems, sections, insets.top, firstCategoryRenderItem]
+    [groupedItems, sections, insets.top]
   );
 
   // Data for FlashList: header + sections
@@ -261,11 +268,11 @@ export default function WardrobeScreen() {
         decelerationRate="fast"
       />
 
-      {/* "Make outfits" floating button */}
+      {/* "Make outfits" button - opens full-screen outfit builder */}
       <View style={[styles.makeOutfitsContainer, { bottom: 88 + insets.bottom, right: 16 }]}>
         <Pressable
           style={styles.makeOutfitsButton}
-          onPress={() => router.push('/(tabs)/outfits' as any)}
+          onPress={handleOpenSelectSheet}
         >
           <Shirt size={16} color="#1A1A1A" />
           <Text style={styles.makeOutfitsText}>Make outfits</Text>
@@ -299,6 +306,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerSpacer: {
+    width: 40,
+    height: 40,
   },
   headerTitle: {
     fontSize: 32,
@@ -348,6 +359,15 @@ const styles = StyleSheet.create({
   },
   makeOutfitsContainer: {
     position: 'absolute',
+  },
+  headerButtonContainer: {
+    position: 'absolute',
+    right: 16,
+    zIndex: 100, // Above the bottom sheet
+  },
+  sheetContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 50,
   },
   makeOutfitsButton: {
     flexDirection: 'row',

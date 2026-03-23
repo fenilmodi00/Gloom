@@ -41,6 +41,18 @@ import type { ModelCard, OutfitItem } from '@/types/inspo';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Swipe gesture thresholds - balanced to prevent accidental taps while keeping usability
+const MIN_DISTANCE = 10;        // Minimum distance to start gesture
+const SWIPE_THRESHOLD = 60;     // Distance to trigger navigation (matches original minDistance)
+const VELOCITY_THRESHOLD = 500; // Velocity to trigger navigation (matches original)
+
+// Smooth flat-swipe spring config (no bounce, no rubber-band lag)
+const SWIPE_SPRING = {
+  damping: 40,
+  stiffness: 400,
+  mass: 1,
+};
+
 // Save model image to gallery
 async function handleSave(imageSource: any) {
   try {
@@ -119,15 +131,15 @@ export function ModelDetailPopup({
   onClose,
 }: ModelDetailPopupProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const isGestureTriggered = useRef(false);
+  const isGestureTriggered = useSharedValue(false);
 
-  // ── Pop-up animation values (scale + fade, not slide-up) ──
-  const scale = useSharedValue(0.88);
-  const popupOpacity = useSharedValue(0);
-  const backdropOpacity = useSharedValue(0);
+   // ── Pop-up animation values (scale + fade, not slide-up) ──
+   const scale = useSharedValue(0.88);
+   const popupOpacity = useSharedValue(0);
+   const backdropOpacity = useSharedValue(0);
 
-  // ── Swipe animation value ──
-  const translateX = useSharedValue(0);
+   // ── Swipe animation value ──
+   const translateX = useSharedValue(0);
 
   // ── Worklet-safe slide index (avoids stale closure in gesture callbacks) ──
   const currentSlideShared = useSharedValue(0);
@@ -139,15 +151,12 @@ export function ModelDetailPopup({
 
   // ── Sync translateX with currentSlide (skip if gesture triggered) ──
   useEffect(() => {
-    if (isGestureTriggered.current) {
-      isGestureTriggered.current = false;
+    if (isGestureTriggered.value) {
+      isGestureTriggered.value = false;
       return;
     }
-    translateX.value = withSpring(-currentSlide * SCREEN_WIDTH, {
-      damping: 22,
-      stiffness: 220,
-    });
-  }, [currentSlide, translateX]);
+    translateX.value = withSpring(-currentSlide * SCREEN_WIDTH, SWIPE_SPRING);
+  }, [currentSlide, translateX, isGestureTriggered]);
 
   // ── Entry animation ──
   useEffect(() => {
@@ -211,48 +220,67 @@ export function ModelDetailPopup({
   // ── Programmatic slide navigation (updates both state and translateX) ──
   const navigateToSlide = useCallback((index: number) => {
     setCurrentSlide(index);
-    translateX.value = withSpring(-index * SCREEN_WIDTH, {
-      damping: 22,
-      stiffness: 220,
-    });
+    translateX.value = withSpring(-index * SCREEN_WIDTH, SWIPE_SPRING);
   }, [translateX]);
 
-  // ── Horizontal swipe gesture ──
-  // GestureDetector wraps ONLY the slide content — not the whole card
-  // This keeps header/footer buttons pressable
-  const swipeGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-20, 20])
-    .onUpdate((e) => {
-      'worklet';
-      // Apply drag directly to slide transform (visual swipe)
-      translateX.value = e.translationX * 0.6;
-    })
-    .onEnd((e) => {
-      'worklet';
-      const threshold = SCREEN_WIDTH * 0.18;
-      const drag = e.translationX;
-      const velocity = e.velocityX;
+   // ── Horizontal swipe gesture ──
+   // GestureDetector wraps slideOuter to capture swipes from both Slide 0 and Slide 1
+   // minDistance prevents gesture from starting on tiny movements (avoids treating taps as swipes)
+   // Only swipes (not taps) will trigger navigation
+   const swipeGesture = Gesture.Pan()
+     .minDistance(10)
+     .failOffsetY([-25, 25])
+     .shouldCancelWhenOutside(false)
+     .onUpdate((e) => {
+       'worklet';
+       // 1:1 flat card feel — no rubber-band lag
+       // Only update if we've moved a meaningful distance (ignore tiny jitter)
+       if (Math.abs(e.translationX) > 5) {
+         // Mark gesture as active to prevent sync effect from overriding during drag
+         isGestureTriggered.value = true;
+         translateX.value = e.translationX;
+       }
+     })
+     .onEnd((e) => {
+       'worklet';
+       const drag = e.translationX;
+       const velocity = e.velocityX;
 
-      // Use shared value for worklet-safe state access
-      const currentIdx = currentSlideShared.value;
-      let targetSlide = currentIdx;
+       // Use shared value for worklet-safe state access
+       const currentIdx = currentSlideShared.value;
+       let targetSlide = currentIdx;
 
-      if (currentIdx === 0 && (drag < -threshold || velocity < -500)) {
-        // Swipe left → outfit grid
-        targetSlide = 1;
-      } else if (currentIdx === 1 && (drag > threshold || velocity > 500)) {
-        // Swipe right → model
-        targetSlide = 0;
-      }
+       // Require either sufficient distance OR (sufficient velocity AND minimum distance)
+       // This prevents taps with high velocity but low distance from triggering navigation
+       const distanceThresholdMet = Math.abs(drag) > SWIPE_THRESHOLD;
+       const velocityThresholdMet = Math.abs(velocity) > 500;
+       const minimumDistanceForVelocity = Math.abs(drag) > 20; // Need some movement to use velocity
 
-      const targetTranslateX = -targetSlide * SCREEN_WIDTH;
-      translateX.value = withSpring(targetTranslateX, { damping: 22, stiffness: 220 });
+       let shouldNavigate = false;
+       if (currentIdx === 0) {
+         // Swipe left → outfit grid
+         shouldNavigate = distanceThresholdMet || (velocityThresholdMet && minimumDistanceForVelocity && drag < 0);
+       } else if (currentIdx === 1) {
+         // Swipe right → model
+         shouldNavigate = distanceThresholdMet || (velocityThresholdMet && minimumDistanceForVelocity && drag > 0);
+       }
 
-      if (targetSlide !== currentIdx) {
-        runOnJS(setSlideIndex)(targetSlide);
-      }
-    });
+       if (shouldNavigate) {
+         targetSlide = 1 - currentIdx; // Toggle between 0 and 1
+       }
+
+       const targetTranslateX = -targetSlide * SCREEN_WIDTH;
+       translateX.value = withSpring(targetTranslateX, {
+         ...SWIPE_SPRING,
+         velocity: e.velocityX,
+       });
+
+       if (targetSlide !== currentIdx) {
+         runOnJS(setSlideIndex)(targetSlide);
+       }
+       // Reset flag after gesture ends
+       isGestureTriggered.value = false;
+     });
 
   // ── Animated styles ──
   const backdropStyle = useAnimatedStyle(() => ({
@@ -319,13 +347,13 @@ export function ModelDetailPopup({
         </View>
 
         {/* ── Swipeable slide content ── */}
-        {/* GestureDetector wraps ONLY this area — buttons in header/footer stay pressable */}
+        {/* slideOuter clips overflow; slideTrack holds both slides side-by-side */}
+        {/* GestureDetector wraps slideOuter to capture swipes from both slides */}
         <GestureDetector gesture={swipeGesture}>
           <Animated.View style={[styles.slideOuter]}>
             <Animated.View
               style={[
                 styles.slideTrack,
-                // Width = 2 screens so swiping left reveals slide 1 to the right
                 { width: SCREEN_WIDTH * 2 },
                 slideStyle,
               ]}
@@ -349,7 +377,7 @@ export function ModelDetailPopup({
                 </View>
               </View>
 
-              {/* ── Slide 1: Outfit grid ── */}
+              {/* ── Slide 1: Outfit grid — OutfitGrid stays pressable ── */}
               <View style={styles.slide}>
                 <View style={styles.outfitHeader}>
                   <Pressable

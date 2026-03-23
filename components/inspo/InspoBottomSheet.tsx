@@ -1,10 +1,12 @@
-import React, { forwardRef, useMemo } from 'react';
-import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import React, { forwardRef, useCallback, useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { TrendingItem, TrendingSection } from '@/types/inspo';
 import { TrendingGrid } from './TrendingGrid';
-import type { TrendingSection, TrendingItem } from '@/types/inspo';
+
+// Ref type forwarded by @gorhom/bottom-sheet — exposes snapToIndex(), expand(), close()
+type BottomSheetRef = React.ElementRef<typeof BottomSheet>;
 
 export interface InspoBottomSheetProps {
   sections: TrendingSection[];
@@ -12,12 +14,18 @@ export interface InspoBottomSheetProps {
   onIndexChange?: (index: number) => void;
 }
 
-export const InspoBottomSheet = forwardRef<BottomSheet, InspoBottomSheetProps>(
+export const InspoBottomSheet = forwardRef<BottomSheetRef, InspoBottomSheetProps>(
   ({ sections, onTryOnPress, onIndexChange }, ref) => {
     const insets = useSafeAreaInsets();
-    
+
     // Bottom sheet snap points
     const snapPoints = useMemo(() => ['34%', '60%', '80%'], []);
+
+    const handleChange = useCallback((index: number) => {
+      if (onIndexChange) {
+        onIndexChange(index);
+      }
+    }, [onIndexChange]);
 
     return (
       <BottomSheet
@@ -26,11 +34,7 @@ export const InspoBottomSheet = forwardRef<BottomSheet, InspoBottomSheetProps>(
         snapPoints={snapPoints}
         enablePanDownToClose={false}
         topInset={insets.top + 65}
-        onChange={(index) => {
-          if (onIndexChange) {
-            onIndexChange(index);
-          }
-        }}
+        onChange={handleChange}
         backgroundStyle={{
           backgroundColor: '#F5F3EC',
           borderTopLeftRadius: 32,
@@ -49,10 +53,10 @@ export const InspoBottomSheet = forwardRef<BottomSheet, InspoBottomSheetProps>(
       >
         <BottomSheetScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ 
-            paddingHorizontal: 24, 
+          contentContainerStyle={{
+            paddingHorizontal: 24,
             paddingTop: 8,
-            paddingBottom: insets.bottom + 120 // Extra padding for bottom tab bar
+            paddingBottom: insets.bottom + 120
           }}
           showsVerticalScrollIndicator={false}
         >

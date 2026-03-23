@@ -6,18 +6,24 @@
  * Layer 3 (Overlay): Bottom sheet with trending ideas
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
  */
-import React, { useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import type BottomSheet from '@gorhom/bottom-sheet';
+import React, { useCallback, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
+import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { ModelDetailPopup } from '@/components/inspo/ModelDetailPopup';
-import type { TrendingSection, TrendingItem, ModelCard } from '@/types/inspo';
+import type { ModelCard, TrendingItem, TrendingSection } from '@/types/inspo';
 import { MOCK_CLOTH_ITEMS } from '@/types/inspo';
-import { useModelDetailStore } from '@/lib/store/modelDetail.store';
+import BottomSheet from '@gorhom/bottom-sheet';
+
+// Ref type for @gorhom/bottom-sheet
+type BottomSheetRef = React.ElementRef<typeof BottomSheet>;
+
+// Snap point indices (must match InspoBottomSheet snapPoints order)
+const SNAP_INDEX_34 = 0;   // Bottom sheet at 34%
+const SNAP_INDEX_60 = 1;   // Bottom sheet at 60%
 
 // ============================================================================
 // Constants & Data
@@ -80,19 +86,40 @@ const COLORS = {
 export default function InspoScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetRef>(null);
 
   // Inline popup state — keeps inspo screen alive behind the blur backdrop
   const [activeModel, setActiveModel] = useState<ModelCard | null>(null);
 
+  // ── Two-stage bottom sheet state ──
+  // Track current sheet index to know position on tap
+  const currentSheetIndex = useRef<number>(SNAP_INDEX_60);
+
+  // Handle model tap — TWO-stage flow:
+  //   @ 60% (index 1) → shrink to 34% (carousel stays interactive)
+  //   @ 34% (index 0) → open ModelDetailPopup
+  //   @ 80% (index 2) → open ModelDetailPopup
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleModelPress = useCallback((model: ModelCard) => {
-    setActiveModel(model);
+    if (currentSheetIndex.current === SNAP_INDEX_60) {
+      // At 60% — shrink to 34%, NO popup
+      bottomSheetRef.current?.snapToIndex(SNAP_INDEX_34);
+    } else {
+      // At 34%, 80%, or any other position — open popup
+      setActiveModel(model);
+    }
   }, []);
 
+  // Bottom sheet settled — update current index for next tap decision
+  const handleSheetChange = useCallback((index: number) => {
+    currentSheetIndex.current = index;
+  }, []);
+
+  // Popup closed — sheet STAYS at 34%, no position change
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handlePopupClose = useCallback(() => {
     setActiveModel(null);
+    // Do NOT restore sheet — stay at 34%
   }, []);
 
   const handleUploadPress = useCallback(() => {
@@ -134,6 +161,7 @@ export default function InspoScreen() {
           ref={bottomSheetRef}
           sections={TRENDING_SECTIONS}
           onTryOnPress={handleTryOnPress}
+          onIndexChange={handleSheetChange}
         />
       </View>
 

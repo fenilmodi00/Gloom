@@ -12,6 +12,7 @@ import Animated, {
   interpolate
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 
 // Aesty-inspired color palette
 const COLORS = {
@@ -33,6 +34,7 @@ const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: s
 // Routes where the tab bar should be hidden
 const HIDDEN_TAB_BAR_ROUTES = [
   'wardrobe/add-item',
+  'wardrobe/outfit-builder',
   'favorites/index',
   'inspo/model-detail',
 ];
@@ -133,12 +135,15 @@ function AnimatedTabItem({
 
 export default function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  
+  // Check if select sheet is open (hides tab bar when sheet is open)
+  const isSheetOpen = useOutfitBuilderStore((s) => s.isSheetOpen);
 
   // Get the current route name to check if we should hide the tab bar
   const currentRoute = state.routes[state.index]?.name;
 
-  // Don't render the tab bar on hidden routes
-  if (HIDDEN_TAB_BAR_ROUTES.includes(currentRoute)) {
+  // Don't render the tab bar on hidden routes or when sheet is open
+  if (HIDDEN_TAB_BAR_ROUTES.includes(currentRoute) || isSheetOpen) {
     return null;
   }
 
