@@ -125,10 +125,21 @@ types/             # TypeScript interfaces: wardrobe, outfit, user, inspo
 ## DESIGN TOKENS
 
 ```
-background: #F5F2EE    surface: #FFFFFF
-text-primary: #1A1A1A  text-secondary: #6B6B6B
-accent: #8B7355        accent-light: #D4C5B0
-error: #C0392B         success: #27AE60
+Brand Core:
+  primary: #8B7355      primaryDark: #6B5840    primaryLight: #B09A7A
+  goldAccent: #C9A84C   goldSoft: #E8D5A3
+
+Backgrounds:
+  bgCanvas: #F5F2EE     bgSurface: #FDFAF6
+  bgSurfaceRaised: #F0EBE3    bgMuted: #EAE4DA
+
+Typography:
+  textPrimary: #1A1A1A  textSecondary: #6B6B6B
+  textTertiary: #A89880 textOnDark: #FDFAF6
+
+Feedback:
+  stateSuccess: #6A8C69 stateError: #B85C4A
+  stateWarning: #C9A84C stateInfo: #7A8FAB
 ```
 
 - Corner radius: `rounded-2xl` (cards), `rounded-full` (pills/buttons)

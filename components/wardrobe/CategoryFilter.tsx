@@ -20,13 +20,13 @@ export function CategoryFilter({ activeCategory, onSelectCategory }: CategoryFil
               onPress={() => onSelectCategory(category)}
               className={`mr-2 px-5 py-2 rounded-full border ${
                 isSelected 
-                  ? 'bg-text-primary border-text-primary' 
-                  : 'bg-surface border-accent-light/50'
+                  ? 'bg-chipActiveBg border-chipActiveBg' 
+                  : 'bg-chipIdleBg border-chipIdleBorder'
               }`}
             >
               <Text
                 className={`text-sm font-medium ${
-                  isSelected ? 'text-white' : 'text-text-secondary'
+                  isSelected ? 'text-chipActiveText' : 'text-textSecondary'
                 }`}
               >
                 {category}

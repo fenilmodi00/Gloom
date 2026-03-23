@@ -74,7 +74,7 @@ const TRENDING_SECTIONS: TrendingSection[] = [
 // Colors matching the design system
 const COLORS = {
   background: '#F5F2EE',
-  surface: '#FFFFFF',
+  surface: '#FDFAF6',
   textPrimary: '#1A1A1A',
   accent: '#8B7355',
 };

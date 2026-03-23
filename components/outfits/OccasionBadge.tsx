@@ -15,19 +15,19 @@ export function OccasionBadge({ occasion }: OccasionBadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    backgroundColor: 'rgba(45, 47, 29, 0.08)',
+    backgroundColor: 'rgba(139, 115, 85, 0.1)', // primary at 10%
     borderWidth: 1,
-    borderColor: 'rgba(45, 47, 29, 0.12)',
+    borderColor: 'rgba(139, 115, 85, 0.15)',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 999,
     alignSelf: 'flex-start',
   },
   text: {
-    color: '#2D2F1D',
-    fontWeight: '500',
-    fontSize: 11,
+    color: '#8B7355', // primary
+    fontWeight: '600',
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
 });

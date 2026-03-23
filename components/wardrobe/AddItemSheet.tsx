@@ -27,35 +27,33 @@ export const AddItemSheet = forwardRef<BottomSheet, AddItemSheetProps>(
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         enablePanDownToClose
-        backgroundStyle={{ backgroundColor: '#FFFFFF', borderRadius: 24 }}
-        handleIndicatorStyle={{ backgroundColor: '#D4C5B0', width: 40 }}
+        backgroundStyle={{ backgroundColor: '#FDFAF6', borderRadius: 24 }} // bgSurface
+        handleIndicatorStyle={{ backgroundColor: '#EAE4DA', width: 40 }} // bgMuted
       >
         <View className="flex-1 p-6 space-y-4">
-          <Text className="text-xl font-bold text-text-primary mb-2">Add to Wardrobe</Text>
-          
+          <Text className="text-xl font-bold text-textPrimary mb-2">Add to Wardrobe</Text>
           <Pressable
             onPress={() => onSelectMethod('camera')}
-            className="flex-row items-center w-full bg-background p-4 rounded-xl mb-3"
+            className="flex-row items-center w-full bg-bgCanvas p-4 rounded-xl mb-3"
           >
-            <View className="w-10 h-10 rounded-full bg-accent/10 items-center justify-center mr-4">
+            <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-4">
               <Camera size={20} color="#8B7355" />
             </View>
-            <View>
-              <Text className="text-base font-bold text-text-primary">Take photo</Text>
-              <Text className="text-sm text-text-secondary">Use camera to capture item</Text>
+            <View className="flex-1">
+              <Text className="text-base font-bold text-textPrimary">Take photo</Text>
+              <Text className="text-sm text-textSecondary">Use camera to capture item</Text>
             </View>
           </Pressable>
-
           <Pressable
             onPress={() => onSelectMethod('gallery')}
-            className="flex-row items-center w-full bg-background p-4 rounded-xl"
+            className="flex-row items-center w-full bg-bgCanvas p-4 rounded-xl"
           >
-            <View className="w-10 h-10 rounded-full bg-accent/10 items-center justify-center mr-4">
+            <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-4">
               <ImageIcon size={20} color="#8B7355" />
             </View>
-            <View>
-              <Text className="text-base font-bold text-text-primary">Choose from gallery</Text>
-              <Text className="text-sm text-text-secondary">Upload an existing photo</Text>
+            <View className="flex-1">
+              <Text className="text-base font-bold text-textPrimary">Choose from gallery</Text>
+              <Text className="text-sm text-textSecondary">Upload an existing photo</Text>
             </View>
           </Pressable>
         </View>

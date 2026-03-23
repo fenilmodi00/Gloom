@@ -27,14 +27,14 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
       <View className="px-5 pt-5 pb-3">
         <View className="flex-row justify-between items-start mb-2">
           <OccasionBadge occasion={outfit.occasion} />
-          <View className="bg-[#F2F0E9] px-3 py-1 rounded-full">
-            <Text className="text-[#2D2F1D] font-medium text-xs">
+          <View className="bg-[#EAE4DA] px-3 py-1 rounded-full">
+            <Text className="text-[#1A1A1A] font-medium text-xs">
               {Math.round((outfit.ai_score || 0.95) * 100)}% match
             </Text>
           </View>
         </View>
-        <Text className="text-lg font-bold text-[#2D2F1D] tracking-tight">{outfit.vibe}</Text>
-        <Text className="text-[#2D2F1D]/50 text-sm mt-1 leading-5">{outfit.color_reasoning}</Text>
+        <Text className="text-lg font-bold text-[#1A1A1A] tracking-tight">{outfit.vibe}</Text>
+        <Text className="text-[#6B6B6B] text-sm mt-1 leading-5">{outfit.color_reasoning}</Text>
       </View>
 
       {/* Item images grid */}
@@ -53,7 +53,7 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
           </View>
         ))}
         {outfitItems.length === 0 && (
-          <Text className="text-[#2D2F1D]/30 my-4 text-sm">No item images available</Text>
+          <Text className="text-[#A89880] my-4 text-sm">No item images available</Text>
         )}
       </View>
 
@@ -64,7 +64,7 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
           style={styles.tryOnButton}
           activeOpacity={0.85}
         >
-          <Text className="text-[#F2F0E9] font-semibold text-sm tracking-wide">✦ Try On</Text>
+          <Text className="text-[#FDFAF6] font-semibold text-sm tracking-wide">✦ Try On</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -73,29 +73,29 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FDFAF6',
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(45, 47, 29, 0.06)',
-    shadowColor: '#2D2F1D',
-    shadowOffset: { width: 0, height: 20 },
+    borderColor: 'rgba(139, 115, 85, 0.08)',
+    shadowColor: '#8B7355',
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 40,
-    elevation: 6,
+    shadowRadius: 20,
+    elevation: 4,
   },
   imageWrapper: {
     width: '46%',
     aspectRatio: 3 / 4,
     borderRadius: 16,
-    backgroundColor: '#F2F0E9',
+    backgroundColor: '#EAE4DA',
     overflow: 'hidden',
     borderWidth: 4,
-    borderColor: '#FFFFFF',
+    borderColor: '#FDFAF6',
   },
   tryOnButton: {
-    backgroundColor: '#2D2F1D',
+    backgroundColor: '#8B7355',
     paddingVertical: 14,
     borderRadius: 999,
     alignItems: 'center',

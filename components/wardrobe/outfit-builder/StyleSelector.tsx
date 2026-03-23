@@ -16,11 +16,11 @@ import { useOutfitBuilderStore, OUTFIT_STYLES, type OutfitStyle } from '@/lib/st
 
 const COLORS = {
   primary: '#8B7355',
-  textPrimary: '#4A3F2C',
+  textPrimary: '#1A1A1A',
   textSecondary: '#6B6B6B',
-  surface: '#FFFFFF',
-  surfaceBg: 'rgba(255, 255, 255, 0.98)',
-  surfaceGlass: 'rgba(255, 255, 255, 0.85)',
+  surface: '#FDFAF6',
+  surfaceBg: 'rgba(253, 250, 246, 0.98)',
+  surfaceGlass: 'rgba(253, 250, 246, 0.85)',
 };
 
 const STYLE_LABELS: Record<OutfitStyle, string> = {

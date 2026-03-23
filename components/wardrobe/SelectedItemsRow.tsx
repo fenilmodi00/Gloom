@@ -20,7 +20,7 @@ const COLORS = {
   primary: '#8B7355',
   textPrimary: '#1A1A1A',
   textSecondary: '#6B6B6B',
-  surface: 'rgba(245, 243, 237, 0.85)',
+  surface: 'rgba(253, 250, 246, 0.9)', // bgSurface with transparency
 };
 
 // Category labels for pills
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(45, 47, 29, 0.05)',
+    borderColor: 'rgba(176, 154, 122, 0.2)', // primaryLight with transparency
   },
   scrollContent: {
     flexDirection: 'row',

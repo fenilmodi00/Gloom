@@ -110,7 +110,7 @@ async function handleShare(imageSource: any) {
 // Design tokens
 const COLORS = {
   background: '#F5F2EE',
-  surface: '#FFFFFF',
+  surface: '#FDFAF6',
   textPrimary: '#1A1A1A',
   textSecondary: '#6B6B6B',
   accent: '#8B7355',

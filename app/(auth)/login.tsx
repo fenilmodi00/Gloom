@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Mail, Phone, ArrowLeft, Loader2 } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -132,23 +132,28 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-bgCanvas"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={[styles.content, { paddingTop: insets.top + 40 }]}>
+      <View 
+        className="flex-1 px-8 justify-center"
+        style={{ paddingTop: insets.top }}
+      >
         {/* Logo / Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>✦</Text>
-          <Text style={styles.title}>StyleAI</Text>
-          <Text style={styles.subtitle}>Your Personal AI Stylist</Text>
+        <View className="items-center mb-12">
+          <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-4">
+            <Text className="text-4xl text-primary">✦</Text>
+          </View>
+          <Text className="text-4xl font-bold italic tracking-tight text-textPrimary">StyleAI</Text>
+          <Text className="text-base text-textSecondary mt-2">Your Personal AI Stylist</Text>
         </View>
 
         {/* Error Message */}
         {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View className="flex-row items-center justify-between bg-stateError/10 p-4 rounded-xl mb-6">
+            <Text className="flex-1 text-stateError text-sm">{error}</Text>
             <TouchableOpacity onPress={() => setError(null)}>
-              <Text style={styles.errorDismiss}>✕</Text>
+              <Text className="text-stateError text-lg ml-3 font-semibold">✕</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -156,15 +161,15 @@ export default function LoginScreen() {
         {!otpSent ? (
           <>
             {/* Phone Input Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Continue with Phone</Text>
+            <View className="mb-6">
+              <Text className="text-lg font-semibold text-textPrimary mb-4">Continue with Phone</Text>
               
-              <View style={styles.phoneInputContainer}>
-                <Text style={styles.countryCode}>+91</Text>
+              <View className="flex-row items-center bg-bgSurface rounded-xl px-4 border border-bgMuted mb-4">
+                <Text className="text-base text-textPrimary font-medium mr-2">+91</Text>
                 <TextInput
-                  style={styles.phoneInput}
+                  className="flex-1 text-base text-textPrimary py-4"
                   placeholder="Enter phone number"
-                  placeholderTextColor="#6B6B6B"
+                  placeholderTextColor="#A89880"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -173,31 +178,28 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity
-                style={[
-                  styles.primaryButton,
-                  (!isValidPhone(phone) || otpLoading) && styles.buttonDisabled,
-                ]}
+                className={`py-4 rounded-xl items-center bg-primary ${(!isValidPhone(phone) || otpLoading) ? 'opacity-50' : ''}`}
                 onPress={handleSendOtp}
                 disabled={!isValidPhone(phone) || otpLoading}
               >
                 {otpLoading ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color="#FDFAF6" />
                 ) : (
-                  <Text style={styles.primaryButtonText}>Send OTP</Text>
+                  <Text className="text-textOnDark text-base font-semibold">Send OTP</Text>
                 )}
               </TouchableOpacity>
             </View>
 
             {/* Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
+            <View className="flex-row items-center my-6">
+              <View className="flex-1 h-[1px] bg-bgMuted" />
+              <Text className="text-textSecondary text-sm mx-4">or</Text>
+              <View className="flex-1 h-[1px] bg-bgMuted" />
             </View>
 
             {/* Google Sign-In */}
             <TouchableOpacity
-              style={[styles.secondaryButton, loading && styles.buttonDisabled]}
+              className={`flex-row items-center justify-center bg-bgSurface py-4 rounded-xl border border-bgMuted ${loading ? 'opacity-50' : ''}`}
               onPress={handleGoogleSignIn}
               disabled={loading}
             >
@@ -205,8 +207,8 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#1A1A1A" />
               ) : (
                 <>
-                  <Text style={styles.googleIcon}>G</Text>
-                  <Text style={styles.secondaryButtonText}>Continue with Google</Text>
+                  <Text className="text-blue-500 font-bold text-lg mr-3">G</Text>
+                  <Text className="text-textPrimary text-base font-medium">Continue with Google</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -214,16 +216,21 @@ export default function LoginScreen() {
         ) : (
           <>
             {/* OTP Verification Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Enter OTP</Text>
-              <Text style={styles.otpSubtitle}>
+            <View className="mb-6">
+              <View className="flex-row items-center mb-4">
+                <TouchableOpacity onPress={() => setOtpSent(false)} className="mr-3">
+                  <ArrowLeft size={20} color="#1A1A1A" />
+                </TouchableOpacity>
+                <Text className="text-lg font-semibold text-textPrimary">Enter OTP</Text>
+              </View>
+              <Text className="text-sm text-textSecondary mb-4">
                 We sent a 6-digit code to +91{phone}
               </Text>
               
               <TextInput
-                style={styles.otpInput}
+                className="bg-bgSurface rounded-xl py-4 px-6 text-2xl text-center tracking-[8px] text-textPrimary border border-bgMuted mb-6"
                 placeholder="------"
-                placeholderTextColor="#6B6B6B"
+                placeholderTextColor="#A89880"
                 value={otp}
                 onChangeText={(text) => setOtp(text.replace(/\D/g, '').slice(0, 6))}
                 keyboardType="number-pad"
@@ -232,204 +239,37 @@ export default function LoginScreen() {
               />
 
               <TouchableOpacity
-                style={[
-                  styles.primaryButton,
-                  (otp.length !== 6 || loading) && styles.buttonDisabled,
-                ]}
+                className={`py-4 rounded-xl items-center bg-primary ${(otp.length !== 6 || loading) ? 'opacity-50' : ''}`}
                 onPress={handleVerifyOtp}
                 disabled={otp.length !== 6 || loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color="#FDFAF6" />
                 ) : (
-                  <Text style={styles.primaryButtonText}>Verify & Continue</Text>
+                  <Text className="text-textOnDark text-base font-semibold">Verify & Continue</Text>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.resendButton}
+                className="items-center mt-4"
                 onPress={() => {
                   setOtpSent(false);
                   setOtp('');
                 }}
               >
-                <Text style={styles.resendText}>Change phone number</Text>
+                <Text className="text-primary text-sm font-medium">Change phone number</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
 
         {/* Footer */}
-        <Text style={styles.footer}>
-          By continuing, you agree to our Terms of Service and Privacy Policy
+        <Text className="text-xs text-textSecondary text-center mt-12 leading-5">
+          By continuing, you agree to our{'\n'}
+          <Text className="underline font-medium">Terms of Service</Text> and <Text className="underline font-medium">Privacy Policy</Text>
         </Text>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F2EE',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    justifyContent: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  logo: {
-    fontSize: 48,
-    color: '#8B7355',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 42,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    fontStyle: 'italic',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B6B6B',
-    marginTop: 8,
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FADBD8',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  errorText: {
-    flex: 1,
-    color: '#C0392B',
-    fontSize: 14,
-  },
-  errorDismiss: {
-    color: '#C0392B',
-    fontSize: 18,
-    marginLeft: 12,
-    fontWeight: '600',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 16,
-  },
-  phoneInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E0DDD5',
-  },
-  countryCode: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  phoneInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1A1A1A',
-    paddingVertical: 16,
-  },
-  primaryButton: {
-    backgroundColor: '#8B7355',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E0DDD5',
-  },
-  dividerText: {
-    color: '#6B6B6B',
-    fontSize: 14,
-    marginHorizontal: 16,
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0DDD5',
-  },
-  googleIcon: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#4285F4',
-    marginRight: 12,
-  },
-  secondaryButtonText: {
-    color: '#1A1A1A',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  otpSubtitle: {
-    fontSize: 14,
-    color: '#6B6B6B',
-    marginBottom: 16,
-  },
-  otpInput: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    fontSize: 24,
-    textAlign: 'center',
-    letterSpacing: 8,
-    color: '#1A1A1A',
-    borderWidth: 1,
-    borderColor: '#E0DDD5',
-    marginBottom: 24,
-  },
-  resendButton: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  resendText: {
-    color: '#8B7355',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  footer: {
-    fontSize: 12,
-    color: '#6B6B6B',
-    textAlign: 'center',
-    marginTop: 48,
-  },
-});

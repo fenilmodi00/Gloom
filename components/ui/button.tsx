@@ -1,40 +1,45 @@
 // Button wrapper component
 import React from 'react';
-import { Pressable, PressableProps, View, ActivityIndicator } from 'react-native';
+import { Pressable, PressableProps, Text, View } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
 
 export type ButtonProps = PressableProps & {
-  variant?: 'solid' | 'outline' | 'ghost';
+  variant?: 'solid' | 'outline' | 'ghost' | 'secondary';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  isLoading?: boolean;
 };
 
 export type ButtonTextProps = {
   className?: string;
   children: React.ReactNode;
+  variant?: 'solid' | 'outline' | 'ghost' | 'secondary';
 };
 
 export type ButtonIconProps = {
   as?: LucideIcon;
   className?: string;
+  color?: string;
 };
 
 const variantClasses = {
-  solid: 'bg-accent',
-  outline: 'bg-transparent border border-accent',
+  solid: 'bg-primary',
+  secondary: 'bg-btnSecondaryBg',
+  outline: 'bg-transparent border border-primary',
   ghost: 'bg-transparent',
 };
 
 const sizeClasses = {
   sm: 'px-3 py-1.5 rounded-full',
-  md: 'px-4 py-2 rounded-full',
-  lg: 'px-6 py-3 rounded-full',
+  md: 'px-4 py-2.5 rounded-full',
+  lg: 'px-6 py-3.5 rounded-full',
 };
 
 const textColorClasses = {
   solid: 'text-white',
-  outline: 'text-accent',
-  ghost: 'text-accent',
+  secondary: 'text-btnSecondaryText',
+  outline: 'text-primary',
+  ghost: 'text-primary',
 };
 
 export function Button({ 
@@ -45,26 +50,34 @@ export function Button({
   disabled,
   ...props 
 }: ButtonProps) {
+  // Pass variant to children if they are ButtonText
+  const childrenWithProps = React.Children.map(children, child => {
+    if (React.isValidElement(child) && (child.type as any).name === 'ButtonText') {
+      return React.cloneElement(child as React.ReactElement<any>, { variant });
+    }
+    return child;
+  });
+
   return (
     <Pressable
-      className={`${variantClasses[variant]} ${sizeClasses[size]} ${disabled ? 'opacity-50' : ''} ${className}`}
+      className={`${variantClasses[variant]} ${sizeClasses[size]} ${disabled ? 'opacity-50' : ''} flex-row items-center justify-center gap-2 ${className}`}
       disabled={disabled}
       {...props}
     >
-      {children}
+      {childrenWithProps}
     </Pressable>
   );
 }
 
-export function ButtonText({ className = '', children }: ButtonTextProps) {
+export function ButtonText({ className = '', children, variant = 'solid' }: ButtonTextProps) {
   return (
-    <View className={`font-medium text-center ${textColorClasses.solid} ${className}`}>
+    <Text className={`font-semibold text-center ${textColorClasses[variant]} ${className}`}>
       {children}
-    </View>
+    </Text>
   );
 }
 
-export function ButtonIcon({ as: Icon, className = '' }: ButtonIconProps) {
+export function ButtonIcon({ as: Icon, className = '', color }: ButtonIconProps) {
   if (!Icon) return null;
-  return <Icon className={className} size={16} />;
+  return <Icon className={className} size={18} color={color} />;
 }

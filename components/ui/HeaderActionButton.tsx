@@ -8,7 +8,7 @@
  * Positioned absolutely to float above the bottom sheet when expanded.
  */
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -17,13 +17,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Plus, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-
-// Design tokens
-const COLORS = {
-  primary: '#8B7355',
-  textPrimary: '#1A1A1A',
-  white: '#FFFFFF',
-};
 
 interface HeaderActionButtonProps {
   isExpanded: boolean;
@@ -62,7 +55,6 @@ export const HeaderActionButton = React.memo(
     });
 
     const handleAddItem = () => {
-      // Close sheet first, then navigate
       onClose();
       router.push({
         pathname: '/(tabs)/wardrobe/add-item',
@@ -71,89 +63,48 @@ export const HeaderActionButton = React.memo(
     };
 
     return (
-      <Animated.View style={[styles.container, containerStyle]}>
+      <Animated.View 
+        className="h-10 rounded-full bg-primary overflow-hidden shadow-sm"
+        style={containerStyle}
+      >
         {/* Default state: + Add Item button */}
-        <Animated.View style={[styles.defaultContent, defaultContentStyle]}>
-          <Pressable onPress={onOpen} style={styles.button} accessibilityLabel="Add Item">
-            <Plus size={18} color={COLORS.white} />
-            <Text style={styles.buttonText}>Add Item</Text>
+        <Animated.View 
+          className="absolute inset-0"
+          style={defaultContentStyle}
+        >
+          <Pressable 
+            onPress={onOpen} 
+            className="flex-1 flex-row items-center justify-center px-4 gap-1.5"
+            accessibilityLabel="Add Item"
+          >
+            <Plus size={18} color="white" />
+            <Text className="text-white text-[14px] font-semibold">Add Item</Text>
           </Pressable>
         </Animated.View>
 
         {/* Expanded state: Add Item + X */}
-        <Animated.View style={[styles.expandedContent, expandedContentStyle]}>
-          <Pressable onPress={handleAddItem} style={styles.addButton} accessibilityLabel="Add Item">
-            <Text style={styles.addButtonText}>Add Item</Text>
+        <Animated.View 
+          className="absolute inset-0 flex-row items-center pl-1"
+          style={expandedContentStyle}
+        >
+          <Pressable 
+            onPress={handleAddItem} 
+            className="flex-1 h-8 bg-primaryDark rounded-full items-center justify-center mr-1"
+            accessibilityLabel="Add Item"
+          >
+            <Text className="text-white text-[13px] font-semibold">Add Item</Text>
           </Pressable>
-          <Pressable onPress={onClose} style={styles.closeButton} accessibilityLabel="Close">
-            <X size={16} color={COLORS.white} />
+          <Pressable 
+            onPress={onClose} 
+            className="w-8 h-8 rounded-full bg-primaryDark items-center justify-center mr-1"
+            accessibilityLabel="Close"
+          >
+            <X size={16} color="white" />
           </Pressable>
         </Animated.View>
       </Animated.View>
     );
   }
 );
-
-const styles = StyleSheet.create({
-  container: {
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    overflow: 'hidden',
-  },
-  defaultContent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  button: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    gap: 6,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  expandedContent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 4,
-  },
-  addButton: {
-    flex: 1,
-    height: 32,
-    backgroundColor: COLORS.primary,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 4,
-  },
-  addButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 4,
-  },
-});
 
 export default HeaderActionButton;

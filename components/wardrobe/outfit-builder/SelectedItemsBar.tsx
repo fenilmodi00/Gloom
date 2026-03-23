@@ -19,10 +19,10 @@ import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit
 // Design tokens
 const COLORS = {
   primary: '#8B7355',
-  surface: 'rgba(255, 255, 255, 0.9)',
+  surface: 'rgba(253, 250, 246, 0.9)',
   border: 'rgba(139, 115, 85, 0.2)',
-  textPrimary: '#4A3F2C',
-  white: '#FFFFFF',
+  textPrimary: '#1A1A1A',
+  white: '#FDFAF6',
 };
 
 const ITEM_SIZE = 48;
