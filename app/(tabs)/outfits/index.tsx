@@ -189,47 +189,47 @@ export default function OutfitsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F0E9',
+    backgroundColor: '#F5F2EE', // bgCanvas
   },
   headerTitle: {
     fontSize: 34,
     fontWeight: '600',
     fontStyle: 'italic',
-    color: '#2D2F1D',
+    color: '#1A1A1A', // textPrimary
     letterSpacing: -0.5,
   },
   uploadBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#2D2F1D',
+    backgroundColor: '#8B7355', // primary
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,
-    shadowColor: '#2D2F1D',
+    shadowColor: '#8B7355',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   uploadBtnText: {
-    color: '#F2F0E9',
+    color: '#FDFAF6', // textOnDark
     fontSize: 12,
     fontWeight: '500',
     letterSpacing: 0.3,
   },
   filterBtn: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(234, 228, 218, 0.5)', // bgMuted with alpha
     padding: 10,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(45, 47, 29, 0.1)',
+    borderColor: 'rgba(168, 152, 128, 0.1)', // textTertiary with alpha
   },
   tagline: {
     fontSize: 26,
     fontWeight: '700',
     fontStyle: 'italic',
-    color: '#2D2F1D',
+    color: '#1A1A1A', // textPrimary
     textAlign: 'center',
     lineHeight: 36,
     marginBottom: 28,
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     top: 10,
     transform: [{ rotate: '-8deg' }],
     opacity: 0.7,
-    backgroundColor: '#EBE7DB',
+    backgroundColor: '#F0EBE3', // bgSurfaceRaised
   },
   fanCardRight: {
     width: 135,
@@ -265,14 +265,14 @@ const styles = StyleSheet.create({
     top: 20,
     transform: [{ rotate: '6deg' }],
     opacity: 0.7,
-    backgroundColor: '#D8D3C5',
+    backgroundColor: '#EAE4DA', // bgMuted
   },
   fanCardCenter: {
     width: 230,
     height: 310,
     top: 40,
-    backgroundColor: '#E8E4D9',
-    shadowColor: '#2D2F1D',
+    backgroundColor: '#FDFAF6', // bgSurface
+    shadowColor: '#8B7355',
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.15,
     shadowRadius: 40,
@@ -299,25 +299,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     fontStyle: 'italic',
-    color: '#2D2F1D',
+    color: '#1A1A1A', // textPrimary
     marginTop: 2,
   },
   primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2D2F1D',
+    backgroundColor: '#8B7355', // primary
     paddingVertical: 16,
     borderRadius: 999,
     gap: 8,
-    shadowColor: '#2D2F1D',
+    shadowColor: '#8B7355',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
     elevation: 6,
   },
   primaryBtnText: {
-    color: '#F2F0E9',
+    color: '#FDFAF6', // textOnDark
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: 0.3,

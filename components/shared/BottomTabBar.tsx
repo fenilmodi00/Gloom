@@ -14,13 +14,13 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 
-// Aesty-inspired color palette
+// Premium Brand Palette
 const COLORS = {
-  navBg: '#F5F3ED',
-  activeHighlight: '#EBE7DB',
-  activeColor: '#8B7355', // Golden accent color
-  inactiveColor: 'rgba(45, 47, 29, 0.35)', // Muted dark for inactive
-  border: 'rgba(45, 47, 29, 0.05)',
+  navBg: '#F5F2EE',            // bgCanvas
+  activeHighlight: '#F0EBE3',  // bgSurfaceRaised
+  activeColor: '#8B7355',      // primary
+  inactiveColor: '#A89880',    // textTertiary
+  border: '#EAE4DA',          // bgMuted
   white: '#FFFFFF',
 };
 

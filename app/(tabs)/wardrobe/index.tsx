@@ -2,7 +2,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
-import { HeaderActionButton } from '@/components/ui/HeaderActionButton';
+
 import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
@@ -27,7 +27,7 @@ const CATEGORY_CONFIG: { key: Category; label: string }[] = [
 
 // Vertical gradient colors for each category (top to bottom)
 const GRADIENT_START = '#F5F2EE';
-const GRADIENT_END = '#F0EACC';
+const GRADIENT_END = '#F0EBE3';
 
 // Aesty-inspired color palette
 const COLORS = {
@@ -179,11 +179,12 @@ export default function WardrobeScreen() {
             {/* Header row */}
             <View style={styles.headerRow}>
                <Text style={styles.headerTitle}>Closet</Text>
-               <HeaderActionButton 
-                 isExpanded={isAddSheetOpen}
-                 onOpen={() => setIsAddSheetOpen(true)}
-                 onClose={() => setIsAddSheetOpen(false)}
-               />
+               <Pressable 
+                 style={styles.uploadButton} 
+                 onPress={() => setIsAddSheetOpen(true)}
+               >
+                 <Text style={styles.uploadText}>Add item</Text>
+               </Pressable>
             </View>
 
             {/* First category section - part of same gradient */}
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
   makeOutfitsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(253, 250, 246, 0.85)', // bgSurface
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 999,
@@ -384,5 +385,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#1A1A1A',
+  },
+  uploadButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  uploadText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FDFAF6',
   },
 });

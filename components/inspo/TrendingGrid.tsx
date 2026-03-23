@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1A1A1A', // textPrimary
     marginBottom: 16,
     marginHorizontal: 24,
   },
@@ -218,21 +218,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FDFAF6', // bgSurface
     borderWidth: 1,
-    borderColor: 'rgba(139, 115, 85, 0.3)',
+    borderColor: '#EAE4DA', // bgMuted
   },
   categoryChipActive: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#1A1A1A',
+    backgroundColor: '#8B7355', // primary
+    borderColor: '#8B7355',
   },
   categoryText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B6B6B',
+    color: '#6B6B6B', // textSecondary
   },
   categoryTextActive: {
-    color: '#FFFFFF',
+    color: '#FDFAF6', // textOnDark
     fontWeight: '600',
   },
   // Section
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1A1A1A', // textPrimary
     marginBottom: 12,
     marginLeft: 24,
   },
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     height: CARD_HEIGHT,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#F2F0E9',
+    backgroundColor: '#F0EBE3', // bgSurfaceRaised
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -304,6 +304,6 @@ const styles = StyleSheet.create({
   tryOnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1A1A1A', // textPrimary
   },
 });

@@ -36,14 +36,14 @@ export const InspoBottomSheet = forwardRef<BottomSheetRef, InspoBottomSheetProps
         topInset={insets.top + 65}
         onChange={handleChange}
         backgroundStyle={{
-          backgroundColor: '#F5F3EC',
+          backgroundColor: '#FDFAF6', // bgSurface
           borderTopLeftRadius: 32,
           borderTopRightRadius: 32,
         }}
         handleIndicatorStyle={{
           width: 48,
           height: 6,
-          backgroundColor: '#D6D3D1',
+          backgroundColor: '#EAE4DA', // bgMuted
           borderRadius: 3,
         }}
         handleStyle={{

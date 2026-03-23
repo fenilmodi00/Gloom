@@ -23,10 +23,10 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | null>(null);
 
 const TOAST_COLORS: Record<ToastType, string> = {
-  success: '#27AE60',
-  error: '#C0392B',
-  info: '#8B7355',
-  warning: '#F39C12',
+  success: '#6A8C69', // stateSuccess
+  error: '#B85C4A',   // stateError
+  info: '#7A8FAB',    // stateInfo
+  warning: '#C9A84C', // stateWarning
 };
 
 const TOAST_HEIGHT = 56;

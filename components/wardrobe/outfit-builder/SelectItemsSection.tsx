@@ -25,15 +25,15 @@ const CATEGORY_CONFIG: { key: Category; label: string }[] = [
   { key: 'accessory', label: 'accessories' },
 ];
 
-const GRADIENT_START = '#F5F2EE';
-const GRADIENT_END = '#F0EACC';
+const GRADIENT_START = '#F5F2EE'; // bgCanvas
+const GRADIENT_END = '#F0EBE3';   // bgSurfaceRaised
 
 const COLORS = {
-  primary: '#8B7355',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  surface: '#FFFFFF',
-  skeleton: '#E5E5E5',
+  primary: '#8B7355',      // primary
+  textPrimary: '#1A1A1A',  // textPrimary
+  textSecondary: '#6B6B6B', // textSecondary
+  surface: '#FDFAF6',      // bgSurface
+  skeleton: '#EAE4DA',     // bgMuted
 };
 
 const CARD_WIDTH = 120;
