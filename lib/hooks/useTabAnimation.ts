@@ -14,8 +14,13 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 
-// Tab order configuration - must match BottomTabBar.tsx TAB_CONFIG order
-const TAB_ORDER = ['inspo/index', 'wardrobe/index', 'outfits/index', 'profile/index'];
+// O(1) Lookup Table (Dictionary/Hash Map) for Tab Order
+const TAB_INDEX_MAP: Record<string, number> = {
+  'inspo/index': 0,
+  'wardrobe/index': 1,
+  'outfits/index': 2,
+  'profile/index': 3,
+};
 
 const SLIDE_DISTANCE = 50; 
 
@@ -29,11 +34,10 @@ const SPRING_CONFIG = {
 let globalLastTabIndex = 0;
 
 /**
- * Get the index of a tab route name
+ * Get the index of a tab route name in O(1) time
  */
 function getTabIndex(routeName: string): number {
-  const index = TAB_ORDER.indexOf(routeName);
-  return index >= 0 ? index : 0;
+  return TAB_INDEX_MAP[routeName] ?? 0;
 }
 
 export function useTabAnimation(routeName: string) {

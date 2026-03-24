@@ -32,12 +32,12 @@ const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: s
 };
 
 // Routes where the tab bar should be hidden
-const HIDDEN_TAB_BAR_ROUTES = [
+const HIDDEN_TAB_BAR_ROUTES = new Set([
   'wardrobe/add-item',
   'wardrobe/outfit-builder',
   'favorites/index',
   'inspo/model-detail',
-];
+]);
 
 // Spring config for 60fps smooth animations
 const SPRING_CONFIG = {
@@ -143,7 +143,7 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
   const currentRoute = state.routes[state.index]?.name;
 
   // Don't render the tab bar on hidden routes or when sheet is open
-  if (HIDDEN_TAB_BAR_ROUTES.includes(currentRoute) || isSheetOpen) {
+  if (HIDDEN_TAB_BAR_ROUTES.has(currentRoute as string) || isSheetOpen) {
     return null;
   }
 
@@ -174,8 +174,7 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
       <View style={styles.Pill}>
         <View style={styles.pill}>
           {tabRoutes.map((route) => {
-            const originalIndex = state.routes.findIndex((r) => r.name === route.name);
-            const isFocused = state.index === originalIndex;
+            const isFocused = state.routes[state.index]?.key === route.key;
             const { options } = descriptors[route.key];
 
             const onPress = () => {
