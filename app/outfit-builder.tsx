@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { View, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+
 import { X, Sparkles, Plus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -16,6 +16,8 @@ import { useSelectedItemsArray, useSelectedStyle } from '@/lib/store/outfit-buil
 import { THEME } from '@/constants/Colors';
 
 
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+
 export default function OutfitBuilderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -28,9 +30,18 @@ export default function OutfitBuilderScreen() {
     return storeItems.length > 0 ? storeItems : getMockWardrobeItemsWithAssets();
   }, [storeItems]);
 
-  // Close screen - navigate back to wardrobe
+
+
+  const [isVisible, setIsVisible] = React.useState(true);
+
+  // Close screen - navigate back
   const closeScreen = useCallback(() => {
-    router.replace('/(tabs)/wardrobe');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsVisible(false);
+    // Delay the actual navigation until the animation completes
+    setTimeout(() => {
+      router.back();
+    }, 400);
   }, [router]);
 
   // Navigate to add-item screen
@@ -56,8 +67,14 @@ export default function OutfitBuilderScreen() {
 
   return (
     <View style={styles.container}>
+      {isVisible && (
+        <Animated.View 
+          entering={FadeInDown.springify().mass(1).damping(18)}
+          exiting={FadeOutDown.springify().mass(1).damping(18)}
+          style={StyleSheet.absoluteFill}
+        >
       {/* Header */}
-      <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Build Outfit</Text>
           <Text style={styles.headerSubtitle}>Mix & match items</Text>
@@ -73,7 +90,7 @@ export default function OutfitBuilderScreen() {
             </Pressable>
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Main content - scrollable item selection */}
       <View style={styles.mainContent}>
@@ -87,8 +104,7 @@ export default function OutfitBuilderScreen() {
       <SelectedItemsBar />
 
       {/* Floating Generate Button - right side bottom */}
-      <Animated.View 
-        entering={FadeInUp.delay(150).springify()} 
+      <View 
         style={[styles.generateButtonContainer, { bottom: insets.bottom || 16, right: 16 }]}
       >
         <Pressable
@@ -101,7 +117,9 @@ export default function OutfitBuilderScreen() {
         >
           <Sparkles size={20} color={selectedItems.length > 0 ? THEME.bgSurface : THEME.textSecondary} />
         </Pressable>
-      </Animated.View>
+      </View>
+        </Animated.View>
+      )}
     </View>
   );
 }

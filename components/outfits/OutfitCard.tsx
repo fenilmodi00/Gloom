@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { OccasionBadge } from './OccasionBadge';
@@ -12,10 +12,20 @@ interface OutfitCardProps {
 export function OutfitCard({ outfit }: OutfitCardProps) {
   const { items } = useWardrobeStore();
 
+  // Create a Map for O(1) lookups
+  const itemMap = useMemo(() => {
+    const map = new Map();
+    items.forEach((item) => map.set(item.id, item));
+    return map;
+  }, [items]);
+
   // Find the actual wardrobe items for this outfit
-  const outfitItems = outfit.item_ids
-    .map((id) => items.find((i) => i.id === id))
-    .filter(Boolean);
+  const outfitItems = useMemo(() => 
+    outfit.item_ids
+      .map((id) => itemMap.get(id))
+      .filter(Boolean),
+    [itemMap, outfit.item_ids]
+  );
 
   const handleTryOn = () => {
     Alert.alert('Coming Soon', 'Virtual Try-On will be available in Phase 2!');

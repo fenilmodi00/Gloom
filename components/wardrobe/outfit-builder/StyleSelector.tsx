@@ -2,17 +2,17 @@
  * StyleSelector
  * 
  * Floating dropdown for selecting outfit style at the bottom center.
+ * Animates up when items are selected to make space for SelectedItemsBar.
  * Single selection with visual feedback.
  */
 import React, { useState } from 'react';
 import { View, Text as RNText, Pressable, StyleSheet } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
+import Animated, { FadeInDown, FadeOutDown, useAnimatedStyle, withTiming, withSpring, useSharedValue } from 'react-native-reanimated';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useOutfitBuilderStore, OUTFIT_STYLES, type OutfitStyle } from '@/lib/store/outfit-builder.store';
+import { useOutfitBuilderStore, useSelectedItemsArray, OUTFIT_STYLES, type OutfitStyle } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
 
 const STYLE_LABELS: Record<OutfitStyle, string> = {
@@ -28,7 +28,23 @@ export const StyleSelector = () => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedStyle = useOutfitBuilderStore((s) => s.selectedStyle);
   const setSelectedStyle = useOutfitBuilderStore((s) => s.setSelectedStyle);
+  const selectedItems = useSelectedItemsArray();
   const insets = useSafeAreaInsets();
+  
+  // Animated position - moves up when items are selected to make space for SelectedItemsBar
+  const hasSelectedItems = selectedItems.length > 0;
+  // When items selected, move UP (larger bottom value = further from bottom edge)
+  // SelectedItemsBar is at bottom: 16, StyleSelector moves to bottom: 90 to be above it
+  const targetBottom = hasSelectedItems ? insets.bottom + 90 : insets.bottom + 16;
+  
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      bottom: withTiming(targetBottom, {
+        duration: 350,
+      }),
+    };
+  });
 
   const handleSelect = (style: OutfitStyle | null) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -42,11 +58,11 @@ export const StyleSelector = () => {
   };
 
   return (
-    <View style={[styles.container, { bottom: insets.bottom + 80 }]}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       {/* Dropdown options - solid white glassmorphism */}
       {isOpen && (
         <Animated.View 
-          entering={FadeInDown.springify()} 
+          entering={FadeInDown.springify().mass(2)}
           exiting={FadeOutDown.duration(200)}
           style={styles.dropdownWrapper}
         >
@@ -104,7 +120,7 @@ export const StyleSelector = () => {
           </View>
         </View>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -138,7 +154,7 @@ const styles = StyleSheet.create({
   triggerText: {
     fontSize: 14,
     fontWeight: '700',
-    color: THEME.textPrimary,
+    color: THEME.textSecondary,
     marginRight: 8,
   },
   iconContainer: {
@@ -154,19 +170,19 @@ const styles = StyleSheet.create({
     bottom: '100%',
     left: 0,
     width: 180,
-    marginBottom: 8,
-    borderRadius: 20,
+    marginBottom: 10,
+    borderRadius: 24,
+    backgroundColor: 'rgba(253, 250, 246, 0.98)',
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 4,
   },
   dropdown: {
-    backgroundColor: THEME.bgSurface,
     padding: 6,
   },
   option: {
@@ -177,7 +193,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     marginBottom: 2,
-    backgroundColor: THEME.bgSurface,
   },
   optionPressed: {
     backgroundColor: 'rgba(139, 115, 85, 0.1)',

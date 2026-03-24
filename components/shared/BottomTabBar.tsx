@@ -1,6 +1,5 @@
 import { Feather } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
@@ -23,7 +22,6 @@ const COLORS = {
   activeColor: Colors.light.primary,
   inactiveColor: Colors.light.textTertiary,
   border: Colors.light.bgMuted,
-  white: '#FFFFFF',
 };
 
 const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: string }> = {
@@ -172,12 +170,8 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
         />
       </View>
 
-      {/* Blur background for frosted glass effect */}
-      <BlurView
-        intensity={100}
-        tint="prominent"
-        style={styles.blurPill}
-      >
+      {/* Solid white background - experimental UX */}
+      <View style={styles.Pill}>
         <View style={styles.pill}>
           {tabRoutes.map((route) => {
             const originalIndex = state.routes.findIndex((r) => r.name === route.name);
@@ -213,7 +207,7 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
             );
           })}
         </View>
-      </BlurView>
+      </View>
     </View>
   );
 }
@@ -239,14 +233,14 @@ const styles = StyleSheet.create({
   fadeGradient: {
     flex: 1,
   },
-  blurPill: {
+  Pill: {
     borderRadius: 32,
     overflow: 'hidden',
-    width: '90%',
+    width: '80%',
     maxWidth: 380,
   },
   pill: {
-    backgroundColor: 'rgba(245, 243, 237, 0.85)',
+    backgroundColor: '#FDFAF6',
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 32,

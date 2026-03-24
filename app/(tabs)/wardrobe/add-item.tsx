@@ -7,12 +7,6 @@ import { X, Camera as CameraIcon, Check, Image as ImageIcon } from 'lucide-react
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { 
-  FadeIn, 
-  FadeInDown, 
-  FadeInUp, 
-  FadeOut, 
-} from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
@@ -176,32 +170,30 @@ export default function AddItemScreen() {
   // Stitch-inspired Upload Screen with animated transitions
   if (showUploadScreen && !photoUri) {
     return (
-      <Animated.View 
-        entering={FadeIn.duration(300)} 
-        exiting={FadeOut.duration(200)}
+      <View 
         style={[styles.uploadContainer, { paddingTop: insets.top }]}
       >
-          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.uploadHeader}>
+          <View style={styles.uploadHeader}>
             <Pressable onPress={closeScreen} style={styles.backButton}>
               <X size={24} color={COLORS.textPrimary} />
             </Pressable>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.uploadContent}>
-          <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.illustrationCard}>
+        <View style={styles.uploadContent}>
+          <View style={styles.illustrationCard}>
             <View style={styles.illustrationImage}>
               <CameraIcon size={48} color={COLORS.brand} />
             </View>
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.textSection}>
+          <View style={styles.textSection}>
             <Text style={styles.uploadTitle}>Add to your Wardrobe</Text>
             <Text style={styles.uploadSubtitle}>
               Snap a photo or choose from your library to start styling your next look.
             </Text>
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.actionButtons}>
+          <View style={styles.actionButtons}>
             <Pressable
               style={styles.captureButton}
               onPress={openCamera}
@@ -217,11 +209,11 @@ export default function AddItemScreen() {
               <ImageIcon size={20} color={COLORS.textPrimary} />
               <Text style={styles.galleryButtonText}>Upload from Gallery</Text>
             </Pressable>
-          </Animated.View>
-        </Animated.View>
+          </View>
+        </View>
 
         <View style={{ height: insets.bottom + 32 }} />
-      </Animated.View>
+      </View>
     );
   }
 
@@ -232,68 +224,63 @@ export default function AddItemScreen() {
     }
     if (!permission.granted) {
       return (
-        <Animated.View 
-          entering={FadeIn.duration(300)}
+        <View 
           style={[styles.permissionContainer, { paddingTop: insets.top }]}
         >
           <Text style={styles.permissionText}>We need your permission to show the camera</Text>
           <Pressable style={styles.permissionButton} onPress={requestPermission}>
             <Text style={styles.permissionButtonText}>Grant Permission</Text>
           </Pressable>
-        </Animated.View>
+        </View>
       );
     }
 
     return (
-      <Animated.View 
-        entering={FadeIn.duration(300)} 
-        exiting={FadeOut.duration(200)}
+      <View 
         style={styles.cameraContainer}
       >
-          <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.cameraHeader, { paddingTop: insets.top }]}>
+          <View style={[styles.cameraHeader, { paddingTop: insets.top }]}>
             <Pressable onPress={closeScreen} style={styles.headerButton}>
               <X size={24} color="white" />
             </Pressable>
             <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
             <View style={styles.headerButton} />
-          </Animated.View>
+          </View>
 
-        <Animated.View entering={FadeIn.delay(200)} style={styles.cameraPreview}>
+        <View style={styles.cameraPreview}>
           <CameraView ref={cameraRef} style={styles.cameraView} facing="back" />
-          <Animated.View entering={FadeIn.delay(400)} style={styles.guideOverlay} />
-          <Animated.Text entering={FadeIn.delay(500)} style={styles.guideText}>Position item clearly in frame</Animated.Text>
-        </Animated.View>
+          <View style={styles.guideOverlay} />
+          <Text style={styles.guideText}>Position item clearly in frame</Text>
+        </View>
 
-        <Animated.View entering={FadeInUp.delay(300).springify()} style={[styles.cameraControls, { paddingBottom: insets.bottom + 24 }]}>
+        <View style={[styles.cameraControls, { paddingBottom: insets.bottom + 24 }]}>
           <Pressable style={styles.captureButtonOuter} onPress={takePhoto}>
             <View style={styles.captureButtonInner} />
           </Pressable>
-        </Animated.View>
-      </Animated.View>
+        </View>
+      </View>
     );
   }
 
   // Preview Screen with animated transitions
   if (photoUri) {
     return (
-      <Animated.View 
-        entering={FadeIn.duration(300)} 
-        exiting={FadeOut.duration(200)}
+      <View 
         style={[styles.previewContainer, { paddingTop: insets.top }]}
       >
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.previewHeader}>
+        <View style={styles.previewHeader}>
           <Pressable onPress={() => router.replace("/(tabs)/wardrobe")} style={styles.headerButton}>
             <X size={24} color={COLORS.textPrimary} />
           </Pressable>
           <Text style={styles.previewTitle}>Preview</Text>
           <View style={styles.headerButton} />
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.previewImageContainer}>
+        <View style={styles.previewImageContainer}>
           <Image source={{ uri: photoUri }} style={styles.previewImage} contentFit="cover" />
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInUp.delay(300).springify()} style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>
+        <View style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>
           <Pressable style={styles.retakeButton} onPress={handleRetake}>
             <Text style={styles.retakeButtonText}>Retake</Text>
           </Pressable>
@@ -301,8 +288,8 @@ export default function AddItemScreen() {
             <Check size={18} color="white" />
             <Text style={styles.saveButtonText}>Analyze & Save</Text>
           </Pressable>
-        </Animated.View>
-      </Animated.View>
+        </View>
+      </View>
     );
   }
 

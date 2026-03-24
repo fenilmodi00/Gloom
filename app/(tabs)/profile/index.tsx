@@ -4,11 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { useRouter } from 'expo-router';
 import Colors from '@/constants/Colors';
+import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
+import Animated from 'react-native-reanimated';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuthStore();
   const router = useRouter();
+  const { animatedStyle, viewKey } = useTabAnimation('profile/index');
 
   const handleSignOut = async () => {
     await signOut();
@@ -16,7 +19,8 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <Animated.View key={viewKey} style={[styles.container, animatedStyle]}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
       </View>
@@ -56,6 +60,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
     </View>
+    </Animated.View>
   );
 }
 

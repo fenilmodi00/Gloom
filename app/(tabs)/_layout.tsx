@@ -64,13 +64,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Hidden route — outfit builder */}
-      <Tabs.Screen
-        name="wardrobe/outfit-builder"
-        options={{
-          href: null,
-        }}
-      />
+
 
       {/* Tab 4 — Profile */}
       <Tabs.Screen

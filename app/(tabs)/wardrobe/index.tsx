@@ -6,6 +6,7 @@ import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
+import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { ChevronRight, Shirt, Plus } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View, ScrollView } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Category configuration
@@ -103,6 +105,7 @@ export default function WardrobeScreen() {
   const insets = useSafeAreaInsets();
   const { items: storeItems, isLoading, fetchItems } = useWardrobeStore();
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const { animatedStyle, viewKey } = useTabAnimation('wardrobe/index');
 
   // Use mock data if store is empty
   const items = useMemo(() => {
@@ -114,23 +117,34 @@ export default function WardrobeScreen() {
     fetchItems();
   }, [fetchItems]);
 
-  // Group items by category
-  const groupedItems = useMemo(() => {
-    const groups: Record<string, WardrobeItem[]> = {};
-    CATEGORY_CONFIG.forEach(({ key }) => {
-      groups[key] = items.filter((item) => item.category === key);
-    });
-    return groups;
-  }, [items]);
+   // Group items by category
+   const groupedItems = useMemo(() => {
+     const groups: Record<string, WardrobeItem[]> = {};
+     CATEGORY_CONFIG.forEach(({ key }) => {
+       groups[key] = items.filter((item) => item.category === key);
+     });
+     return groups;
+   }, [items]);
 
-  // Sections to render
-  const sections = useMemo(() => {
-    return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
-  }, [groupedItems]);
+   // Navigate to outfit builder screen
+   const navigateToOutfitBuilder = useCallback(() => {
+     router.push('/outfit-builder');
+   }, [router]);
 
-  const handleEmptyAdd = () => {
-    navigateToAddItem('camera');
-  };
+   // Handler for SelectItemsSheet - now just opens the screen
+   const handleOpenSelectSheet = useCallback(() => {
+     console.log('[Wardrobe] Opening outfit builder screen');
+     navigateToOutfitBuilder();
+   }, [navigateToOutfitBuilder]);
+
+   // Handle close - not needed for full screen
+   const handleCloseSelectSheet = useCallback(() => {
+     // Full screen handles its own close
+   }, []);
+
+   const handleEmptyAdd = () => {
+     navigateToAddItem('camera');
+   };
 
    const navigateToAddItem = (method: 'camera' | 'gallery') => {
      setIsAddSheetOpen(false);
@@ -140,21 +154,10 @@ export default function WardrobeScreen() {
      });
    };
 
-  // Navigate to outfit builder screen
-  const navigateToOutfitBuilder = useCallback(() => {
-    router.push('/(tabs)/wardrobe/outfit-builder');
-  }, [router]);
-
-  // Handler for SelectItemsSheet - now just opens the screen
-  const handleOpenSelectSheet = useCallback(() => {
-    console.log('[Wardrobe] Opening outfit builder screen');
-    navigateToOutfitBuilder();
-  }, [navigateToOutfitBuilder]);
-
-  // Handle close - not needed for full screen
-  const handleCloseSelectSheet = useCallback(() => {
-    // Full screen handles its own close
-  }, []);
+   // Sections to render
+   const sections = useMemo(() => {
+     return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
+   }, [groupedItems]);
 
   // First category card renderer
   const firstCategoryRenderItem = useCallback(
@@ -235,7 +238,7 @@ export default function WardrobeScreen() {
 
   if (items.length === 0) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas }]}>
         <EmptyState
           title="Your closet is empty"
           description="Start building your digital closet to get personalized outfit suggestions."
@@ -258,7 +261,7 @@ export default function WardrobeScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <Animated.View key={viewKey} style={[styles.container, animatedStyle, { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas }]}>
       {/* Main content - scrollable with header + categories */}
       <FlashList
         data={listData}
@@ -285,14 +288,14 @@ export default function WardrobeScreen() {
         onClose={() => setIsAddSheetOpen(false)}
         onSelectMethod={navigateToAddItem}
       />
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.light.bgCanvas,
   },
   headerWithFirstCategory: {
     paddingBottom: 16,

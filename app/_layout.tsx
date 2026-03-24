@@ -172,15 +172,13 @@ function RootLayoutNav() {
         {/* iOS: slide_from_bottom opens and closes (reverse animation) */}
         {/* Android: fade_from_bottom opens and closes (reverse animation) */}
         <Stack.Screen 
-          name="(tabs)/wardrobe/outfit-builder" 
+          name="outfit-builder" 
           options={{ 
-            presentation: 'modal',
-            animation: Platform.OS === 'ios' ? 'slide_from_bottom' : 'fade_from_bottom',
+            headerShown: false,
+            presentation: 'transparentModal',
+            animation: 'slide_from_bottom',
             gestureEnabled: true,
-            gestureDirection: 'vertical',
-            ...(Platform.OS === 'android' && {
-              animationDuration: 300,
-            }),
+            fullScreenGestureEnabled: true,
           }} 
         />
       </Stack>

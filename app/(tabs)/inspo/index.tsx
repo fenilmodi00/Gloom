@@ -9,8 +9,10 @@
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/Colors';
+import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
@@ -82,6 +84,7 @@ export default function InspoScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheetRef>(null);
+  const { animatedStyle, viewKey } = useTabAnimation('inspo/index');
 
   // Inline popup state — keeps inspo screen alive behind the blur backdrop
   const [activeModel, setActiveModel] = useState<ModelCard | null>(null);
@@ -129,7 +132,7 @@ export default function InspoScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <Animated.View key={viewKey} style={[styles.container, animatedStyle]}>
       {/* ======================================== */}
       {/* Layer 1: Top-aligned model carousel */}
       {/* ======================================== */}
@@ -169,7 +172,7 @@ export default function InspoScreen() {
         clothItems={MOCK_CLOTH_ITEMS}
         onClose={handlePopupClose}
       />
-    </View>
+    </Animated.View>
   );
 }
 

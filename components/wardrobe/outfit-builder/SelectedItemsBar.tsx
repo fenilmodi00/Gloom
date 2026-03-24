@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { View, Pressable, StyleSheet, ScrollView, Text as RNText } from 'react-native';
-import Animated, { FadeInRight, FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
@@ -27,16 +27,14 @@ export const SelectedItemsBar = () => {
   if (selectedItems.length === 0) return null;
 
   return (
-    <Animated.View 
-      entering={FadeInDown.delay(300).springify()} 
+    <View 
       style={[styles.container, { bottom: insets.bottom + 16 }]}
     >
       <BlurView intensity={70} tint="light" style={styles.blurContainer}>
         <View style={styles.stackContainer}>
           {selectedItems.slice(0, 4).map((item, index) => (
-            <Animated.View
+            <View
               key={item.id}
-              entering={FadeInRight.delay(index * 100).springify()}
               style={[
                 styles.itemImageContainer,
                 { marginLeft: index === 0 ? 0 : -24, zIndex: 10 - index }
@@ -51,7 +49,7 @@ export const SelectedItemsBar = () => {
                 style={styles.itemImage}
                 contentFit="contain"
               />
-            </Animated.View>
+            </View>
           ))}
           {selectedItems.length > 4 && (
             <View style={styles.moreBadge}>
@@ -65,7 +63,7 @@ export const SelectedItemsBar = () => {
           )}
         </View>
       </BlurView>
-    </Animated.View>
+    </View>
   );
 };
 
