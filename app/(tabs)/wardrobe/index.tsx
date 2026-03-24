@@ -129,7 +129,7 @@ export default function WardrobeScreen() {
   }, [groupedItems]);
 
   const handleEmptyAdd = () => {
-    setIsAddSheetOpen(true);
+    navigateToAddItem('camera');
   };
 
    const navigateToAddItem = (method: 'camera' | 'gallery') => {
@@ -177,9 +177,9 @@ export default function WardrobeScreen() {
             {/* Header row */}
             <View style={styles.headerRow}>
                <Text style={styles.headerTitle}>Closet</Text>
-               <Pressable 
-                 style={styles.uploadButton} 
-                 onPress={() => setIsAddSheetOpen(true)}
+               <Pressable
+                 style={styles.uploadButton}
+                 onPress={() => navigateToAddItem('camera')}
                >
                  <Text style={styles.uploadText}>Add item</Text>
                </Pressable>

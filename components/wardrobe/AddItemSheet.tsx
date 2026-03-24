@@ -10,7 +10,7 @@ interface AddItemSheetProps {
 }
 
 export const AddItemSheet = forwardRef<BottomSheet, AddItemSheetProps>(
-  ({ onSelectMethod }, ref) => {
+  ({ isOpen = false, onClose, onSelectMethod }, ref) => {
     const snapPoints = ['30%'];
 
     const renderBackdrop = useCallback(
@@ -23,10 +23,11 @@ export const AddItemSheet = forwardRef<BottomSheet, AddItemSheetProps>(
     return (
       <BottomSheet
         ref={ref}
-        index={-1}
+        index={isOpen ? 0 : -1}
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         enablePanDownToClose
+        onClose={onClose}
         backgroundStyle={{ backgroundColor: '#FDFAF6', borderRadius: 24 }} // bgSurface
         handleIndicatorStyle={{ backgroundColor: '#EAE4DA', width: 40 }} // bgMuted
       >

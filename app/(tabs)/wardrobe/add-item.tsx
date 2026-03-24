@@ -47,8 +47,8 @@ export default function AddItemScreen() {
   const { addItem } = useWardrobeStore();
   const { user } = useAuthStore();
 
-  // Show upload screen first (Stitch design)
-  const [showUploadScreen, setShowUploadScreen] = useState(method !== 'camera');
+  // Show upload screen first (Stitch design) - always show upload screen, let user choose
+  const [showUploadScreen, setShowUploadScreen] = useState(true);
 
   // Map origin keys to tab paths — deterministic, no navigation stack dependency
   const ORIGIN_PATHS: Record<string, string> = {
@@ -63,13 +63,6 @@ export default function AddItemScreen() {
     const dest = origin ? ORIGIN_PATHS[origin] : ORIGIN_PATHS.wardrobe;
     router.replace(dest as any);
   };
-
-  useEffect(() => {
-    if (method === 'gallery' && !photoUri && !showUploadScreen) {
-      pickImage();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [method, showUploadScreen]);
 
   const pickImage = async () => {
     try {
