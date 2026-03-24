@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
-import { View, StyleSheet, Pressable, Alert, BackHandler, useWindowDimensions, ScrollView } from 'react-native';
+import { View, StyleSheet, Pressable, Alert, BackHandler, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { X, Sparkles, Plus, Maximize2 } from 'lucide-react-native';
+import { X, Plus, Sparkles } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/components/ui/text';
@@ -12,10 +12,10 @@ import { StyleSelector } from '@/components/wardrobe/outfit-builder/StyleSelecto
 import { SelectedItemsBar } from '@/components/wardrobe/outfit-builder/SelectedItemsBar';
 import { OutfitCombinationsSection } from '@/components/wardrobe/outfit-builder/OutfitCombinationsSection';
 import { OutfitBoardSheet } from '@/components/wardrobe/outfit-builder/OutfitBoardSheet';
-import { OutfitBoard } from '@/components/outfit-board';
+
 import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
-import { useSelectedItemsArray, useSelectedStyle, useOutfitBuilderStore, useSelectedItems } from '@/lib/store/outfit-builder.store';
+import { useSelectedItemsArray, useSelectedStyle, useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import type { OutfitCombination } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
 
@@ -25,10 +25,8 @@ import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 export default function OutfitBuilderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width: screenWidth } = useWindowDimensions();
   const { items: storeItems } = useWardrobeStore();
   const selectedItemsArray = useSelectedItemsArray();
-  const selection = useSelectedItems();
   const selectedStyle = useSelectedStyle();
   const openCombinationSheet = useOutfitBuilderStore((s) => s.openCombinationSheet);
 
@@ -110,8 +108,7 @@ export default function OutfitBuilderScreen() {
     openCombinationSheet(combination);
   }, [openCombinationSheet]);
 
-  const BOARD_WIDTH = screenWidth - 32;
-  const BOARD_HEIGHT = BOARD_WIDTH * 1.25;
+
 
   return (
     <View style={styles.container}>
@@ -151,33 +148,7 @@ export default function OutfitBuilderScreen() {
               showsVerticalScrollIndicator={false}
               contentInsetAdjustmentBehavior="automatic"
             >
-              {/* Live Preview Board */}
-              <View style={styles.boardPreviewContainer}>
-                <Pressable 
-                  onPress={() => openCombinationSheet({ id: 'live', selection, matchScore: 100 })}
-                  style={({ pressed }) => [
-                    styles.boardPressable,
-                    pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }
-                  ]}
-                >
-                  <OutfitBoard 
-                    selection={selection} 
-                    width={BOARD_WIDTH} 
-                    height={BOARD_HEIGHT}
-                  />
-                  
-                  {/* Overlay indicators */}
-                  <View style={styles.boardOverlay}>
-                    <View style={styles.liveBadge}>
-                      <Sparkles size={12} color={THEME.goldAccent} />
-                      <Text style={styles.liveBadgeText}>LIVE PREVIEW</Text>
-                    </View>
-                    <View style={styles.expandButton}>
-                      <Maximize2 size={16} color={THEME.textSecondary} />
-                    </View>
-                  </View>
-                </Pressable>
-              </View>
+
 
               {/* Item selection by category */}
               <SelectItemsSection items={items} />
@@ -288,57 +259,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  boardPreviewContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  boardPressable: {
-    backgroundColor: THEME.bgSurface,
-    borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: THEME.bgMuted,
-  },
-  boardOverlay: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    pointerEvents: 'none',
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: THEME.bgMuted,
-  },
-  liveBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: THEME.textPrimary,
-    letterSpacing: 0.5,
-  },
-  expandButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: THEME.bgMuted,
-  },
+
   combinationsContainer: {
     marginTop: 8,
   },
