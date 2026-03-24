@@ -66,6 +66,8 @@ export const BLUR = {
  * Note: Phase 1 is light-only, so we export THEME as the primary light color set.
  */
 export const THEME = {
+  text: Typography.textPrimary,
+  background: Backgrounds.bgSurface,
   // Brand Core
   primary: Brand.primary,
   primaryDark: Brand.primaryDark,

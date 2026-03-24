@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,6 +7,7 @@ import { X, Camera as CameraIcon, Check, Image as ImageIcon } from 'lucide-react
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
@@ -30,7 +31,7 @@ const COLORS = {
 export default function AddItemScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { method, origin } = useLocalSearchParams<{ method: string; origin?: string }>();
+  const { method, origin, ts } = useLocalSearchParams<{ method: string; origin?: string; ts?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
@@ -43,6 +44,50 @@ export default function AddItemScreen() {
 
   // Show upload screen first (Stitch design) - always show upload screen, let user choose
   const [showUploadScreen, setShowUploadScreen] = useState(true);
+
+  // Reset state ONLY on first mount (key={ts} change = fresh navigation).
+  // Does NOT run on router.back() returns — those keep component alive.
+  const isFirstMount = useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      setPhotoUri(null);
+      setShowUploadScreen(true);
+    }
+  }, []);
+
+  // Handle hardware back button — step back through the add-item flow
+  useEffect(() => {
+    const backAction = () => {
+      if (photoUri) {
+        setPhotoUri(null);
+        return true;
+      }
+      if (!showUploadScreen) {
+        setShowUploadScreen(true);
+        return true;
+      }
+      // Upload screen: let default back behavior (close to origin)
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [photoUri, showUploadScreen]);
+
+  // Go back one step in the add-item flow
+  const goBack = () => {
+    if (photoUri) {
+      // Preview → camera
+      setPhotoUri(null);
+    } else if (!showUploadScreen) {
+      // Camera → upload
+      setShowUploadScreen(true);
+    } else {
+      // Upload → origin tab
+      closeScreen();
+    }
+  };
 
   // Map origin keys to tab paths — deterministic, no navigation stack dependency
   const ORIGIN_PATHS: Record<string, string> = {
@@ -170,7 +215,9 @@ export default function AddItemScreen() {
   // Stitch-inspired Upload Screen with animated transitions
   if (showUploadScreen && !photoUri) {
     return (
-      <View 
+      <Animated.View 
+        key={ts}
+        entering={ZoomIn.duration(350)}
         style={[styles.uploadContainer, { paddingTop: insets.top }]}
       >
           <View style={styles.uploadHeader}>
@@ -213,7 +260,7 @@ export default function AddItemScreen() {
         </View>
 
         <View style={{ height: insets.bottom + 32 }} />
-      </View>
+      </Animated.View>
     );
   }
 
@@ -236,11 +283,12 @@ export default function AddItemScreen() {
     }
 
     return (
-      <View 
+      <Animated.View 
+        entering={ZoomIn.duration(350)}
         style={styles.cameraContainer}
       >
           <View style={[styles.cameraHeader, { paddingTop: insets.top }]}>
-            <Pressable onPress={closeScreen} style={styles.headerButton}>
+            <Pressable onPress={goBack} style={styles.headerButton}>
               <X size={24} color="white" />
             </Pressable>
             <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
@@ -258,7 +306,7 @@ export default function AddItemScreen() {
             <View style={styles.captureButtonInner} />
           </Pressable>
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
@@ -269,7 +317,7 @@ export default function AddItemScreen() {
         style={[styles.previewContainer, { paddingTop: insets.top }]}
       >
         <View style={styles.previewHeader}>
-          <Pressable onPress={() => router.replace("/(tabs)/wardrobe")} style={styles.headerButton}>
+          <Pressable onPress={goBack} style={styles.headerButton}>
             <X size={24} color={COLORS.textPrimary} />
           </Pressable>
           <Text style={styles.previewTitle}>Preview</Text>

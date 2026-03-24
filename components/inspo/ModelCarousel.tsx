@@ -140,7 +140,6 @@ function CarouselItem({ item, onPress }: CarouselItemProps) {
         source={imageSource}
         style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
         contentFit="cover"
-        transition={200}
       />
       {(item.name || item.outfit) && (
         <View className="absolute bottom-0 left-0 right-0 p-4 pb-6">

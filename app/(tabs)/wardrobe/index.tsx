@@ -59,7 +59,6 @@ const CategoryCard = ({ item }: { item: WardrobeItem }) => (
       }
       style={styles.cardImage}
       contentFit="contain"
-      transition={200}
     />
   </View>
 );

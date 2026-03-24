@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, StyleSheet, Pressable, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useEffect } from 'react';
+import { View, StyleSheet, Pressable, Alert, BackHandler } from 'react-native';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { X, Sparkles, Plus } from 'lucide-react-native';
@@ -43,6 +43,40 @@ export default function OutfitBuilderScreen() {
       router.back();
     }, 400);
   }, [router]);
+
+  const navigation = useNavigation();
+
+  // Handle hardware back button and native gestures
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      // If we're already closing via our custom logic, let the removal happen
+      if (!isVisible) {
+        return;
+      }
+
+      // Prevent immediate removal
+      e.preventDefault();
+
+      // Trigger our custom close logic which includes animation
+      closeScreen();
+    });
+
+    return unsubscribe;
+  }, [navigation, isVisible, closeScreen]);
+
+  // Android hardware back - also covered by beforeRemove but good to have explicit handler
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        closeScreen();
+        return true; 
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [closeScreen])
+  );
 
   // Navigate to add-item screen
   const navigateToAddItem = useCallback(() => {

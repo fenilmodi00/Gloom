@@ -102,7 +102,6 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
         source={{ uri: item.imageUrl }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
-        transition={200}
       />
       {/* Gradient overlay */}
       <View style={styles.gradientOverlay} />

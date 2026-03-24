@@ -9,7 +9,11 @@
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/Colors';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
@@ -123,13 +127,19 @@ export default function InspoScreen() {
   const handleUploadPress = useCallback(() => {
     router.push({
       pathname: '/(tabs)/wardrobe/add-item',
-      params: { origin: 'inspo' },
+      params: { origin: 'inspo', ts: String(Date.now()) },
     });
   }, [router]);
 
   const handleTryOnPress = useCallback((item: TrendingItem) => {
     console.log('Try on pressed for:', item.id);
   }, []);
+
+  // Upload button spring scale animation
+  const uploadScale = useSharedValue(1);
+  const uploadAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: uploadScale.value }],
+  }));
 
   return (
     <Animated.View key={viewKey} style={[styles.container, animatedStyle]}>
@@ -146,9 +156,16 @@ export default function InspoScreen() {
       {/* ======================================== */}
       <View style={[styles.header, { top: insets.top + 16 }]} className="z-20">
         <Text style={styles.title}>Inspo</Text>
-        <Pressable style={styles.uploadButton} onPress={handleUploadPress}>
-          <Text style={styles.uploadText}>Upload outfit</Text>
-        </Pressable>
+        <Animated.View style={uploadAnimatedStyle}>
+          <Pressable
+            style={styles.uploadButton}
+            onPress={handleUploadPress}
+            onPressIn={() => { uploadScale.value = withSpring(0.93, { damping: 15, stiffness: 300 }); }}
+            onPressOut={() => { uploadScale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+          >
+            <Text style={styles.uploadText}>Upload outfit</Text>
+          </Pressable>
+        </Animated.View>
       </View>
 
       {/* ======================================== */}

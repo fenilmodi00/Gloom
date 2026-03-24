@@ -51,12 +51,14 @@ export function Button({
   ...props 
 }: ButtonProps) {
   // Pass variant to children if they are ButtonText
-  const childrenWithProps = React.Children.map(children, child => {
-    if (React.isValidElement(child) && (child.type as any).name === 'ButtonText') {
-      return React.cloneElement(child as React.ReactElement<any>, { variant });
-    }
-    return child;
-  });
+  const childrenWithProps = typeof children === 'function' 
+    ? children 
+    : React.Children.map(children, (child): React.ReactNode => {
+        if (React.isValidElement(child) && (child.type as any).name === 'ButtonText') {
+          return React.cloneElement(child as React.ReactElement<any>, { variant });
+        }
+        return child;
+      });
 
   return (
     <Pressable

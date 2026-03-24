@@ -58,7 +58,6 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
               source={{ uri: item?.image_url }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
-              transition={200}
             />
           </View>
         ))}
