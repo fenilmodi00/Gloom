@@ -162,7 +162,7 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
       ]}
       pointerEvents="box-none"
     >
-      {/* Full-screen fade gradient extending from tab bar to top of screen */}
+      {/* Fade gradient below the tab bar pill */}
       <View style={styles.fadeContainer} pointerEvents="none">
         <LinearGradient
           colors={['transparent', Colors.light.bgCanvas]}
@@ -174,7 +174,7 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
 
       {/* Blur background for frosted glass effect */}
       <BlurView
-        intensity={30}
+        intensity={100}
         tint="prominent"
         style={styles.blurPill}
       >
@@ -230,15 +230,13 @@ const styles = StyleSheet.create({
   },
   fadeContainer: {
     position: 'absolute',
-    bottom: 70, // Height of tab bar pill
+    bottom: -10,
     left: 0,
     right: 0,
-    top: 0, // Extend to top of screen
+    height: 80,
+    zIndex: 49,
   },
   fadeGradient: {
-    flex: 1,
-  },
-  pillGradient: {
     flex: 1,
   },
   blurPill: {
