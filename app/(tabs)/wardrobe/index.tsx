@@ -104,7 +104,7 @@ export default function WardrobeScreen() {
   const insets = useSafeAreaInsets();
   const { items: storeItems, isLoading, fetchItems } = useWardrobeStore();
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
-  const { animatedStyle, viewKey } = useTabAnimation('wardrobe/index');
+  const { animatedStyle } = useTabAnimation('wardrobe/index');
 
   // Use mock data if store is empty
   const items = useMemo(() => {
@@ -260,7 +260,7 @@ export default function WardrobeScreen() {
   }
 
   return (
-    <Animated.View key={viewKey} style={[styles.container, animatedStyle, { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas }]}>
+    <Animated.View style={[styles.container, animatedStyle, { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas }]}>
       {/* Main content - scrollable with header + categories */}
       <FlashList
         data={listData}

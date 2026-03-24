@@ -5,14 +5,13 @@
  * This hook uses react-native-reanimated to create slide-from-right/slide-from-left
  * transitions based on the tab's position in the tab bar.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
-import Animated, {
+import {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSpring,
-  Easing,
 } from 'react-native-reanimated';
 
 // Tab order configuration - must match BottomTabBar.tsx TAB_CONFIG order
@@ -26,6 +25,9 @@ const SPRING_CONFIG = {
   stiffness: 150,
 };
 
+// Global state to track the last active tab across all hook instances
+let globalLastTabIndex = 0;
+
 /**
  * Get the index of a tab route name
  */
@@ -38,28 +40,19 @@ export function useTabAnimation(routeName: string) {
   const currentIndex = getTabIndex(routeName);
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
-  const [viewKey, setViewKey] = useState(0);
   const lastIndexRef = useRef(currentIndex);
-
-  // Initialize global last index if not present
-  if (typeof (global as any).__lastTabIndex === 'undefined') {
-    (global as any).__lastTabIndex = currentIndex;
-  }
 
   useFocusEffect(
     useCallback(() => {
-      const lastTabIndex = (global as any).__lastTabIndex;
+      const lastTabIndex = globalLastTabIndex;
       const isMovingRight = currentIndex > lastTabIndex;
       const isMovingLeft = currentIndex < lastTabIndex;
 
       // Update global last index
-      (global as any).__lastTabIndex = currentIndex;
+      globalLastTabIndex = currentIndex;
 
       // Only animate if we're switching tabs (not returning from modal)
       if (isMovingRight || isMovingLeft) {
-        // Increment key to trigger re-mount
-        setViewKey((k) => k + 1);
-
         // Pre-animation state
         translateX.value = isMovingRight ? SLIDE_DISTANCE : -SLIDE_DISTANCE;
         opacity.value = 0;
@@ -67,6 +60,10 @@ export function useTabAnimation(routeName: string) {
         // Animate in
         translateX.value = withSpring(0, SPRING_CONFIG);
         opacity.value = withTiming(1, { duration: 300 });
+      } else {
+        // Ensure values are reset if no transition (e.g. initial render)
+        translateX.value = 0;
+        opacity.value = 1;
       }
 
       lastIndexRef.current = currentIndex;
@@ -87,7 +84,6 @@ export function useTabAnimation(routeName: string) {
 
   return {
     animatedStyle,
-    viewKey,
   };
 }
 

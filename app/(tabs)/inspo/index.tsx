@@ -88,7 +88,7 @@ export default function InspoScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheetRef>(null);
-  const { animatedStyle, viewKey } = useTabAnimation('inspo/index');
+  const { animatedStyle } = useTabAnimation('inspo/index');
 
   // Inline popup state — keeps inspo screen alive behind the blur backdrop
   const [activeModel, setActiveModel] = useState<ModelCard | null>(null);
@@ -142,7 +142,7 @@ export default function InspoScreen() {
   }));
 
   return (
-    <Animated.View key={viewKey} style={[styles.container, animatedStyle]}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       {/* ======================================== */}
       {/* Layer 1: Top-aligned model carousel */}
       {/* ======================================== */}
