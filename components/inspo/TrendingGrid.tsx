@@ -98,8 +98,12 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
   // Render a single card
   const renderCard = ({ item }: { item: TrendingItem }) => (
     <View style={styles.card}>
-      <Image
-        source={{ uri: item.imageUrl }}
+            <Image
+        source={
+          typeof item.imageUrl === 'string' && item.imageUrl.startsWith('http')
+            ? { uri: item.imageUrl }
+            : (item.imageUrl as any)
+        }
         style={StyleSheet.absoluteFill}
         contentFit="cover"
       />

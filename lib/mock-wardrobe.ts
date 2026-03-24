@@ -7,10 +7,10 @@ import type { WardrobeItem, Category } from '@/types/wardrobe';
 
 // Category mapping from folder names to our Category type
 const FOLDER_TO_CATEGORY: Record<string, Category> = {
-  top: 'upper',
-  bottom: 'lower',
+  top: 'tops',
+  bottom: 'bottoms',
   shoes: 'shoes',
-  accessories: 'accessory',
+  accessories: 'accessories',
 };
 
 // Asset files by category (generated from stats.json and folder contents)
@@ -230,11 +230,11 @@ export function getMockWardrobeItemsWithAssets(): WardrobeItem[] {
   // Tops
   MOCK_ASSETS.top.forEach((asset, index) => {
     items.push({
-      id: `mock-upper-${index}`,
+      id: `mock-tops-${index}`,
       user_id: 'mock-user',
       image_url: asset,
       cutout_url: null,
-      category: 'upper',
+      category: 'tops',
       sub_category: null,
       colors: ['white', 'beige'],
       style_tags: ['casual', 'minimalist'],
@@ -247,11 +247,11 @@ export function getMockWardrobeItemsWithAssets(): WardrobeItem[] {
   // Bottoms
   MOCK_ASSETS.bottom.forEach((asset, index) => {
     items.push({
-      id: `mock-lower-${index}`,
+      id: `mock-bottoms-${index}`,
       user_id: 'mock-user',
       image_url: asset,
       cutout_url: null,
-      category: 'lower',
+      category: 'bottoms',
       sub_category: null,
       colors: ['navy', 'black'],
       style_tags: ['casual'],
@@ -281,11 +281,11 @@ export function getMockWardrobeItemsWithAssets(): WardrobeItem[] {
   // Accessories
   MOCK_ASSETS.accessories.forEach((asset, index) => {
     items.push({
-      id: `mock-accessory-${index}`,
+      id: `mock-accessories-${index}`,
       user_id: 'mock-user',
       image_url: asset,
       cutout_url: null,
-      category: 'accessory',
+      category: 'accessories',
       sub_category: null,
       colors: ['black', 'gold'],
       style_tags: ['classic'],

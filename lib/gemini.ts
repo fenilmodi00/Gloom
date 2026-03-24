@@ -10,7 +10,7 @@ export async function tagWardrobeItem(base64Image: string) {
 
   const prompt = `You are a fashion AI. Analyze this clothing item photo and return ONLY valid JSON:
   {
-    "category": "upper|lower|dress|shoes|bag|accessory",
+    "category": "tops|bottoms|shoes|accessories|outerwear|fullbody|bags",
     "sub_category": "string",
     "colors": ["string"],
     "style_tags": ["string"],

@@ -1,10 +1,10 @@
-export type Category = 'upper' | 'lower' | 'dress' | 'shoes' | 'bag' | 'accessory';
+export type Category = 'tops' | 'bottoms' | 'shoes' | 'accessories' | 'outerwear' | 'fullbody' | 'bags';
 
 export interface WardrobeItem {
   id: string;
   user_id: string;
-  image_url: string;
-  cutout_url: string | null;
+  image_url: string | number;
+  cutout_url: (string | number) | null;
   category: Category;
   sub_category: string | null;
   colors: string[];
@@ -15,8 +15,8 @@ export interface WardrobeItem {
 }
 
 export interface WardrobeItemInput {
-  image_url?: string;
-  cutout_url?: string | null;
+  image_url?: string | number;
+  cutout_url?: (string | number) | null;
   category: Category;
   sub_category?: string | null;
   colors?: string[];

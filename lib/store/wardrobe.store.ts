@@ -43,6 +43,11 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
         style_tags: itemInput.style_tags || [],
         occasion_tags: itemInput.occasion_tags || [],
         fabric_guess: itemInput.fabric_guess,
+        // Supabase typically handles created_at and updated_at automatically
+        // if the table schema is configured with default values and update triggers.
+        // If not, you would explicitly add them here:
+        // created_at: new Date().toISOString(),
+        // updated_at: new Date().toISOString(),
       })
       .select()
       .single();

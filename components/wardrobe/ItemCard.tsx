@@ -28,7 +28,7 @@ export function ItemCard({ item, onPress, size }: ItemCardProps) {
       }}
     >
       <Image
-        source={{ uri: item.cutout_url || item.image_url }}
+        source={(item.cutout_url || item.image_url) as any}
         style={{
           width: '100%',
           height: '100%',

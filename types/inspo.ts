@@ -2,7 +2,7 @@ import type { ImageSourcePropType } from 'react-native';
 
 export interface InspoItem {
   id: string;
-  imageUrl: string;
+  imageUrl: string | ImageSourcePropType;
   title?: string;
 }
 
@@ -39,7 +39,7 @@ export interface TrendingSection {
 
 export interface TrendingItem {
   id: string;
-  imageUrl: string;
+  imageUrl: string | ImageSourcePropType;
   outfitName?: string;
 }
 

@@ -19,12 +19,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Category configuration
 const CATEGORY_CONFIG: { key: Category; label: string }[] = [
-  { key: 'upper', label: 'upper body' },
-  { key: 'lower', label: 'lower body' },
-  { key: 'dress', label: 'dresses' },
-  { key: 'shoes', label: 'shoes' },
-  { key: 'bag', label: 'bags' },
-  { key: 'accessory', label: 'accessories' },
+  { key: 'tops', label: 'Tops' },
+  { key: 'bottoms', label: 'Bottoms' },
+  { key: 'fullbody', label: 'Full Body' },
+  { key: 'outerwear', label: 'Outerwear' },
+  { key: 'shoes', label: 'Shoes' },
+  { key: 'bags', label: 'Bags' },
+  { key: 'accessories', label: 'Accessories' },
 ];
 
 // Vertical gradient colors for each category (top to bottom)
@@ -49,19 +50,20 @@ interface CategorySectionProps {
 }
 
 // Memoized card renderer
-const CategoryCard = ({ item }: { item: WardrobeItem }) => (
-  <View style={styles.cardContainer}>
-    <Image
-      source={
-        typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? { uri: item.cutout_url || item.image_url }
-          : item.image_url
-      }
-      style={styles.cardImage}
-      contentFit="contain"
-    />
-  </View>
-);
+const CategoryCard = ({ item }: { item: WardrobeItem }) => {
+  const uri = item.cutout_url || item.image_url;
+  const source = typeof uri === 'string' ? { uri } : uri;
+  
+  return (
+    <View style={styles.cardContainer}>
+      <Image
+        source={source as any}
+        style={styles.cardImage}
+        contentFit="contain"
+      />
+    </View>
+  );
+};
 
 function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
   const renderItem = useCallback(

@@ -22,7 +22,7 @@ create table wardrobe_items (
   image_url text not null,
   cutout_url text,
   category text not null
-    check (category in ('upper','lower','dress','shoes','bag','accessory')),
+    check (category in ('tops','bottoms','fullbody','outerwear','shoes','bags','accessories')),
   sub_category text,
   colors text[] default '{}',
   style_tags text[] default '{}',

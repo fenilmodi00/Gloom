@@ -16,14 +16,14 @@ import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
 
-// Category configuration
 const CATEGORY_CONFIG: { key: Category; label: string }[] = [
-  { key: 'upper', label: 'upper body' },
-  { key: 'lower', label: 'lower body' },
-  { key: 'dress', label: 'dresses' },
-  { key: 'shoes', label: 'shoes' },
-  { key: 'bag', label: 'bags' },
-  { key: 'accessory', label: 'accessories' },
+  { key: 'tops', label: 'Tops' },
+  { key: 'bottoms', label: 'Bottoms' },
+  { key: 'fullbody', label: 'Full Body' },
+  { key: 'outerwear', label: 'Outerwear' },
+  { key: 'shoes', label: 'Shoes' },
+  { key: 'bags', label: 'Bags' },
+  { key: 'accessories', label: 'Accessories' },
 ];
 
 const GRADIENT_START = THEME.bgCanvas;
@@ -45,7 +45,7 @@ const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => (
     <Image
       source={
         typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? { uri: item.cutout_url || item.image_url }
+          ? (item.cutout_url || item.image_url)
           : item.image_url
       }
       style={styles.cardImage}
@@ -86,12 +86,13 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
   // Group items by category
   const groupedItems = useMemo(() => {
     const groups: Record<Category, WardrobeItem[]> = {
-      upper: [],
-      lower: [],
-      dress: [],
+      tops: [],
+      bottoms: [],
+      fullbody: [],
+      outerwear: [],
       shoes: [],
-      bag: [],
-      accessory: [],
+      bags: [],
+      accessories: [],
     };
     items.forEach((item) => {
       if (groups[item.category]) {
@@ -216,34 +217,19 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
   }, [categoriesWithItems, groupedItems, isSelected, toggleItem]);
 
   return (
-    <ScrollView 
-      style={styles.scrollView}
-      contentContainerStyle={[
-        styles.scrollContent, 
-        { 
-          paddingBottom: insets.bottom + 140,
-          paddingTop: 8,
-        }
-      ]}
-      showsVerticalScrollIndicator={false}
-      contentInsetAdjustmentBehavior="automatic"
-    >
+    <View style={styles.container}>
       {/* First category with header */}
       {renderFirstSection()}
       
       {/* Remaining categories */}
       {renderRemainingSections()}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  scrollContent: {
-    flexGrow: 1,
+  container: {
+    paddingBottom: 20,
   },
   headerGradient: {
     paddingBottom: 16,

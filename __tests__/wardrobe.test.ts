@@ -35,7 +35,7 @@ describe('Wardrobe Store', () => {
       user_id: 'user-1',
       image_url: 'https://example.com/image.jpg',
       cutout_url: null,
-      category: 'upper' as const,
+      category: 'tops' as const,
       sub_category: 'tshirt',
       colors: ['blue', 'white'],
       style_tags: ['casual'],
@@ -57,7 +57,7 @@ describe('Wardrobe Store', () => {
       user_id: 'user-1',
       image_url: 'https://example.com/image.jpg',
       cutout_url: null,
-      category: 'upper' as const,
+      category: 'tops' as const,
       sub_category: 'tshirt',
       colors: [],
       style_tags: [],
@@ -74,9 +74,9 @@ describe('Wardrobe Store', () => {
   });
 
   it('should set category correctly', () => {
-    useWardrobeStore.getState().setCategory('lower');
+    useWardrobeStore.getState().setCategory('bottoms');
     
     const { selectedCategory } = useWardrobeStore.getState();
-    expect(selectedCategory).toBe('lower');
+    expect(selectedCategory).toBe('bottoms');
   });
 });

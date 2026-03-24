@@ -55,7 +55,7 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
             style={styles.imageWrapper}
           >
             <Image
-              source={{ uri: item?.image_url }}
+              source={typeof item?.image_url === 'string' ? { uri: item.image_url } : item?.image_url as any}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
             />

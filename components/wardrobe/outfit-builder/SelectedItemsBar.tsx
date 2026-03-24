@@ -2,11 +2,17 @@
  * SelectedItemsBar
  * 
  * Shows selected items as a row of cutouts with frosted glass effect.
- * "PNGs only" style for a more visual, premium feel.
+ * Tap to expand horizontally — reveals remove (X) buttons on each item.
  */
-import React from 'react';
-import { View, Pressable, StyleSheet, ScrollView, Text as RNText } from 'react-native';
-import Animated from 'react-native-reanimated';
+import React, { useState } from 'react';
+import { View, Pressable, StyleSheet, Text as RNText, useWindowDimensions, ScrollView } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
+  FadeIn,
+  FadeOut,
+  LinearTransition,
+} from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
@@ -17,53 +23,143 @@ import type { WardrobeItem } from '@/types/wardrobe';
 import { THEME } from '@/constants/Colors';
 import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit-builder.store';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const ITEM_SIZE = 48;
+const REMOVE_BUTTON_SIZE = 20;
+
+interface ItemIconProps {
+  item: WardrobeItem;
+  index: number;
+  expanded: boolean;
+  onRemove: (id: string) => void;
+}
+
+const ItemIcon = ({ item, index, expanded, onRemove }: ItemIconProps) => {
+  const animatedWrapperStyle = useAnimatedStyle(() => {
+    return {
+      marginLeft: withSpring(expanded ? 12 : index === 0 ? 0 : -28, {
+        mass: 0.6,
+        damping: 15,
+        stiffness: 100,
+      }),
+    };
+  });
+
+  return (
+    <Animated.View 
+      layout={LinearTransition.springify().mass(0.8)}
+      style={[styles.itemWrapper, animatedWrapperStyle]}
+    >
+      <View style={styles.itemImageContainer}>
+        <Image
+          source={item.cutout_url || item.image_url}
+          style={styles.itemImage}
+          contentFit="contain"
+        />
+      </View>
+      
+      {expanded && (
+        <AnimatedPressable
+          entering={FadeIn.duration(200).delay(index * 30)}
+          exiting={FadeOut.duration(150)}
+          onPress={() => onRemove(item.id)}
+          hitSlop={8}
+          style={styles.removeButton}
+        >
+          <X size={12} color="#fff" strokeWidth={3} />
+        </AnimatedPressable>
+      )}
+    </Animated.View>
+  );
+};
 
 export const SelectedItemsBar = () => {
+  const [expanded, setExpanded] = useState(false);
   const selectedItems = useSelectedItemsArray();
+  const removeSelection = useOutfitBuilderStore((s) => s.removeSelection);
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+
+  // Dynamic max width to prevent overlapping with Generate button
+  const MAX_BAR_WIDTH = screenWidth - 140;
+
+  const toggleExpand = () => {
+    if (selectedItems.length === 0) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setExpanded(!expanded);
+  };
+
+  const handleRemove = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    removeSelection(id);
+    // If only 1 item left (which was just removed), close expansion
+    if (selectedItems.length <= 1) {
+      setExpanded(false);
+    }
+  };
+
+  const animatedInnerStyle = useAnimatedStyle(() => {
+    return {
+      paddingHorizontal: withSpring(expanded ? 16 : 10, {
+        damping: 18,
+        stiffness: 120,
+      }),
+    };
+  });
 
   if (selectedItems.length === 0) return null;
 
   return (
-    <View 
+    <Animated.View
+      layout={LinearTransition.springify().mass(0.8)}
       style={[styles.container, { bottom: insets.bottom + 16 }]}
     >
-      <BlurView intensity={70} tint="light" style={styles.blurContainer}>
-        <View style={styles.stackContainer}>
-          {selectedItems.slice(0, 4).map((item, index) => (
-            <View
-              key={item.id}
-              style={[
-                styles.itemImageContainer,
-                { marginLeft: index === 0 ? 0 : -24, zIndex: 10 - index }
-              ]}
+      <Pressable onPress={toggleExpand}>
+        <BlurView
+          intensity={85}
+          tint="light"
+          style={[styles.blurContainer, { maxWidth: MAX_BAR_WIDTH }]}
+        >
+          <Animated.View style={[styles.innerContent, animatedInnerStyle]}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+              scrollEnabled={expanded}
+              keyboardShouldPersistTaps="always"
             >
-              <Image
-                source={
-                  typeof item.image_url === 'string' && item.image_url.startsWith('http')
-                    ? { uri: item.cutout_url || item.image_url }
-                    : item.image_url
-                }
-                style={styles.itemImage}
-                contentFit="contain"
-              />
-            </View>
-          ))}
-          {selectedItems.length > 4 && (
-            <View style={styles.moreBadge}>
-              <RNText style={styles.moreText}>+{selectedItems.length - 4}</RNText>
-            </View>
-          )}
-          {selectedItems.length > 0 && (
-            <View style={styles.countBadge}>
-              <RNText style={styles.countText}>{selectedItems.length}</RNText>
-            </View>
-          )}
-        </View>
-      </BlurView>
-    </View>
+              {selectedItems.map((item, index) => {
+                // Collapsed: show first 4 items, then a +N badge
+                if (!expanded && index >= 4) return null;
+                
+                return (
+                  <ItemIcon 
+                    key={item.id} 
+                    item={item} 
+                    index={index}
+                    expanded={expanded}
+                    onRemove={handleRemove}
+                  />
+                );
+              })}
+
+              {!expanded && selectedItems.length > 4 && (
+                <View style={styles.moreBadge}>
+                  <RNText style={styles.moreText}>+{selectedItems.length - 4}</RNText>
+                </View>
+              )}
+            </ScrollView>
+
+            {!expanded && (
+              <View style={styles.countPill}>
+                <RNText style={styles.countText}>{selectedItems.length}</RNText>
+              </View>
+            )}
+          </Animated.View>
+        </BlurView>
+      </Pressable>
+    </Animated.View>
   );
 };
 
@@ -74,17 +170,24 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   blurContainer: {
-    borderRadius: 28,
+    borderRadius: 30,
     overflow: 'hidden',
-    padding: 6,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Slight overlay for glassmorphism
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
-  stackContainer: {
+  innerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 8,
+    height: 64,
+  },
+  scrollContent: {
+    alignItems: 'center',
+  },
+  itemWrapper: {
+    width: ITEM_SIZE,
+    height: ITEM_SIZE,
+    position: 'relative',
   },
   itemImageContainer: {
     width: ITEM_SIZE,
@@ -99,38 +202,57 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   itemImage: {
-    width: '85%',
-    height: '85%',
+    width: '100%',
+    height: '100%',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: REMOVE_BUTTON_SIZE,
+    height: REMOVE_BUTTON_SIZE,
+    borderRadius: REMOVE_BUTTON_SIZE / 2,
+    backgroundColor: THEME.stateError,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    zIndex: 20,
   },
   moreBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: THEME.primary,
-    marginLeft: -12,
-    zIndex: 20,
+    width: ITEM_SIZE - 4,
+    height: ITEM_SIZE - 4,
+    borderRadius: (ITEM_SIZE - 4) / 2,
+    backgroundColor: THEME.bgMuted,
+    marginLeft: -24,
+    zIndex: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: THEME.bgSurface,
   },
   moreText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
-    color: THEME.bgSurface,
+    color: THEME.textSecondary,
   },
-  countBadge: {
-    marginLeft: 10,
+  countPill: {
+    marginLeft: 12,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    backgroundColor: 'rgba(26, 26, 26, 0.05)',
+    backgroundColor: 'rgba(26, 26, 26, 0.08)',
     borderRadius: 12,
   },
   countText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     color: THEME.textPrimary,
   },
 });
