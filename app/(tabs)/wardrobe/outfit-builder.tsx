@@ -13,20 +13,8 @@ import { StyleSelector } from '@/components/wardrobe/outfit-builder/StyleSelecto
 import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useSelectedItemsArray, useSelectedStyle } from '@/lib/store/outfit-builder.store';
+import { THEME } from '@/constants/Colors';
 
-// Design tokens from AGENTS.md
-const COLORS = {
-  primary: '#8B7355',
-  background: '#F5F2EE',
-  surface: '#FFFFFF',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  brand: '#8B7355',
-  brandLight: '#D4C5B0',
-  white: '#FFFFFF',
-  error: '#C0392B',
-  success: '#27AE60',
-};
 
 export default function OutfitBuilderScreen() {
   const router = useRouter();
@@ -69,19 +57,19 @@ export default function OutfitBuilderScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.header, { paddingTop: insets.top + 6 }]}>
-        <View style={styles.headerLeft} />
-        <View style={styles.headerCenter}>
+      <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Build Outfit</Text>
+          <Text style={styles.headerSubtitle}>Mix & match items</Text>
         </View>
         <View style={styles.headerRight}>
           <View style={styles.actionPill}>
             <Pressable onPress={navigateToAddItem} style={styles.pillButton}>
-              <Plus size={20} color={COLORS.white} />
+              <Plus size={18} color={THEME.bgSurface} />
             </Pressable>
             <View style={styles.pillDivider} />
             <Pressable onPress={closeScreen} style={styles.pillButton}>
-              <X size={20} color={COLORS.white} />
+              <X size={18} color={THEME.bgSurface} />
             </Pressable>
           </View>
         </View>
@@ -111,7 +99,7 @@ export default function OutfitBuilderScreen() {
           onPress={handleGenerateOutfit}
           disabled={selectedItems.length === 0}
         >
-          <Sparkles size={20} color={selectedItems.length > 0 ? COLORS.white : COLORS.textSecondary} />
+          <Sparkles size={20} color={selectedItems.length > 0 ? THEME.bgSurface : THEME.textSecondary} />
         </Pressable>
       </Animated.View>
     </View>
@@ -121,55 +109,59 @@ export default function OutfitBuilderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: THEME.bgCanvas,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: THEME.bgCanvas,
   },
   headerLeft: {
     flex: 1,
-  },
-  headerCenter: {
-    flex: 2,
-    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerRight: {
-    flex: 1,
     alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
+    fontSize: 22,
+    fontWeight: '800',
+    color: THEME.textPrimary,
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: THEME.textSecondary,
+    marginTop: -2,
   },
   actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: THEME.primary,
+    borderRadius: 22,
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+    shadowColor: THEME.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   pillButton: {
-    width: 44,
-    height: 32,
+    width: 40,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: 18,
   },
   pillDivider: {
     width: 1,
-    height: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    marginHorizontal: 0,
+    height: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   mainContent: {
     flex: 1,
@@ -179,17 +171,17 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   generateButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.brand,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: THEME.goldAccent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowColor: THEME.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   generateButtonDisabled: {
     backgroundColor: 'rgba(0, 0, 0, 0.05)',

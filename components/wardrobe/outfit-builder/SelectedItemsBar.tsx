@@ -14,16 +14,9 @@ import * as Haptics from 'expo-haptics';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { WardrobeItem } from '@/types/wardrobe';
+import { THEME } from '@/constants/Colors';
 import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit-builder.store';
 
-// Design tokens
-const COLORS = {
-  primary: '#8B7355',
-  surface: 'rgba(253, 250, 246, 0.9)',
-  border: 'rgba(139, 115, 85, 0.2)',
-  textPrimary: '#1A1A1A',
-  white: '#FDFAF6',
-};
 
 const ITEM_SIZE = 48;
 
@@ -99,9 +92,9 @@ const styles = StyleSheet.create({
     width: ITEM_SIZE,
     height: ITEM_SIZE,
     borderRadius: ITEM_SIZE / 2,
-    backgroundColor: COLORS.white,
+    backgroundColor: THEME.bgSurface,
     borderWidth: 2,
-    borderColor: COLORS.white,
+    borderColor: THEME.bgSurface,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -117,18 +110,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.primary,
+    backgroundColor: THEME.primary,
     marginLeft: -12,
     zIndex: 20,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: COLORS.white,
+    borderColor: THEME.bgSurface,
   },
   moreText: {
     fontSize: 10,
     fontWeight: '700',
-    color: COLORS.white,
+    color: THEME.bgSurface,
   },
   countBadge: {
     marginLeft: 10,
@@ -140,7 +133,7 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: THEME.textPrimary,
   },
 });
 

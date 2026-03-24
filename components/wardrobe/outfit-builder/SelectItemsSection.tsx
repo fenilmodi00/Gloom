@@ -14,6 +14,7 @@ import { Check, ChevronRight } from 'lucide-react-native';
 
 import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
+import { THEME } from '@/constants/Colors';
 
 // Category configuration
 const CATEGORY_CONFIG: { key: Category; label: string }[] = [
@@ -25,16 +26,9 @@ const CATEGORY_CONFIG: { key: Category; label: string }[] = [
   { key: 'accessory', label: 'accessories' },
 ];
 
-const GRADIENT_START = '#F5F2EE'; // bgCanvas
-const GRADIENT_END = '#F0EBE3';   // bgSurfaceRaised
+const GRADIENT_START = THEME.bgCanvas;
+const GRADIENT_END = THEME.bgSurfaceRaised;
 
-const COLORS = {
-  primary: '#8B7355',      // primary
-  textPrimary: '#1A1A1A',  // textPrimary
-  textSecondary: '#6B6B6B', // textSecondary
-  surface: '#FDFAF6',      // bgSurface
-  skeleton: '#EAE4DA',     // bgMuted
-};
 
 const CARD_WIDTH = 120;
 const CARD_HEIGHT = 150;
@@ -147,7 +141,7 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionLabel}>{first.label}</Text>
-            <ChevronRight size={16} color={COLORS.textSecondary} />
+            <ChevronRight size={16} color={THEME.textSecondary} />
           </View>
         </View>
         
@@ -193,7 +187,7 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionLabel}>{label}</Text>
-              <ChevronRight size={16} color={COLORS.textSecondary} />
+              <ChevronRight size={16} color={THEME.textSecondary} />
             </View>
           </View>
           
@@ -263,7 +257,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: THEME.textPrimary,
     letterSpacing: -0.5,
   },
   sectionHeaderRow: {
@@ -278,7 +272,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 15,
     fontWeight: '500',
-    color: COLORS.textSecondary,
+    color: THEME.textSecondary,
   },
   sectionContent: {
     gap: 12,
@@ -312,7 +306,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.primary,
+    backgroundColor: THEME.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -320,13 +314,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: THEME.textPrimary,
     textAlign: 'center',
     marginTop: 40,
   },
   emptySubtext: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: THEME.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -337,7 +331,7 @@ const styles = StyleSheet.create({
   skeletonHeader: {
     width: 120,
     height: 16,
-    backgroundColor: COLORS.skeleton,
+    backgroundColor: THEME.skeleton,
     borderRadius: 4,
     marginBottom: 12,
   },
@@ -348,7 +342,7 @@ const styles = StyleSheet.create({
   skeletonCard: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    backgroundColor: COLORS.skeleton,
+    backgroundColor: THEME.skeleton,
     borderRadius: 12,
   },
 });

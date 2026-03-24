@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -161,6 +162,16 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
       ]}
       pointerEvents="box-none"
     >
+      {/* Full-screen fade gradient extending from tab bar to top of screen */}
+      <View style={styles.fadeContainer} pointerEvents="none">
+        <LinearGradient
+          colors={['transparent', Colors.light.bgCanvas]}
+          style={styles.fadeGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        />
+      </View>
+
       {/* Blur background for frosted glass effect */}
       <BlurView
         intensity={30}
@@ -216,6 +227,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 50,
     backgroundColor: 'transparent',
+  },
+  fadeContainer: {
+    position: 'absolute',
+    bottom: 70, // Height of tab bar pill
+    left: 0,
+    right: 0,
+    top: 0, // Extend to top of screen
+  },
+  fadeGradient: {
+    flex: 1,
+  },
+  pillGradient: {
+    flex: 1,
   },
   blurPill: {
     borderRadius: 32,

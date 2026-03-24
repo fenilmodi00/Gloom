@@ -13,15 +13,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOutfitBuilderStore, OUTFIT_STYLES, type OutfitStyle } from '@/lib/store/outfit-builder.store';
-
-const COLORS = {
-  primary: '#8B7355',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  surface: '#FDFAF6',
-  surfaceBg: 'rgba(253, 250, 246, 0.98)',
-  surfaceGlass: 'rgba(253, 250, 246, 0.85)',
-};
+import { THEME } from '@/constants/Colors';
 
 const STYLE_LABELS: Record<OutfitStyle, string> = {
   casual: 'Casual',
@@ -68,7 +60,7 @@ export const StyleSelector = () => {
               ]}
             >
               <RNText style={[styles.optionText, !selectedStyle && styles.optionTextSelected]}>Any Style</RNText>
-              {!selectedStyle && <Check size={16} color={COLORS.primary} strokeWidth={3} />}
+              {!selectedStyle && <Check size={16} color={THEME.primary} strokeWidth={3} />}
             </Pressable>
             {OUTFIT_STYLES.map((style) => (
               <Pressable
@@ -83,7 +75,7 @@ export const StyleSelector = () => {
                 <RNText style={[styles.optionText, selectedStyle === style && styles.optionTextSelected]}>
                   {STYLE_LABELS[style]}
                 </RNText>
-                {selectedStyle === style && <Check size={16} color={COLORS.primary} strokeWidth={3} />}
+                {selectedStyle === style && <Check size={16} color={THEME.primary} strokeWidth={3} />}
               </Pressable>
             ))}
           </View>
@@ -105,9 +97,9 @@ export const StyleSelector = () => {
           </RNText>
           <View style={styles.iconContainer}>
             {isOpen ? (
-              <ChevronUp size={14} color={COLORS.primary} strokeWidth={3} />
+              <ChevronUp size={14} color={THEME.primary} strokeWidth={3} />
             ) : (
-              <ChevronDown size={14} color={COLORS.textSecondary} strokeWidth={3} />
+              <ChevronDown size={14} color={THEME.textSecondary} strokeWidth={3} />
             )}
           </View>
         </View>
@@ -130,7 +122,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   triggerActive: {
-    borderColor: COLORS.primary,
+    borderColor: THEME.goldAccent,
   },
   triggerPressed: {
     transform: [{ scale: 0.97 }],
@@ -141,19 +133,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: COLORS.surfaceGlass,
+    backgroundColor: 'rgba(253, 250, 246, 0.85)', // surfaceGlass equivalent
   },
   triggerText: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: THEME.textPrimary,
     marginRight: 8,
   },
   iconContainer: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: THEME.bgSurface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -174,7 +166,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   dropdown: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: THEME.bgSurface,
     padding: 6,
   },
   option: {
@@ -185,7 +177,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     marginBottom: 2,
-    backgroundColor: COLORS.surface,
+    backgroundColor: THEME.bgSurface,
   },
   optionPressed: {
     backgroundColor: 'rgba(139, 115, 85, 0.1)',
@@ -196,10 +188,10 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    color: THEME.textSecondary,
   },
   optionTextSelected: {
-    color: COLORS.textPrimary,
+    color: THEME.textPrimary,
     fontWeight: '700',
   },
 });
