@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
-import { View, StyleSheet, Pressable, Alert, BackHandler } from 'react-native';
+import { View, StyleSheet, Pressable, Alert, BackHandler, Dimensions } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,6 +14,7 @@ import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useSelectedItemsArray, useSelectedStyle } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
+import { OutfitBoard, useOutfitStore } from '@/components/outfit-board';
 
 
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
@@ -24,6 +25,12 @@ export default function OutfitBuilderScreen() {
   const { items: storeItems } = useWardrobeStore();
   const selectedItems = useSelectedItemsArray();
   const selectedStyle = useSelectedStyle();
+
+  // Outfit store for the board
+  const { top, bottom, shoes, accessory } = useOutfitStore();
+
+  const BOARD_W = Dimensions.get('window').width - 32;
+  const BOARD_H = BOARD_W * 0.8; // shorter board for preview area
 
   // Use mock data if store is empty
   const items = useMemo(() => {
@@ -131,6 +138,17 @@ export default function OutfitBuilderScreen() {
         <SelectItemsSection items={items} />
       </View>
 
+      <View style={styles.boardContainer}>
+        <OutfitBoard
+          width={BOARD_W}
+          height={BOARD_H}
+          top={top}
+          bottom={bottom}
+          shoes={shoes}
+          accessory={accessory}
+        />
+      </View>
+
       {/* Floating Style Selector - bottom center */}
       <StyleSelector />
 
@@ -217,6 +235,11 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
+  },
+  boardContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 80,
   },
   generateButtonContainer: {
     position: 'absolute',
