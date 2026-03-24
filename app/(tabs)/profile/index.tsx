@@ -11,7 +11,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuthStore();
   const router = useRouter();
-  const { animatedStyle, viewKey } = useTabAnimation('profile/index');
+  const { animatedStyle } = useTabAnimation('profile/index');
 
   const handleSignOut = async () => {
     await signOut();
@@ -19,7 +19,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Animated.View key={viewKey} style={[styles.container, animatedStyle]}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>

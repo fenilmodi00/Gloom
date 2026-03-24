@@ -25,7 +25,7 @@ export default function OutfitsScreen() {
   const { user } = useAuthStore();
   const { items: wardrobeItems, fetchItems } = useWardrobeStore();
   const { outfits, isLoading, fetchOutfits, addOutfit } = useOutfitStore();
-  const { animatedStyle, viewKey } = useTabAnimation('outfits/index');
+  const { animatedStyle } = useTabAnimation('outfits/index');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -144,7 +144,7 @@ export default function OutfitsScreen() {
   // ─── MAIN RENDER ────────────────────────────────────────
   if (isLoading && outfits.length === 0) {
     return (
-      <Animated.View key={viewKey} style={animatedStyle}>
+      <Animated.View style={animatedStyle}>
         <View style={{ flex: 1, backgroundColor: Colors.light.bgCanvas, justifyContent: 'center', alignItems: 'center' }}>
           <LoadingOverlay message="Loading outfits..." />
         </View>
@@ -153,7 +153,7 @@ export default function OutfitsScreen() {
   }
 
   return (
-    <Animated.View key={viewKey} style={animatedStyle}>
+    <Animated.View style={animatedStyle}>
       <SafeAreaView style={styles.container} edges={['top']}>
         {/* Header — Stitch style */}
         <View className="flex-row justify-between items-center px-8 pt-2 pb-4">
