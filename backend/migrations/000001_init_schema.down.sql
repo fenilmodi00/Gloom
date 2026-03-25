@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS outfits;
+DROP TABLE IF EXISTS wardrobe_items;
+DROP TABLE IF EXISTS profiles;

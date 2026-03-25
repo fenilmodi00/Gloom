@@ -1,0 +1,136 @@
+package outfit
+
+import (
+	"backend/internal/db"
+	"backend/internal/middleware"
+	"backend/internal/response"
+	"context"
+	"fmt"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+)
+
+type Handler struct {
+	db *db.DB
+	v  *validator.Validate
+}
+
+func New(database *db.DB) *Handler {
+	return &Handler{
+		db: database,
+		v:  validator.New(),
+	}
+}
+
+func (h *Handler) RegisterRoutes(router fiber.Router) {
+	// TODO(Phase2): Integrate Gemini AI outfit recommendation endpoint
+	outfitGroup := router.Group("/outfits")
+	outfitGroup.Get("/", h.ListOutfits)
+	outfitGroup.Post("/", h.CreateOutfit)
+	outfitGroup.Get("/:id", h.GetOutfit)
+	outfitGroup.Delete("/:id", h.DeleteOutfit)
+}
+
+func (h *Handler) ListOutfits(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	occasionFilter := c.Query("occasion")
+	vibeFilter := c.Query("vibe")
+
+	query := `SELECT id, user_id, item_ids, occasion, vibe, color_reasoning, ai_score, cover_image_url, created_at FROM outfits WHERE user_id = $1`
+	args := []interface{}{userID}
+
+	if occasionFilter != "" {
+		args = append(args, occasionFilter)
+		query += fmt.Sprintf(` AND occasion = $%d`, len(args))
+	}
+	if vibeFilter != "" {
+		args = append(args, vibeFilter)
+		query += fmt.Sprintf(` AND vibe = $%d`, len(args))
+	}
+
+	query += ` ORDER BY created_at DESC`
+
+	rows, err := h.db.Query(context.Background(), query, args...)
+	if err != nil {
+		return response.InternalError(c, "error fetching outfits")
+	}
+	defer rows.Close()
+
+	outfits := []db.Outfit{}
+	for rows.Next() {
+		var outfit db.Outfit
+		if err := rows.Scan(&outfit.ID, &outfit.UserID, &outfit.ItemIDs, &outfit.Occasion, &outfit.Vibe, &outfit.ColorReasoning, &outfit.AIScore, &outfit.CoverImageURL, &outfit.CreatedAt); err != nil {
+			return response.InternalError(c, "error mapping outfits")
+		}
+		outfits = append(outfits, outfit)
+	}
+
+	return response.Success(c, outfits)
+}
+
+func (h *Handler) CreateOutfit(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	var req db.CreateOutfitRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.BadRequest(c, "invalid request body")
+	}
+
+	if err := h.v.Struct(req); err != nil {
+		var errs []string
+		for _, e := range err.(validator.ValidationErrors) {
+			errs = append(errs, fmt.Sprintf("%s: %s", e.Field(), e.Tag()))
+		}
+		return response.ValidationError(c, errs)
+	}
+
+	query := `INSERT INTO outfits (user_id, item_ids, occasion, vibe, color_reasoning, ai_score, cover_image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, item_ids, occasion, vibe, color_reasoning, ai_score, cover_image_url, created_at`
+	var outfit db.Outfit
+	err := h.db.QueryRow(context.Background(), query, userID, req.ItemIDs, req.Occasion, req.Vibe, req.ColorReasoning, req.AIScore, req.CoverImageURL).Scan(&outfit.ID, &outfit.UserID, &outfit.ItemIDs, &outfit.Occasion, &outfit.Vibe, &outfit.ColorReasoning, &outfit.AIScore, &outfit.CoverImageURL, &outfit.CreatedAt)
+	if err != nil {
+		return response.InternalError(c, "error creating outfit")
+	}
+
+	return response.Created(c, outfit)
+}
+
+func (h *Handler) GetOutfit(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return response.BadRequest(c, "invalid uuid format")
+	}
+
+	var outfit db.Outfit
+	err = h.db.QueryRow(context.Background(), `SELECT id, user_id, item_ids, occasion, vibe, color_reasoning, ai_score, cover_image_url, created_at FROM outfits WHERE id = $1 AND user_id = $2`, id, userID).Scan(&outfit.ID, &outfit.UserID, &outfit.ItemIDs, &outfit.Occasion, &outfit.Vibe, &outfit.ColorReasoning, &outfit.AIScore, &outfit.CoverImageURL, &outfit.CreatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return response.NotFound(c, "outfit not found")
+		}
+		return response.InternalError(c, "error fetching outfit")
+	}
+
+	return response.Success(c, outfit)
+}
+
+func (h *Handler) DeleteOutfit(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return response.BadRequest(c, "invalid uuid format")
+	}
+
+	tag, err := h.db.Exec(context.Background(), `DELETE FROM outfits WHERE id = $1 AND user_id = $2`, id, userID)
+	if err != nil {
+		return response.InternalError(c, "error deleting outfit")
+	}
+
+	if tag.RowsAffected() == 0 {
+		return response.NotFound(c, "outfit not found")
+	}
+
+	return response.NoContent(c)
+}
