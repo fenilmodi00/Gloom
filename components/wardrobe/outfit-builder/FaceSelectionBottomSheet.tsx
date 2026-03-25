@@ -1,11 +1,5 @@
 import { Typography } from '@/constants/Typography';
-/**
- * FaceSelectionBottomSheet
- *
- * Bottom sheet for face selection before try-on.
- * Shows face carousel and "Try on" button.
- */
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
 import { Sparkles, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef } from 'react';
@@ -14,10 +8,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { THEME } from '@/constants/Colors';
 import { FaceCarousel, type FaceItem } from './FaceCarousel';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface FaceSelectionBottomSheetProps {
   isOpen: boolean;
@@ -29,10 +19,6 @@ interface FaceSelectionBottomSheetProps {
   onAddFace?: () => void;
 }
 
-// ============================================================================
-// Component
-// ============================================================================
-
 export function FaceSelectionBottomSheet({
   isOpen,
   onClose,
@@ -43,11 +29,8 @@ export function FaceSelectionBottomSheet({
   onAddFace,
 }: FaceSelectionBottomSheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ['50%'], []);
 
-  // Snap points
-  const snapPoints = useMemo(() => ['35%'], []);
-
-  // Backdrop component
   const renderBackdrop = useCallback(
     (props: any) => (
       <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
@@ -55,30 +38,26 @@ export function FaceSelectionBottomSheet({
     []
   );
 
-  // Get selected face
-  const selectedFace = faces.find(f => f.id === selectedFaceId) || null;
+  const selectedFace = faces.find((f) => f.id === selectedFaceId) || null;
 
-  // Handle close - only close the sheet, let handleSheetChange update parent state
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     bottomSheetRef.current?.close();
   }, []);
 
-  // Handle try on - call onTryOn immediately, then close sheet
   const handleTryOn = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onTryOn(selectedFace);
     bottomSheetRef.current?.close();
   }, [onTryOn, selectedFace]);
 
-  // Handle sheet changes
-  const handleSheetChange = useCallback((index: number) => {
-    if (index === -1) {
-      onClose();
-    }
-  }, [onClose]);
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) onClose();
+    },
+    [onClose]
+  );
 
-  // Open/close based on isOpen prop
   React.useEffect(() => {
     if (isOpen) {
       bottomSheetRef.current?.expand();
@@ -90,7 +69,7 @@ export function FaceSelectionBottomSheet({
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={-1} // Closed by default
+      index={-1}
       snapPoints={snapPoints}
       onChange={handleSheetChange}
       enablePanDownToClose
@@ -98,7 +77,15 @@ export function FaceSelectionBottomSheet({
       handleIndicatorStyle={styles.handleIndicator}
       backdropComponent={renderBackdrop}
     >
-      <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
+      {/*
+        🔧 FIX 1: BottomSheetView instead of plain View.
+        Plain View breaks bottom sheet's internal height measurement
+        making the sheet content invisible. BottomSheetView is the
+        correct non-scrollable container for @gorhom/bottom-sheet
+        and respects overflow:'visible' unlike BottomSheetScrollView.
+      */}
+      <BottomSheetView style={styles.contentContainer}>
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Select Face for Try-On</Text>
@@ -107,15 +94,17 @@ export function FaceSelectionBottomSheet({
           </Pressable>
         </View>
 
-        {/* Face Carousel */}
-        <View style={styles.carouselContainer}>
-          <FaceCarousel
-            faces={faces}
-            selectedFaceId={selectedFaceId}
-            onSelectFace={onSelectFace}
-            onAddFace={onAddFace}
-          />
-        </View>
+        {/*
+          🔧 FIX 2: Removed the redundant carouselContainer wrapper View.
+          FaceCarousel already has its own container with marginHorizontal:-16.
+          Double-wrapping with padding/alignment was breaking the edge-to-edge layout.
+        */}
+        <FaceCarousel
+          faces={faces}
+          selectedFaceId={selectedFaceId}
+          onSelectFace={onSelectFace}
+          onAddFace={onAddFace}
+        />
 
         {/* Selected Face Info */}
         {selectedFace && !selectedFace.isAddButton && (
@@ -126,21 +115,20 @@ export function FaceSelectionBottomSheet({
 
         {/* Try On Button */}
         <Pressable
-          style={[styles.tryOnButton, !selectedFace && styles.tryOnButtonDisabled]}
+          style={[
+            styles.tryOnButton,
+            !selectedFace && styles.tryOnButtonDisabled,
+          ]}
           onPress={handleTryOn}
           disabled={!selectedFace}
         >
           <Text style={styles.tryOnButtonText}>Try on</Text>
           <Sparkles size={18} color={THEME.bgSurface} />
         </Pressable>
-      </BottomSheetScrollView>
+      </BottomSheetView>
     </BottomSheet>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
 
 const styles = StyleSheet.create({
   sheetBackground: {
@@ -192,7 +180,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 20,
     gap: 8,
-    marginTop: 8,
+    marginTop: 20,
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
   },
   tryOnButtonDisabled: {

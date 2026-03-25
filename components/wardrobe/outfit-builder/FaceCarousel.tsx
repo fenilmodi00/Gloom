@@ -8,6 +8,8 @@ import { Typography } from '@/constants/Typography';
 import { Image } from 'expo-image';
 import { useCallback, useMemo } from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { Text } from '@/components/ui/text';
@@ -37,10 +39,12 @@ interface FaceCarouselProps {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Smaller cards for faces
-const CARD_WIDTH = 100;
-const CARD_HEIGHT = 120;
-const FACE_IMAGE_SIZE = 80;
+// Face card dimensions
+const CARD_WIDTH = 300;
+const CARD_HEIGHT = 180;
+const FACE_IMAGE_WIDTH = 130;
+const FACE_IMAGE_HEIGHT = 178;
+const FACE_IMAGE_RADIUS = 60;
 
 // ============================================================================
 // Component
@@ -73,10 +77,11 @@ export function FaceCarousel({
   }, [faces]);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: FaceItem; index: number }) => (
-      <FaceCard
+    ({ item, animationValue }: { item: FaceItem; animationValue: SharedValue<number> }) => (
+      <AnimatedFaceCard
         item={item}
         isSelected={item.id === selectedFaceId}
+        animationValue={animationValue}
         onPress={() => {
           if (item.isAddButton && onAddFace) {
             onAddFace();
@@ -96,7 +101,7 @@ export function FaceCarousel({
   return (
     <View style={styles.carouselContainer}>
       <Carousel
-        width={CARD_WIDTH}
+        width={SCREEN_WIDTH}
         height={CARD_HEIGHT}
         data={carouselData}
         defaultIndex={0}
@@ -104,7 +109,7 @@ export function FaceCarousel({
         mode="parallax"
         modeConfig={{
           parallaxScrollingScale: 0.9,
-          parallaxScrollingOffset: CARD_WIDTH * 0.6,
+          parallaxScrollingOffset:  CARD_WIDTH * 1.0,
           parallaxAdjacentItemScale: 0.7,
         }}
         loop={carouselData.length > 2}
@@ -117,8 +122,32 @@ export function FaceCarousel({
 }
 
 // ============================================================================
-// Face Card
+// Animated Face Card
 // ============================================================================
+
+interface AnimatedFaceCardProps {
+  item: FaceItem;
+  isSelected: boolean;
+  animationValue: SharedValue<number>;
+  onPress: () => void;
+}
+
+function AnimatedFaceCard({ item, isSelected, animationValue, onPress }: AnimatedFaceCardProps) {
+  const animatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      animationValue.value,
+      [-1, 0, 1],
+      [0.4, 1, 0.4]
+    );
+    return { opacity };
+  });
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <FaceCard item={item} isSelected={isSelected} onPress={onPress} />
+    </Animated.View>
+  );
+}
 
 interface FaceCardProps {
   item: FaceItem;
@@ -164,9 +193,10 @@ function FaceCard({ item, isSelected, onPress }: FaceCardProps) {
 
 const styles = StyleSheet.create({
   carouselContainer: {
-    height: 140,
+    height: CARD_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: -16,
   },
   faceCard: {
     width: CARD_WIDTH,
@@ -179,16 +209,17 @@ const styles = StyleSheet.create({
     // Add some visual indicator for selected face
   },
   faceImage: {
-    width: FACE_IMAGE_SIZE,
-    height: FACE_IMAGE_SIZE,
-    borderRadius: FACE_IMAGE_SIZE / 2,
+    width: FACE_IMAGE_WIDTH,
+    height: FACE_IMAGE_HEIGHT,
+    borderRadius: FACE_IMAGE_RADIUS,
     borderWidth: 2,
     borderColor: 'transparent',
+    overflow: 'hidden',
   },
   addFaceButton: {
-    width: FACE_IMAGE_SIZE,
-    height: FACE_IMAGE_SIZE,
-    borderRadius: FACE_IMAGE_SIZE / 2,
+    width: FACE_IMAGE_WIDTH,
+    height: FACE_IMAGE_HEIGHT,
+    borderRadius: FACE_IMAGE_RADIUS,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',

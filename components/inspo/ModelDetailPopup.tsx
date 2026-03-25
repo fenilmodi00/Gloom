@@ -7,36 +7,33 @@
  * - Scale+fade animation (not bottom-sheet slide-up)
  * - Uses react-native-reanimated-carousel for reliable swiping
  */
-import React, { useEffect, useState, useCallback } from 'react';
-import { Typography } from '@/constants/Typography';
 import Colors from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
+import { Feather } from '@expo/vector-icons';
+import { Asset } from 'expo-asset';
+import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Sharing from 'expo-sharing';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
-  View,
+  Alert,
+  BackHandler,
+  Dimensions,
   Modal,
   Pressable,
-  Dimensions,
-  BackHandler,
-  Text,
   StyleSheet,
-  type ViewStyle,
-  type TextStyle,
-  type ImageStyle,
+  Text,
+  View
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Image } from 'expo-image';
-import { Feather } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
-import { Alert } from 'react-native';
-import { Asset } from 'expo-asset';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
   withTiming,
+  runOnJS,
 } from 'react-native-reanimated';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { OutfitBoard } from '@/components/outfit-board/OutfitBoard';
@@ -72,7 +69,8 @@ export function ModelDetailPopup({
   clothItems,
 }: ModelDetailPopupProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const carouselRef = React.useRef<any>(null);
+  const [carouselHeight, setCarouselHeight] = useState(0);
+  const carouselRef = useRef<any>(null);
 
   // -- Animations --
   const backdropOpacity = useSharedValue(0);
@@ -82,16 +80,17 @@ export function ModelDetailPopup({
   const safeClose = useCallback(() => {
     backdropOpacity.value = withTiming(0, { duration: 200 });
     scale.value = withTiming(0.9, { duration: 200 });
-    popupOpacity.value = withTiming(0, { duration: 200 }, () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setCurrentSlide(0);
-      onClose();
+    popupOpacity.value = withTiming(0, { duration: 200 }, (isFinished) => {
+      if (isFinished) {
+        runOnJS(onClose)();
+      }
     });
   }, [backdropOpacity, scale, popupOpacity, onClose]);
 
   // Entrance
   useEffect(() => {
     if (visible) {
+      setCurrentSlide(0);
       backdropOpacity.value = withTiming(1, { duration: 300 });
       popupOpacity.value = withTiming(1, { duration: 250 });
       scale.value = withSpring(1, {
@@ -114,6 +113,11 @@ export function ModelDetailPopup({
 
   const navigateToSlide = (index: number) => {
     carouselRef.current?.scrollTo({ index, animated: true });
+  };
+
+  const handleSnap = (index: number) => {
+    setCurrentSlide(index);
+    Haptics.selectionAsync();
   };
 
   // Convert clothItems to OutfitBoard format
@@ -145,7 +149,6 @@ export function ModelDetailPopup({
 
   const handleSave = async (source: any) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       Alert.alert('Saved!', 'Look added to your boards.', [{ text: 'OK' }]);
     } catch (err) {
       console.log('Error saving image:', err);
@@ -154,7 +157,6 @@ export function ModelDetailPopup({
 
   const handleShare = async (source: any) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       let localUri = source.uri;
 
       if (!localUri && typeof source === 'number') {
@@ -195,7 +197,6 @@ export function ModelDetailPopup({
       : require('../../assets/modal.png');
 
   // We need to measure the container of the carousel so it sizes perfectly.
-  const [carouselHeight, setCarouselHeight] = useState<number>(0);
 
   const renderItem = ({ index }: { index: number }) => {
     if (index === 0) {
@@ -304,7 +305,7 @@ export function ModelDetailPopup({
                 width={SCREEN_WIDTH}
                 height={carouselHeight}
                 data={[0, 1]}
-                onSnapToItem={(index) => setCurrentSlide(index)}
+                onSnapToItem={handleSnap}
                 renderItem={renderItem}
                 enabled={true}
                 defaultIndex={0}
