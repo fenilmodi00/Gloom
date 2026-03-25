@@ -11,11 +11,16 @@ func CORS(frontendURL string, isDevelopment bool) fiber.Handler {
 		allowOrigins = "*"
 	}
 
+	allowCredentials := true
+	if isDevelopment {
+		allowCredentials = false // Fiber disallows AllowCredentials=true when AllowOrigins="*"
+	}
+
 	return cors.New(cors.Config{
 		AllowOrigins:     allowOrigins,
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
-		AllowCredentials: true,
+		AllowCredentials: allowCredentials,
 		MaxAge:           86400,
 	})
 }

@@ -1,0 +1,21 @@
+Warning: error pinging database: failed to connect to `user=postgres database=postgres`:
+	127.0.0.1:5432 (localhost): dial error: dial tcp 127.0.0.1:5432: connect: connection refused
+	[::1]:5432 (localhost): dial error: dial tcp [::1]:5432: connect: connection refused
+	127.0.0.1:5432 (localhost): dial error: dial tcp 127.0.0.1:5432: connect: connection refused
+	[::1]:5432 (localhost): dial error: dial tcp [::1]:5432: connect: connection refused
+2026/03/25 20:41:50 Starting server on port 8080 in development mode
+
+ ┌───────────────────────────────────────────────────┐
+ │                  StyleAI Backend                  │
+ │                  Fiber v2.52.12                   │
+ │               http://127.0.0.1:8080               │
+ │       (bound on host 0.0.0.0 and port 8080)       │
+ │                                                   │
+ │ Handlers ............ 24  Processes ........... 1 │
+ │ Prefork ....... Disabled  PID ............. 13170 │
+ └───────────────────────────────────────────────────┘
+
+20:41:51 | 200 |      86.498µs | 127.0.0.1 | GET | /health | -
+20:41:51 | 401 |     129.118µs | 127.0.0.1 | GET | /api/v1/profile | -
+2026/03/25 20:41:52 Received signal terminated, shutting down server...
+2026/03/25 20:41:52 Server exiting
