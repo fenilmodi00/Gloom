@@ -16,6 +16,7 @@ import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { tagWardrobeItem } from '@/lib/gemini';
 import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
+import type { Category } from '@/types/wardrobe';
 
 // Design tokens from Stitch
 const COLORS = {
@@ -191,7 +192,7 @@ export default function AddItemScreen() {
 
       await addItem({
         image_url: publicUrl,
-        category: tags.category,
+        category: tags.category as Category,
         sub_category: tags.sub_category,
         colors: tags.colors,
         style_tags: tags.style_tags,

@@ -1,28 +1,34 @@
 export type Category = 'tops' | 'bottoms' | 'shoes' | 'accessories' | 'outerwear' | 'fullbody' | 'bags';
 
 export interface WardrobeItem {
-  id: string;
-  user_id: string;
-  image_url: string | number;
-  cutout_url: (string | number) | null;
-  category: Category;
-  sub_category: string | null;
-  colors: string[];
-  style_tags: string[];
-  occasion_tags: string[];
-  fabric_guess: string | null;
-  created_at: string;
+id: string;
+user_id: string;
+image_url: string | number;
+cutout_url: (string | number) | null;
+category: Category;
+sub_category: string | null;
+colors: string[];
+style_tags: string[];
+occasion_tags: string[];
+functional_tags: string[];
+silhouette_tags: string[];
+vibe_tags: string[];
+fabric_guess: string | null;
+created_at: string;
 }
 
 export interface WardrobeItemInput {
-  image_url?: string | number;
-  cutout_url?: (string | number) | null;
-  category: Category;
-  sub_category?: string | null;
-  colors?: string[];
-  style_tags?: string[];
-  occasion_tags?: string[];
-  fabric_guess?: string | null;
+image_url?: string | number;
+cutout_url?: (string | number) | null;
+category: Category;
+sub_category?: string | null;
+colors?: string[];
+style_tags?: string[];
+occasion_tags?: string[];
+functional_tags?: string[];
+silhouette_tags?: string[];
+vibe_tags?: string[];
+fabric_guess?: string | null;
 }
 
 export type SubCategory = 

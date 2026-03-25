@@ -18,6 +18,8 @@ export const Brand = {
   goldAccent: '#bc921cfa',
   /** Subdued gold. Use for subtle highlights and hover/active states of light surfaces. */
   goldSoft: '#E8D5A3',
+  /** Cool-toned secondary color. Use for denim accents, alternate button states, or cool-palette highlights. */
+  secondary: 'rgba(251, 249, 242, 0.98)',
 };
 
 export const Backgrounds = {
@@ -74,6 +76,7 @@ export const THEME = {
   primaryLight: Brand.primaryLight,
   goldAccent: Brand.goldAccent,
   goldSoft: Brand.goldSoft,
+  secondary: Brand.secondary,
 
   // Backgrounds
   bgCanvas: Backgrounds.bgCanvas,

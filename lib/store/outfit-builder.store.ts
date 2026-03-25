@@ -7,6 +7,13 @@
  */
 import { create } from 'zustand';
 import type { WardrobeItem, Category } from '@/types/wardrobe';
+import { categoryToSlot, slotToCategories, OUTFIT_SLOTS, type OutfitSlot } from '@/lib/outfit-mapping';
+import { 
+  calculateItemPairScore, 
+  calculateOutfitScore, 
+  filterByStyle, 
+  getBestMatchingItem 
+} from '@/lib/outfit-scoring';
 
 // Outfit style options
 export type OutfitStyle = 'casual' | 'streetwear' | 'formal' | 'party' | 'bohemian' | 'sporty';
@@ -43,7 +50,7 @@ interface OutfitBuilderState {
 
   // Sheet state
   isSheetOpen: boolean;
-  activeCategory: Category | null;
+  activeCategory: OutfitSlot | null;
 
   // Style selection
   selectedStyle: OutfitStyle | null;
@@ -52,22 +59,29 @@ interface OutfitBuilderState {
   combinations: OutfitCombination[];
   activeCombination: OutfitCombination | null;
   isCombinationSheetOpen: boolean;
+  
+  // Carousel state
+  isCarouselOpen: boolean;
+  activeCombinationIndex: number;
 
   // Actions
   toggleItem: (item: WardrobeItem) => void;
-  removeItem: (category: Category) => void;
+  removeItem: (slot: OutfitSlot) => void;
   removeSelection: (itemId: string) => void;
   clearSelection: () => void;
   setSheetOpen: (open: boolean) => void;
-  setActiveCategory: (category: Category | null) => void;
+  setActiveCategory: (slot: OutfitSlot | null) => void;
   setSelectedStyle: (style: OutfitStyle | null) => void;
   generateCombinations: (allItems: WardrobeItem[]) => void;
   openCombinationSheet: (combination: OutfitCombination) => void;
   closeCombinationSheet: () => void;
+  openCombinationCarousel: (index: number) => void;
+  closeCombinationCarousel: () => void;
+  setActiveCombinationIndex: (index: number) => void;
 
   // Computed
   getSelectedCount: () => number;
-  getSelectedItem: (category: Category) => WardrobeItem | undefined;
+  getSelectedItem: (slot: OutfitSlot) => WardrobeItem | undefined;
   isSelected: (itemId: string) => boolean;
 }
 
@@ -79,17 +93,20 @@ export const useOutfitBuilderStore = create<OutfitBuilderState>((set, get) => ({
   combinations: [],
   activeCombination: null,
   isCombinationSheetOpen: false,
+  isCarouselOpen: false,
+  activeCombinationIndex: 0,
 
   toggleItem: (item: WardrobeItem) => {
     set((state) => {
-      const currentSelected = state.selectedItems[item.category];
+      const slot = categoryToSlot(item.category);
+      const currentSelected = state.selectedItems[slot];
 
       // If same item is selected, deselect it
       if (currentSelected?.id === item.id) {
         return {
           selectedItems: {
             ...state.selectedItems,
-            [item.category]: undefined,
+            [slot]: undefined,
           },
         };
       }
@@ -98,17 +115,17 @@ export const useOutfitBuilderStore = create<OutfitBuilderState>((set, get) => ({
       return {
         selectedItems: {
           ...state.selectedItems,
-          [item.category]: item,
+          [slot]: item,
         },
       };
     });
   },
 
-  removeItem: (category: Category) => {
+  removeItem: (slot: OutfitSlot) => {
     set((state) => ({
       selectedItems: {
         ...state.selectedItems,
-        [category]: undefined,
+        [slot]: undefined,
       },
     }));
   },
@@ -140,8 +157,8 @@ setSheetOpen: (open: boolean) => {
 set({ isSheetOpen: open });
 },
 
-setActiveCategory: (category: Category | null) => {
-set({ activeCategory: category });
+  setActiveCategory: (slot: OutfitSlot | null) => {
+set({ activeCategory: slot });
 },
 
 setSelectedStyle: (style: OutfitStyle | null) => {
@@ -149,84 +166,96 @@ set({ selectedStyle: style });
 },
 
 // Generate outfit combinations from available items
-// Creates multiple suggestions based on selected items + random completions
+// Creates multiple suggestions based on selected items + best matching completions
 generateCombinations: (allItems: WardrobeItem[]) => {
-const { selectedItems } = get();
-const selectedArray = Object.values(selectedItems).filter(Boolean) as WardrobeItem[];
+  const { selectedItems, selectedStyle } = get();
 
-// Need at least 1 selected item to generate combinations
-if (selectedArray.length === 0) {
-set({ combinations: [] });
-return;
-}
+  // Filter items by selected style if set
+  let itemsToUse = allItems;
+  if (selectedStyle) {
+    itemsToUse = filterByStyle(allItems, selectedStyle);
+  }
 
-// Group all items by category
-const itemsByCategory: Record<Category, WardrobeItem[]> = {
-upper: [],
-lower: [],
-dress: [],
-shoes: [],
-bag: [],
-accessory: [],
-};
+  const selectedArray = Object.values(selectedItems).filter(Boolean) as WardrobeItem[];
 
-allItems.forEach((item) => {
-if (itemsByCategory[item.category]) {
-itemsByCategory[item.category].push(item);
-}
-});
+  // Need at least 1 selected item to generate combinations
+  if (selectedArray.length === 0) {
+    set({ combinations: [] });
+    return;
+  }
 
-// Generate combinations
-const newCombinations: OutfitCombination[] = [];
-const combinationCount = Math.min(5, 10); // Generate 5 combinations max
+  // Group items by slot (using mapping from Category → slot)
+  const itemsBySlot: Record<OutfitSlot, WardrobeItem[]> = {
+    upper: [],
+    lower: [],
+    dress: [],
+    shoes: [],
+    bag: [],
+    accessory: [],
+  };
 
-for (let i = 0; i < combinationCount; i++) {
-const combination: OutfitSelection = { ...selectedItems };
-let matchScore = 100;
+  itemsToUse.forEach((item) => {
+    const slot = categoryToSlot(item.category);
+    itemsBySlot[slot].push(item);
+  });
 
-// Fill missing slots with random items
-const slots: Category[] = ['upper', 'lower', 'dress', 'shoes', 'bag', 'accessory'];
+  // Generate combinations
+  const newCombinations: OutfitCombination[] = [];
+  const combinationCount = 5; // Generate 5 combinations max
 
-slots.forEach((category) => {
-// If dress is selected, skip upper and lower
-if (category === 'upper' || category === 'lower') {
-if (combination.dress) {
-return;
-}
-}
+  for (let i = 0; i < combinationCount; i++) {
+    const combination: OutfitSelection = { ...selectedItems };
 
-// Skip if already selected
-if (combination[category]) {
-return;
-}
+    // Fill missing slots with best matching items in random order
+    // Randomizing the order helps with diversity because the "best" item
+    // for a slot depends on what's already in other slots.
+    const missingSlots = OUTFIT_SLOTS.filter(slot => {
+      // If dress is selected, skip upper and lower
+      if (slot === 'upper' || slot === 'lower') {
+        if (combination.dress) return false;
+      }
+      return !combination[slot];
+    });
 
-// Pick random item from category
-const categoryItems = itemsByCategory[category];
-if (categoryItems && categoryItems.length > 0) {
-const randomIndex = Math.floor(Math.random() * categoryItems.length);
-combination[category] = categoryItems[randomIndex];
-matchScore -= 5; // Penalty for each auto-filled slot
-}
-});
+    // Shuffle missing slots
+    const shuffledSlots = [...missingSlots].sort(() => Math.random() - 0.5);
 
-// Create unique ID for combination
-const id = Object.values(combination)
-.filter(Boolean)
-.map((item) => item?.id)
-.sort()
-.join('-');
+    shuffledSlots.forEach((slot) => {
+      // Get available items for this slot
+      const slotItems = itemsBySlot[slot];
+      if (slotItems && slotItems.length > 0) {
+        // Use best matching item (which now has internal randomness)
+        const bestItem = getBestMatchingItem(slotItems, combination as { [key: string]: WardrobeItem | undefined });
+        if (bestItem) {
+          combination[slot] = bestItem;
+        }
+      }
+    });
 
-// Only add if not already in list
-if (!newCombinations.find((c) => c.id === id)) {
-newCombinations.push({
-id,
-selection: combination,
-matchScore: Math.max(50, matchScore), // Minimum 50% match
-});
-}
-}
+    // Calculate real match score using scoring algorithm
+    const matchScore = calculateOutfitScore(combination as { [key: string]: WardrobeItem | undefined });
 
-set({ combinations: newCombinations });
+    // Create unique ID for combination
+    const id = Object.values(combination)
+      .filter(Boolean)
+      .map((item) => item?.id)
+      .sort()
+      .join('-');
+
+    // Only add if not already in list
+    if (!newCombinations.find((c) => c.id === id)) {
+      newCombinations.push({
+        id,
+        selection: combination,
+        matchScore: Math.max(30, matchScore), // Minimum 30% match
+      });
+    }
+  }
+
+  // Sort by match score descending
+  newCombinations.sort((a, b) => b.matchScore - a.matchScore);
+
+  set({ combinations: newCombinations });
 },
 
 openCombinationSheet: (combination: OutfitCombination) => {
@@ -237,13 +266,25 @@ closeCombinationSheet: () => {
 set({ isCombinationSheetOpen: false, activeCombination: null });
 },
 
+openCombinationCarousel: (index: number) => {
+  set({ isCarouselOpen: true, activeCombinationIndex: index });
+},
+
+closeCombinationCarousel: () => {
+  set({ isCarouselOpen: false });
+},
+
+setActiveCombinationIndex: (index: number) => {
+  set({ activeCombinationIndex: index });
+},
+
 getSelectedCount: () => {
 const state = get();
 return Object.values(state.selectedItems).filter(Boolean).length;
 },
 
-getSelectedItem: (category: Category) => {
-return get().selectedItems[category];
+getSelectedItem: (slot: OutfitSlot) => {
+return get().selectedItems[slot];
 },
 
 isSelected: (itemId: string) => {
@@ -285,3 +326,10 @@ useOutfitBuilderStore((state) => state.activeCombination);
 
 export const useIsCombinationSheetOpen = () =>
 useOutfitBuilderStore((state) => state.isCombinationSheetOpen);
+
+// Carousel selectors
+export const useIsCarouselOpen = () =>
+  useOutfitBuilderStore((state) => state.isCarouselOpen);
+
+export const useActiveCombinationIndex = () =>
+  useOutfitBuilderStore((state) => state.activeCombinationIndex);

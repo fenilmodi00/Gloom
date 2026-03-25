@@ -28,40 +28,40 @@ interface SlotConfig {
   height: number; // multiplier for height
 }
 
-const PAD = 14; // base padding
+const RELATIVE_PAD = 0.08; // Increased from 0.04 for more breathing room (minimal look)
 
 const SLOT_CONFIGS: SlotConfig[] = [
-  // TOP (shirt) — top left, tall
+  // TOP (shirt) — top left
   {
     key: 'top',
-    left: PAD,
-    top: PAD,
-    width: 0.47,
-    height: 0.44,
+    left: RELATIVE_PAD,
+    top: RELATIVE_PAD,
+    width: 0.44,
+    height: 0.40,
   },
-  // ACCESSORY (charm/bag) — top right, small
+  // ACCESSORY (charm/bag) — top right
   {
     key: 'accessory',
-    right: PAD,
-    top: PAD + 10,
-    width: 0.30,
+    right: RELATIVE_PAD,
+    top: RELATIVE_PAD + 0.04,
+    width: 0.32,
     height: 0.22,
   },
-  // BOTTOM (skirt/pants) — bottom left, tall
+  // BOTTOM (skirt/pants) — bottom left
   {
     key: 'bottom',
-    left: PAD,
-    bottom: PAD,
-    width: 0.47,
-    height: 0.50,
+    left: RELATIVE_PAD,
+    bottom: RELATIVE_PAD,
+    width: 0.44,
+    height: 0.44,
   },
-  // SHOES (sneakers) — bottom right, medium
+  // SHOES (sneakers) — bottom right
   {
     key: 'shoes',
-    right: PAD,
-    bottom: PAD + 20,
-    width: 0.44,
-    height: 0.26,
+    right: RELATIVE_PAD,
+    bottom: RELATIVE_PAD * 1.5,
+    width: 0.42,
+    height: 0.24,
   },
 ];
 
@@ -77,6 +77,12 @@ interface OutfitBoardProps {
   width?: number;
   /** Custom height (defaults to width * 1.35) */
   height?: number;
+  /** Disable shadow */
+  disableShadow?: boolean;
+  /** Make background transparent */
+  transparent?: boolean;
+  /** Remove border radius */
+  noBorderRadius?: boolean;
 }
 
 /**
@@ -84,9 +90,16 @@ interface OutfitBoardProps {
  */
 function toItem(item: WardrobeItem | undefined): ClothingItem | null {
   if (!item) return null;
+  
+  const uri = item.cutout_url || item.image_url;
+  if (!uri) {
+    console.warn('[OutfitBoard] Item has no valid image URI:', item.id);
+    return null;
+  }
+  
   return {
     id: item.id,
-    uri: item.cutout_url || item.image_url,
+    uri,
     name: item.sub_category || undefined,
     category: item.category,
   };
@@ -100,6 +113,9 @@ export function OutfitBoard({
   accessory,
   width,
   height,
+  disableShadow,
+  transparent,
+  noBorderRadius,
 }: OutfitBoardProps) {
   const { width: screenWidth } = useWindowDimensions();
 
@@ -153,6 +169,9 @@ export function OutfitBoard({
         {
           width: boardWidth,
           height: boardHeight,
+          backgroundColor: transparent ? 'transparent' : THEME.bgSurface,
+          ...(disableShadow ? { shadowOpacity: 0, elevation: 0 } : {}),
+          ...(noBorderRadius ? { borderRadius: 0 } : {}),
         },
       ]}
     >
@@ -172,10 +191,10 @@ export function OutfitBoard({
           position: 'absolute' as const,
           width: slotWidth,
           height: slotHeight,
-          ...(config.left !== undefined ? { left: config.left } : {}),
-          ...(config.right !== undefined ? { right: config.right } : {}),
-          ...(config.top !== undefined ? { top: config.top } : {}),
-          ...(config.bottom !== undefined ? { bottom: config.bottom } : {}),
+          ...(config.left !== undefined ? { left: boardWidth * config.left } : {}),
+          ...(config.right !== undefined ? { right: boardWidth * config.right } : {}),
+          ...(config.top !== undefined ? { top: boardHeight * config.top } : {}),
+          ...(config.bottom !== undefined ? { bottom: boardHeight * config.bottom } : {}),
         };
 
         return (

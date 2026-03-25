@@ -5,23 +5,17 @@
  * Replaces the tab bar when the SelectItemsSheet is open.
  * Uses expo-blur for frosted glass effect.
  */
-import React from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
-import { X } from 'lucide-react-native';
+import { X, Sparkles } from 'lucide-react-native';
 
 import type { WardrobeItem } from '@/types/wardrobe';
-import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit-builder.store';
-
-// Design tokens
-const COLORS = {
-  primary: '#8B7355',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  surface: 'rgba(253, 250, 246, 0.9)', // bgSurface with transparency
-};
+import { useOutfitBuilderStore, useSelectedItemsArray, useSelectedItems } from '@/lib/store/outfit-builder.store';
+import { categoryToSlot } from '@/lib/outfit-mapping';
+import { calculateOutfitScore } from '@/lib/outfit-scoring';
 
 // Category labels for pills
 const CATEGORY_LABELS: Record<string, string> = {
@@ -40,131 +34,86 @@ interface SelectedItemPillProps {
 }
 
 const SelectedItemPill = React.memo(({ item, onRemove }: SelectedItemPillProps) => (
-  <View style={styles.pill}>
+  <View className="flex-row items-center bg-white/90 rounded-full pl-[6px] pr-[8px] py-[6px] gap-1.5 border border-[#8B7355]/20">
     <Image
       source={
         typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? { uri: item.cutout_url || item.image_url }
-          : item.image_url
+          ? { uri: (item.cutout_url || item.image_url) as string }
+          : (item.image_url as any)
       }
-      style={styles.pillImage}
+      className="w-7 h-7 rounded-full bg-[#F0EDE8]"
       contentFit="cover"
       transition={150}
     />
-    <Text style={styles.pillLabel} numberOfLines={1}>
+    <Text className="text-xs font-medium text-[#1A1A1A] max-w-[50px]" numberOfLines={1}>
       {CATEGORY_LABELS[item.category] || item.category}
     </Text>
-    <Pressable onPress={onRemove} style={styles.removeButton} hitSlop={8}>
-      <X size={12} color={COLORS.textSecondary} />
+    <Pressable onPress={onRemove} className="w-5 h-5 rounded-full bg-black/5 justify-center items-center" hitSlop={8}>
+      <X size={12} color="#6B6B6B" />
     </Pressable>
   </View>
 ));
 
 export const SelectedItemsRow = () => {
   const insets = useSafeAreaInsets();
-  const selectedItems = useSelectedItemsArray();
+  const selectedItemsArray = useSelectedItemsArray();
+  const selectedItemsMap = useSelectedItems();
   const removeItem = useOutfitBuilderStore((s) => s.removeItem);
-  const getSelectedCount = useOutfitBuilderStore((s) => s.getSelectedCount);
+
+  const matchScore = useMemo(() => {
+    return calculateOutfitScore(selectedItemsMap as Record<string, WardrobeItem | undefined>);
+  }, [selectedItemsMap]);
 
   // Don't render if no items selected
-  if (selectedItems.length === 0) {
+  if (selectedItemsArray.length === 0) {
     return null;
   }
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-[#6A8C69] bg-[#6A8C69]/10 border-[#6A8C69]/20';
+    if (score >= 60) return 'text-[#C9A84C] bg-[#C9A84C]/10 border-[#C9A84C]/20';
+    return 'text-[#8B7355] bg-[#8B7355]/10 border-[#8B7355]/20';
+  };
+
+  const scoreTheme = getScoreColor(matchScore);
+
   return (
-    <View style={[styles.container, { bottom: 6 + insets.bottom }]} pointerEvents="box-none">
-      <BlurView intensity={30} tint="light" style={styles.blurContainer}>
-        <View style={styles.content}>
+    <View className="absolute left-0 right-0 items-center z-[60]" style={{ bottom: 6 + insets.bottom }} pointerEvents="box-none">
+      <BlurView intensity={30} tint="light" className="w-[90%] max-w-[400px] rounded-3xl overflow-hidden">
+        <View className="bg-[#FDFAF6]/90 rounded-3xl py-2 px-3 flex-row items-center border border-[#B09A7A]/20">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 }}
+            className="flex-1"
           >
-            {selectedItems.map((item) => (
+            {selectedItemsArray.map((item) => (
               <SelectedItemPill
                 key={item.id}
                 item={item}
-                onRemove={() => removeItem(item.category)}
+                onRemove={() => removeItem(categoryToSlot(item.category))}
               />
             ))}
           </ScrollView>
-          <Text style={styles.countText}>
-            {getSelectedCount()} selected
-          </Text>
+          
+          <View className="ml-2 items-end justify-center shrink-0">
+            {matchScore > 0 ? (
+              <View className={`flex-row items-center px-2 py-1 rounded-full border ${scoreTheme}`}>
+                <Sparkles size={10} color={scoreTheme.split(' ')[0].replace('text-[', '').replace(']', '')} className="mr-1" />
+                <Text className={`text-[10px] font-bold ${scoreTheme.split(' ')[0]}`}>
+                  {matchScore}% match
+                </Text>
+              </View>
+            ) : (
+              <Text className="text-xs font-semibold text-[#8B7355]">
+                {selectedItemsArray.length} items
+              </Text>
+            )}
+          </View>
         </View>
       </BlurView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 60, // Above tab bar
-  },
-  blurContainer: {
-    width: '90%',
-    maxWidth: 400,
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  content: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(176, 154, 122, 0.2)', // primaryLight with transparency
-  },
-  scrollContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingRight: 8,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    paddingLeft: 6,
-    paddingRight: 8,
-    paddingVertical: 6,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 115, 85, 0.2)',
-  },
-  pillImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#F0EDE8',
-  },
-  pillLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: COLORS.textPrimary,
-    maxWidth: 50,
-  },
-  removeButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  countText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginLeft: 4,
-  },
-});
 
 export default SelectedItemsRow;

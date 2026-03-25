@@ -64,6 +64,8 @@ export default function OutfitsScreen() {
       const suggestions = await generateOutfitSuggestions(wardrobeItems, date, weather, city);
 
       for (const suggestion of suggestions) {
+        if (!suggestion) continue;
+
         const coverItem = wardrobeItems.find((i) => i.id === suggestion.item_ids[0]);
 
         const { data, error } = await supabase

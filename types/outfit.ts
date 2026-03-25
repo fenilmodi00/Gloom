@@ -19,7 +19,7 @@ export interface OutfitInput {
   cover_image_url?: string | null;
 }
 
-export type Occasion = 
+export type Occasion =
   | 'casual'
   | 'work'
   | 'formal'
@@ -31,7 +31,7 @@ export type Occasion =
   | 'travel'
   | 'home';
 
-export type Vibe = 
+export type Vibe =
   | 'minimalist'
   | 'ethnic'
   | 'western'

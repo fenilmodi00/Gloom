@@ -15,15 +15,16 @@ import { Check, ChevronRight } from 'lucide-react-native';
 
 import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
+import { categoryToSlot, type OutfitSlot } from '@/lib/outfit-mapping';
 
-// Category configuration
-const CATEGORY_CONFIG: { key: Category; label: string }[] = [
-  { key: 'upper', label: 'upper body' },
-  { key: 'lower', label: 'lower body' },
-  { key: 'dress', label: 'dresses' },
-  { key: 'shoes', label: 'shoes' },
-  { key: 'bag', label: 'bags' },
-  { key: 'accessory', label: 'accessories' },
+// Category configuration (using OutfitSlot, not Category)
+const CATEGORY_CONFIG: { key: OutfitSlot; label: string }[] = [
+{ key: 'upper', label: 'upper body' },
+{ key: 'lower', label: 'lower body' },
+{ key: 'dress', label: 'dresses' },
+{ key: 'shoes', label: 'shoes' },
+{ key: 'bag', label: 'bags' },
+{ key: 'accessory', label: 'accessories' },
 ];
 
 const GRADIENT_START = '#F5F2EE'; // bgCanvas
@@ -56,8 +57,8 @@ const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => (
     <Image
       source={
         typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? { uri: item.cutout_url || item.image_url }
-          : item.image_url
+          ? { uri: (item.cutout_url || item.image_url) as string }
+          : (item.image_url as any)
       }
       style={styles.cardImage}
       contentFit="contain"
@@ -81,23 +82,22 @@ export const SelectItemsSheet = forwardRef<BottomSheet, SelectItemsSheetProps>(
 
     const snapPoints = useMemo(() => ['94%'], []);
 
-    // Group items by category
-    const groupedItems = useMemo(() => {
-      const groups: Record<Category, WardrobeItem[]> = {
-        upper: [],
-        lower: [],
-        dress: [],
-        shoes: [],
-        bag: [],
-        accessory: [],
-      };
-      items.forEach((item) => {
-        if (groups[item.category]) {
-          groups[item.category].push(item);
-        }
-      });
-      return groups;
-    }, [items]);
+// Group items by slot (using mapping from Category → slot)
+const groupedItems = useMemo(() => {
+const groups: Record<OutfitSlot, WardrobeItem[]> = {
+upper: [],
+lower: [],
+dress: [],
+shoes: [],
+bag: [],
+accessory: [],
+};
+items.forEach((item) => {
+const slot = categoryToSlot(item.category);
+groups[slot].push(item);
+});
+return groups;
+}, [items]);
 
     // Filter to only show categories with items
     const categoriesWithItems = useMemo(() => {

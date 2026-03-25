@@ -88,97 +88,201 @@ const ASSET_FILES = {
   ],
 };
 
-// Style tags for variety
+// Style Tags (expanded from research taxonomy)
 const STYLE_TAGS = [
-  'minimalist',
-  'casual',
-  'formal',
-  'streetwear',
-  'bohemian',
-  'vintage',
-  'contemporary',
-  'classic',
-];
+'casual',
+'streetwear',
+'old_money',
+'minimalist',
+'bohemian',
+'dark_academia',
+'cottagecore',
+'y2k',
+'athleisure',
+'gorpcore',
+] as const;
 
-// Color options
+// Color options (unchanged)
 const COLORS_AVAILABLE = [
-  'white',
-  'black',
-  'navy',
-  'beige',
-  'gray',
-  'brown',
-  'olive',
-  'cream',
+'white',
+'black',
+'navy',
+'beige',
+'gray',
+'brown',
+'olive',
+'cream',
 ];
 
-// Occasion tags
+// Occasion Tags (expanded)
 const OCCASION_TAGS = [
-  'everyday',
-  'work',
-  'casual',
-  'formal',
-  'party',
-  'weekend',
-  'date-night',
+'daytime',
+'night_out',
+'work',
+'weekend',
+'party',
+'date_night',
+'casual_friday',
+'beach',
+'travel',
+] as const;
+
+// NEW: Functional Tags
+const FUNCTIONAL_TAGS = [
+'layering_staple',
+'statement_piece',
+'base_layer',
+'outer_layer',
+'transitional',
+'four_season',
+'summer_only',
+'winter_only',
+] as const;
+
+// NEW: Silhouette Tags
+const SILHOUETTE_TAGS = [
+'slim_fit',
+'regular_fit',
+'relaxed_fit',
+'oversized',
+'cropped',
+'fitted',
+'flowy',
+] as const;
+
+// NEW: Vibe/Era Tags
+const VIBE_TAGS = [
+'timeless',
+'trend_aware',
+'90s_revival',
+'modern_classic',
+'vintage_inspired',
+'ahead_of_curve',
+] as const;
+
+/**
+* Category-aware tag profiles for realistic mock data
+* Items from each category get appropriate functional/silhouette tags
+*/
+const TAG_PROFILES: Record<Category, {
+functional: string[];
+silhouette: string[];
+styles: string[];
+}> = {
+tops: {
+functional: ['layering_staple', 'base_layer', 'transitional'],
+silhouette: ['slim_fit', 'regular_fit', 'relaxed_fit', 'oversized'],
+styles: ['casual', 'minimalist', 'old_money', 'streetwear'],
+},
+bottoms: {
+functional: ['base_layer', 'four_season'],
+silhouette: ['slim_fit', 'regular_fit', 'relaxed_fit', 'cropped'],
+styles: ['casual', 'minimalist', 'streetwear'],
+},
+shoes: {
+functional: [], // Shoes rarely have functional tags
+silhouette: ['slim_fit', 'regular_fit'],
+styles: ['casual', 'classic', 'streetwear'],
+},
+accessories: {
+functional: ['statement_piece'],
+silhouette: [], // Accessories don't have silhouette
+styles: ['classic', 'minimalist', 'bohemian'],
+},
+outerwear: {
+functional: ['outer_layer', 'layering_staple', 'winter_only', 'transitional'],
+silhouette: ['regular_fit', 'relaxed_fit', 'oversized'],
+styles: ['casual', 'streetwear', 'gorpcore'],
+},
+fullbody: {
+functional: ['statement_piece', 'four_season'],
+silhouette: ['slim_fit', 'regular_fit', 'fitted', 'flowy'],
+styles: ['casual', 'bohemian', 'minimalist'],
+},
+bags: {
+functional: ['statement_piece'],
+silhouette: [],
+styles: ['casual', 'classic', 'minimalist'],
+},
+};
+
+/**
+* Color combinations that work well together
+*/
+const COLOR_COMBINATIONS: string[][] = [
+['white', 'beige'],
+['navy', 'white'],
+['black', 'gray'],
+['olive', 'cream'],
+['brown', 'beige'],
+['navy', 'beige'],
+['black', 'white'],
+['gray', 'olive'],
 ];
 
 /**
- * Generate mock wardrobe items from local assets
- */
+* Vibe tag associations by style
+*/
+const STYLE_TO_VIBE: Record<string, string[]> = {
+old_money: ['timeless', 'modern_classic'],
+streetwear: ['trend_aware', '90s_revival'],
+minimalist: ['timeless', 'modern_classic'],
+bohemian: ['vintage_inspired', 'ahead_of_curve'],
+dark_academia: ['vintage_inspired', 'timeless'],
+cottagecore: ['vintage_inspired', 'timeless'],
+y2k: ['90s_revival', 'trend_aware'],
+casual: ['timeless', 'modern_classic'],
+athleisure: ['trend_aware', 'modern_classic'],
+gorpcore: ['trend_aware', 'ahead_of_curve'],
+};
+
+/**
+* Generate mock wardrobe items with smart category-aware tags
+*/
 export function getMockWardrobeItems(): WardrobeItem[] {
-  const items: WardrobeItem[] = [];
-  let globalIndex = 0;
+const items: WardrobeItem[] = [];
 
-  // Process each category
-  for (const [folder, category] of Object.entries(FOLDER_TO_CATEGORY)) {
-    const files = ASSET_FILES[folder as keyof typeof ASSET_FILES] || [];
+// Process each category
+for (const [folder, category] of Object.entries(FOLDER_TO_CATEGORY)) {
+const files = ASSET_FILES[folder as keyof typeof ASSET_FILES] || [];
+const profile = TAG_PROFILES[category];
 
-    files.forEach((filename, index) => {
-      // Create the asset URI - require works for local assets in React Native
-      const assetPath = `../assets/fashion_categorized/${folder}/${filename}`;
+files.forEach((filename, index) => {
+const assetPath = `../assets/fashion_categorized/${folder}/${filename}`;
 
-      items.push({
-        id: `mock-${category}-${index}`,
-        user_id: 'mock-user',
-        // Use require for local assets in React Native
-        image_url: assetPath,
-        cutout_url: null,
-        category: category,
-        sub_category: null,
-        colors: getRandomColors(),
-        style_tags: getRandomTags(STYLE_TAGS, 2),
-        occasion_tags: getRandomTags(OCCASION_TAGS, 1),
-        fabric_guess: null,
-        created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-      globalIndex++;
-    });
-  }
+// Get smart tags based on category
+const styleTag = profile.styles[index % profile.styles.length];
+const vibeTags = STYLE_TO_VIBE[styleTag] || ['timeless'];
 
-  return items;
+items.push({
+id: `mock-${category}-${index}`,
+user_id: 'mock-user',
+image_url: assetPath,
+cutout_url: null,
+category: category,
+sub_category: null,
+colors: COLOR_COMBINATIONS[index % COLOR_COMBINATIONS.length],
+style_tags: [styleTag],
+occasion_tags: [OCCASION_TAGS[index % OCCASION_TAGS.length]],
+functional_tags: profile.functional.length > 0
+? [profile.functional[index % profile.functional.length]]
+: [],
+silhouette_tags: profile.silhouette.length > 0
+? [profile.silhouette[index % profile.silhouette.length]]
+: [],
+vibe_tags: [vibeTags[index % vibeTags.length]],
+fabric_guess: null,
+created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+});
+});
+}
+
+return items;
 }
 
 /**
- * Get random subset of colors
- */
-function getRandomColors(): string[] {
-  const count = Math.floor(Math.random() * 3) + 1;
-  const shuffled = [...COLORS_AVAILABLE].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
-
-/**
- * Get random subset of tags
- */
-function getRandomTags(tags: string[], count: number): string[] {
-  const shuffled = [...tags].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
-
-/**
- * Get asset URI for local images (to be used with expo-image)
- */
+* Get asset URI for local images (to be used with expo-image)
+*/
 export function getLocalAssetUri(folder: string, filename: string): string {
   // For expo-image, we need to use require() or asset URIs
   // In development, we'll use the asset path directly
@@ -222,78 +326,106 @@ export const MOCK_ASSETS = {
 };
 
 /**
- * Generate mock items with proper require() assets for React Native
- */
+* Generate mock items with proper require() assets and smart tags
+*/
 export function getMockWardrobeItemsWithAssets(): WardrobeItem[] {
-  const items: WardrobeItem[] = [];
+const items: WardrobeItem[] = [];
 
-  // Tops
-  MOCK_ASSETS.top.forEach((asset, index) => {
-    items.push({
-      id: `mock-tops-${index}`,
-      user_id: 'mock-user',
-      image_url: asset,
-      cutout_url: null,
-      category: 'tops',
-      sub_category: null,
-      colors: ['white', 'beige'],
-      style_tags: ['casual', 'minimalist'],
-      occasion_tags: ['everyday'],
-      fabric_guess: null,
-      created_at: new Date().toISOString(),
-    });
-  });
+// Tops - mostly casual/minimalist with layering capability
+MOCK_ASSETS.top.forEach((asset, index) => {
+const styles = ['casual', 'minimalist', 'old_money', 'streetwear'];
+const style = styles[index % styles.length];
+const vibeTags = STYLE_TO_VIBE[style] || ['timeless'];
 
-  // Bottoms
-  MOCK_ASSETS.bottom.forEach((asset, index) => {
-    items.push({
-      id: `mock-bottoms-${index}`,
-      user_id: 'mock-user',
-      image_url: asset,
-      cutout_url: null,
-      category: 'bottoms',
-      sub_category: null,
-      colors: ['navy', 'black'],
-      style_tags: ['casual'],
-      occasion_tags: ['everyday'],
-      fabric_guess: null,
-      created_at: new Date().toISOString(),
-    });
-  });
+items.push({
+id: `mock-tops-${index}`,
+user_id: 'mock-user',
+image_url: asset,
+cutout_url: null,
+category: 'tops',
+sub_category: null,
+colors: COLOR_COMBINATIONS[index % COLOR_COMBINATIONS.length],
+style_tags: [style],
+occasion_tags: ['daytime'],
+functional_tags: ['layering_staple'],
+silhouette_tags: [['slim_fit', 'regular_fit', 'oversized'][index % 3]],
+vibe_tags: [vibeTags[0]],
+fabric_guess: null,
+created_at: new Date().toISOString(),
+});
+});
 
-  // Shoes
-  MOCK_ASSETS.shoes.forEach((asset, index) => {
-    items.push({
-      id: `mock-shoes-${index}`,
-      user_id: 'mock-user',
-      image_url: asset,
-      cutout_url: null,
-      category: 'shoes',
-      sub_category: null,
-      colors: ['brown', 'black'],
-      style_tags: ['classic'],
-      occasion_tags: ['everyday'],
-      fabric_guess: null,
-      created_at: new Date().toISOString(),
-    });
-  });
+// Bottoms - casual/minimalist with base layer
+MOCK_ASSETS.bottom.forEach((asset, index) => {
+items.push({
+id: `mock-bottoms-${index}`,
+user_id: 'mock-user',
+image_url: asset,
+cutout_url: null,
+category: 'bottoms',
+sub_category: null,
+colors: COLOR_COMBINATIONS[index % COLOR_COMBINATIONS.length],
+style_tags: [['casual', 'minimalist', 'streetwear'][index % 3]],
+occasion_tags: ['daytime'],
+functional_tags: ['base_layer'],
+silhouette_tags: [['slim_fit', 'regular_fit', 'cropped'][index % 3]],
+vibe_tags: ['timeless'],
+fabric_guess: null,
+created_at: new Date().toISOString(),
+});
+});
 
-  // Accessories
-  MOCK_ASSETS.accessories.forEach((asset, index) => {
-    items.push({
-      id: `mock-accessories-${index}`,
-      user_id: 'mock-user',
-      image_url: asset,
-      cutout_url: null,
-      category: 'accessories',
-      sub_category: null,
-      colors: ['black', 'gold'],
-      style_tags: ['classic'],
-      occasion_tags: ['everyday'],
-      fabric_guess: null,
-      created_at: new Date().toISOString(),
-    });
-  });
+// Shoes - classic/casual
+MOCK_ASSETS.shoes.forEach((asset, index) => {
+items.push({
+id: `mock-shoes-${index}`,
+user_id: 'mock-user',
+image_url: asset,
+cutout_url: null,
+category: 'shoes',
+sub_category: null,
+colors: [['brown', 'black'], ['white', 'cream'], ['navy', 'beige']][index % 3],
+style_tags: [['classic', 'casual', 'streetwear'][index % 3]],
+occasion_tags: ['daytime'],
+functional_tags: [], // Shoes don't have functional tags
+silhouette_tags: [], // Shoes don't use silhouette tags
+vibe_tags: [['timeless', 'modern_classic', 'trend_aware'][index % 3]],
+fabric_guess: null,
+created_at: new Date().toISOString(),
+});
+});
 
-  return items;
+// Accessories - statement pieces
+MOCK_ASSETS.accessories.forEach((asset, index) => {
+items.push({
+id: `mock-accessories-${index}`,
+user_id: 'mock-user',
+image_url: asset,
+cutout_url: null,
+category: 'accessories',
+sub_category: null,
+colors: [['black', 'gold'], ['brown', 'beige'], ['silver', 'white']][index % 3],
+style_tags: [['classic', 'minimalist', 'bohemian'][index % 3]],
+occasion_tags: ['daytime'],
+functional_tags: ['statement_piece'],
+silhouette_tags: [], // Accessories don't have silhouette
+vibe_tags: [['timeless', 'modern_classic', 'vintage_inspired'][index % 3]],
+fabric_guess: null,
+created_at: new Date().toISOString(),
+});
+});
+
+return items;
 }
+
+// Export tag constants for use in StyleSelector, filtering, etc.
+export {
+STYLE_TAGS,
+OCCASION_TAGS,
+FUNCTIONAL_TAGS,
+SILHOUETTE_TAGS,
+VIBE_TAGS,
+TAG_PROFILES,
+COLOR_COMBINATIONS,
+STYLE_TO_VIBE,
+};

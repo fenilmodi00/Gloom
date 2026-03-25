@@ -22,13 +22,13 @@ interface DotGridProps {
 export function DotGrid({
   width,
   height,
-  backgroundColor = THEME.bgCanvas,
+  backgroundColor = 'transparent',
   dotColor = THEME.dragHandle,
   dotRadius = 3.5,   // ← bigger dots, not tiny 1.8px
   spacing = 30,      // ← wider spacing to match screenshot
 }: DotGridProps) {
   const dots = useMemo(() => {
-    const positions: Array<{ x: number; y: number }> = [];
+    const positions: Array<{ x: number; y: number; opacity: number }> = [];
 
     const cols = Math.floor(width / spacing);
     const rows = Math.floor(height / spacing);
@@ -51,14 +51,18 @@ export function DotGrid({
         const dotY = offsetY + row * spacing;
 
         // Only draw dot if it falls inside the ellipse
-        // This naturally gives fewer dots on edge columns,
-        // more dots toward the center columns — exactly like the screenshot
         const dx = dotX - centerX;
         const dy = dotY - centerY;
-        const insideEllipse = (dx * dx) / (a * a) + (dy * dy) / (b * b) <= 1;
+        const distSq = (dx * dx) / (a * a) + (dy * dy) / (b * b);
+        const insideEllipse = distSq <= 1;
 
         if (insideEllipse) {
-          positions.push({ x: dotX, y: dotY });
+          // Calculate opacity: 1.0 at center, 0.2 at the very edge
+          // Using square root for a more natural radial falloff
+          const distRatio = Math.sqrt(distSq);
+          const opacity = Math.max(0.1, 1.0 - (1.0 - 0.1) * distRatio);
+          
+          positions.push({ x: dotX, y: dotY, opacity });
         }
       }
     }
@@ -69,13 +73,14 @@ export function DotGrid({
   return (
     <Canvas style={StyleSheet.absoluteFill}>
       <Fill color={backgroundColor} />
-      {dots.map((dot) => (
+      {dots.map((dot, index) => (
         <Circle
-          key={`${dot.x}-${dot.y}`}
+          key={`dot-${index}-${dot.x}-${dot.y}`}
           cx={dot.x}
           cy={dot.y}
           r={dotRadius}
           color={dotColor}
+          opacity={dot.opacity}
         />
       ))}
     </Canvas>

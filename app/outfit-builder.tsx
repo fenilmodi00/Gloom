@@ -15,7 +15,7 @@ import { OutfitBoardSheet } from '@/components/wardrobe/outfit-builder/OutfitBoa
 
 import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
-import { useSelectedItemsArray, useSelectedStyle, useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
+import { useSelectedItemsArray, useSelectedStyle, useOutfitBuilderStore, useCombinations } from '@/lib/store/outfit-builder.store';
 import type { OutfitCombination } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
 
@@ -27,8 +27,9 @@ export default function OutfitBuilderScreen() {
   const insets = useSafeAreaInsets();
   const { items: storeItems } = useWardrobeStore();
   const selectedItemsArray = useSelectedItemsArray();
-  const selectedStyle = useSelectedStyle();
-  const openCombinationSheet = useOutfitBuilderStore((s) => s.openCombinationSheet);
+const selectedStyle = useSelectedStyle();
+const openCombinationSheet = useOutfitBuilderStore((s) => s.openCombinationSheet);
+const combinations = useCombinations();
 
   // Use mock data if store is empty
   const items = useMemo(() => {
@@ -103,10 +104,11 @@ export default function OutfitBuilderScreen() {
     );
   }, [selectedItemsArray, selectedStyle]);
 
-  // Handle combination card press - open full board sheet
+  // Handle combination card press - navigate to combination screen
   const handleCombinationPress = useCallback((combination: OutfitCombination) => {
-    openCombinationSheet(combination);
-  }, [openCombinationSheet]);
+    const index = combinations.findIndex(c => c.id === combination.id);
+    router.push(`/outfit-combination?index=${index >= 0 ? index : 0}`);
+  }, [combinations, router]);
 
 
 
@@ -185,8 +187,8 @@ export default function OutfitBuilderScreen() {
             </Pressable>
           </View>
 
-          {/* Outfit Board Sheet - opens when combination card is tapped */}
-          <OutfitBoardSheet />
+        {/* Outfit Board Sheet - opens when combination card is tapped */}
+        <OutfitBoardSheet />
         </Animated.View>
       )}
     </View>
