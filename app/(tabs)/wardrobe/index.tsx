@@ -101,6 +101,7 @@ function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
   );
 }
 
+
 export default function WardrobeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -188,6 +189,7 @@ export default function WardrobeScreen() {
                  <Text style={styles.uploadText}>Add item</Text>
                </Pressable>
             </View>
+
 
             {/* First category section - part of same gradient */}
             {sections.length > 0 && (

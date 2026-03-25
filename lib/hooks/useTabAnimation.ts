@@ -11,8 +11,9 @@ import {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
+  Easing,
 } from 'react-native-reanimated';
+import { useWindowDimensions } from 'react-native';
 
 // O(1) Lookup Table (Dictionary/Hash Map) for Tab Order
 const TAB_INDEX_MAP: Record<string, number> = {
@@ -22,16 +23,11 @@ const TAB_INDEX_MAP: Record<string, number> = {
   'profile/index': 3,
 };
 
-const SLIDE_DISTANCE = 50; 
-
-const SPRING_CONFIG = {
-  damping: 20,
-  mass: 0.5,
-  stiffness: 150,
-};
+const ANIMATION_DURATION = 250; // Faster for responsive feel
+const EASING = Easing.out(Easing.poly(3)); // Sharp but smooth transition
 
 // Global state to track the last active tab across all hook instances
-let globalLastTabIndex = 0;
+let globalLastTabIndex = -1; // -1 means no previous tab has been focused yet
 
 /**
  * Get the index of a tab route name in O(1) time
@@ -41,6 +37,9 @@ function getTabIndex(routeName: string): number {
 }
 
 export function useTabAnimation(routeName: string) {
+  const { width } = useWindowDimensions();
+  const SLIDE_DISTANCE = width; // 100% screen width slide for Telegram style
+
   const currentIndex = getTabIndex(routeName);
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
@@ -49,21 +48,26 @@ export function useTabAnimation(routeName: string) {
   useFocusEffect(
     useCallback(() => {
       const lastTabIndex = globalLastTabIndex;
-      const isMovingRight = currentIndex > lastTabIndex;
-      const isMovingLeft = currentIndex < lastTabIndex;
+      const isMovingRight = currentIndex > lastTabIndex && lastTabIndex !== -1;
+      const isMovingLeft = currentIndex < lastTabIndex && lastTabIndex !== -1;
 
       // Update global last index
       globalLastTabIndex = currentIndex;
 
-      // Only animate if we're switching tabs (not returning from modal)
+      // Only animate if we're switching tabs (not returning from modal or initial app load)
       if (isMovingRight || isMovingLeft) {
         // Pre-animation state
         translateX.value = isMovingRight ? SLIDE_DISTANCE : -SLIDE_DISTANCE;
-        opacity.value = 0;
+        opacity.value = 1;
 
         // Animate in
-        translateX.value = withSpring(0, SPRING_CONFIG);
-        opacity.value = withTiming(1, { duration: 300 });
+        translateX.value = withTiming(0, {
+          duration: ANIMATION_DURATION,
+          easing: EASING,
+        });
+        opacity.value = withTiming(1, {
+          duration: 100, // Faster fade so the slide is the focus
+        });
       } else {
         // Ensure values are reset if no transition (e.g. initial render)
         translateX.value = 0;
@@ -75,7 +79,7 @@ export function useTabAnimation(routeName: string) {
       return () => {
         // Cleanup if needed
       };
-    }, [currentIndex, translateX, opacity])
+    }, [currentIndex, translateX, opacity, SLIDE_DISTANCE])
   );
 
   const animatedStyle = useAnimatedStyle(() => {
