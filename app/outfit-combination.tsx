@@ -21,6 +21,7 @@ import { OutfitCombinationSlide } from '@/components/wardrobe/outfit-builder/Out
 import { FaceSelectionBottomSheet } from '@/components/wardrobe/outfit-builder/FaceSelectionBottomSheet';
 import type { FaceItem } from '@/components/wardrobe/outfit-builder/FaceCarousel';
 import { THEME } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 import {
   useCombinations,
   useOutfitBuilderStore,
@@ -238,8 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...Typography.body,
     color: THEME.textSecondary,
     marginBottom: 16,
   },
@@ -250,8 +250,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   closeButtonText: {
+    ...Typography.uiLabelMedium,
     color: THEME.bgSurface,
-    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -289,8 +289,7 @@ const styles = StyleSheet.create({
     zIndex: 10, // Same level as header and bottom bar
   },
   paginationText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...Typography.bodySmall,
     color: THEME.textSecondary,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     paddingHorizontal: 8,
@@ -321,8 +320,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: THEME.bgSurface,
   },
   lightButton: {

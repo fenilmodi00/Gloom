@@ -1,3 +1,4 @@
+import { Typography } from '@/constants/Typography';
 /**
  * OutfitCombinationGrid
  *
@@ -200,8 +201,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
   },
   uploadButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: THEME.textPrimary,
   },
   settingsIcon: {
@@ -220,11 +220,9 @@ const styles = StyleSheet.create({
     top: 60, // Position below header
     left: 0,
     right: 0,
-    fontSize: 32,
-    fontWeight: '800',
+    ...Typography.heading1,
     color: THEME.textSecondary,
     textAlign: 'center',
-    letterSpacing: -0.5,
   },
   boardWrapper: {
     flex: 1,
@@ -251,8 +249,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
   },
   actionButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: THEME.bgSurface,
   },
   lightButton: {

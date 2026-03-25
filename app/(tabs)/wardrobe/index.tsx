@@ -8,6 +8,7 @@ import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { FlashList } from '@shopify/flash-list';
+import { Typography } from '@/constants/Typography';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -319,10 +320,8 @@ const styles = StyleSheet.create({
     height: 40,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    ...Typography.heading1,
     color: Colors.light.textPrimary,
-    letterSpacing: -0.5,
   },
   addButton: {
     width: 40,
@@ -345,7 +344,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionLabel: {
-    fontSize: 15,
+    ...Typography.body,
     fontWeight: '500',
     color: Colors.light.textSecondary,
   },
@@ -386,8 +385,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   makeOutfitsText: {
-    fontSize: 13,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: Colors.light.textPrimary,
   },
   uploadButton: {
@@ -397,8 +395,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   uploadText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: Colors.light.textOnDark,
   },
 });

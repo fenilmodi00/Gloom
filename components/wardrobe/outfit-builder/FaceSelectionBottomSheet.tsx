@@ -1,3 +1,4 @@
+import { Typography } from '@/constants/Typography';
 /**
  * FaceSelectionBottomSheet
  *
@@ -161,8 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...Typography.heading3,
     color: THEME.textPrimary,
   },
   closeButton: {
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   selectedFaceName: {
-    fontSize: 14,
+    ...Typography.body,
     color: THEME.textSecondary,
     textAlign: 'center',
   },
@@ -199,8 +199,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   tryOnButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: THEME.bgSurface,
   },
 });

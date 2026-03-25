@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOutfitBuilderStore, useSelectedItemsArray, OUTFIT_STYLES, type OutfitStyle } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 
 const STYLE_LABELS: Record<OutfitStyle, string> = {
   casual: 'Casual',
@@ -152,8 +153,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(253, 250, 246, 0.85)', // surfaceGlass equivalent
   },
   triggerText: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...Typography.uiLabelMedium,
     color: THEME.textSecondary,
     marginRight: 8,
   },
@@ -201,8 +201,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(139, 115, 85, 0.15)',
   },
   optionText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: THEME.textSecondary,
   },
   optionTextSelected: {

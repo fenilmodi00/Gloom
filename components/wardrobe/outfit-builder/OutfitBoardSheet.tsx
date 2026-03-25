@@ -21,6 +21,7 @@ useActiveCombination,
 useIsCombinationSheetOpen,
 } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 
 export function OutfitBoardSheet() {
 const { width: screenWidth } = useWindowDimensions();
@@ -133,13 +134,11 @@ headerLeft: {
 flex: 1,
 },
 title: {
-fontSize: 22,
-fontWeight: '700',
-color: THEME.textPrimary,
-},
+    ...Typography.heading2,
+    color: THEME.textPrimary,
+  },
 subtitle: {
-fontSize: 13,
-fontWeight: '500',
+...Typography.bodySmall,
 color: THEME.textSecondary,
 marginTop: 2,
 },
@@ -165,8 +164,7 @@ paddingVertical: 16,
 borderRadius: 16,
 },
 generateText: {
-fontSize: 16,
-fontWeight: '600',
+...Typography.uiLabelMedium,
 color: THEME.bgSurface,
 },
 });

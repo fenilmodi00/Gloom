@@ -18,7 +18,7 @@ import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useSelectedItemsArray, useSelectedStyle, useOutfitBuilderStore, useCombinations } from '@/lib/store/outfit-builder.store';
 import type { OutfitCombination } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
-
+import { Typography } from '@/constants/Typography';
 
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
@@ -216,14 +216,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    ...Typography.heading2,
     color: THEME.textPrimary,
-    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
+    ...Typography.bodySmall,
     color: THEME.textSecondary,
     marginTop: -2,
   },

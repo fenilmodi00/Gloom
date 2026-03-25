@@ -1,3 +1,4 @@
+import { Typography } from '@/constants/Typography';
 /**
  * FaceCarousel - Carousel for face selection in try-on flow
  *
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '90deg' }],
   },
   faceName: {
-    fontSize: 12,
+    ...Typography.bodySmall,
     color: THEME.textSecondary,
     textAlign: 'center',
   },

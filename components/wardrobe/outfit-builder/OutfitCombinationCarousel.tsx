@@ -1,3 +1,4 @@
+import { Typography } from '@/constants/Typography';
 /**
  * OutfitCombinationCarousel
  *
@@ -141,9 +142,9 @@ export function OutfitCombinationCarousel({
       >
         <StatusBar barStyle="dark-content" />
         <View style={[styles.container, { backgroundColor: THEME.bgCanvas, alignItems: 'center', justifyContent: 'center' }]}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: THEME.textSecondary, marginBottom: 16 }}>No outfit combinations available</Text>
+          <Text style={[{ marginBottom: 16, color: THEME.textSecondary }, Typography.body]}>No outfit combinations available</Text>
           <Pressable onPress={handleClose} style={{ backgroundColor: THEME.goldAccent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 }}>
-            <Text style={{ color: THEME.bgSurface, fontWeight: '600' }}>Close</Text>
+            <Text style={[{ color: THEME.bgSurface }, Typography.uiLabelMedium]}>Close</Text>
           </Pressable>
         </View>
       </Animated.View>
@@ -204,8 +205,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   paginationText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: THEME.textSecondary,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     paddingHorizontal: 8,

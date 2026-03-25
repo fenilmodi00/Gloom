@@ -15,6 +15,7 @@ import { Check, ChevronRight } from 'lucide-react-native';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 
 const CATEGORY_CONFIG: { key: Category; label: string }[] = [
   { key: 'tops', label: 'Tops' },
@@ -241,10 +242,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    ...Typography.heading1,
     color: THEME.textPrimary,
-    letterSpacing: -0.5,
   },
   sectionHeaderRow: {
     marginTop: 16,
@@ -256,7 +255,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionLabel: {
-    fontSize: 15,
+    ...Typography.body,
     fontWeight: '500',
     color: THEME.textSecondary,
   },
@@ -298,14 +297,14 @@ const styles = StyleSheet.create({
   },
   // Empty state
   emptyText: {
-    fontSize: 18,
+    ...Typography.body,
     fontWeight: '600',
     color: THEME.textPrimary,
     textAlign: 'center',
     marginTop: 40,
   },
   emptySubtext: {
-    fontSize: 14,
+    ...Typography.bodySmall,
     color: THEME.textSecondary,
     textAlign: 'center',
     marginTop: 8,

@@ -19,6 +19,7 @@ import {
 } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
 import { OUTFIT_BUILDER_CONSTANTS } from '@/constants/OutfitBuilder';
+import { Typography } from '@/constants/Typography';
 
 const { CARD_WIDTH, GAP, HORIZONTAL_PADDING } = OUTFIT_BUILDER_CONSTANTS;
 
@@ -119,13 +120,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...Typography.heading3,
     color: THEME.textPrimary,
   },
   countText: {
-    fontSize: 13,
-    fontWeight: '500',
+    ...Typography.bodySmall,
     color: THEME.textSecondary,
     backgroundColor: THEME.bgSurface,
     paddingHorizontal: 10,
