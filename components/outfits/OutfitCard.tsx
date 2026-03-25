@@ -37,14 +37,14 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
       <View className="px-5 pt-5 pb-3">
         <View className="flex-row justify-between items-start mb-2">
           <OccasionBadge occasion={outfit.occasion} />
-          <View className="bg-[#EAE4DA] px-3 py-1 rounded-full">
-            <Text className="text-[#1A1A1A] font-medium text-xs">
+          <View className="bg-bgMuted px-3 py-1 rounded-full">
+            <Text className="text-textPrimary font-medium text-xs">
               {Math.round((outfit.ai_score || 0.95) * 100)}% match
             </Text>
           </View>
         </View>
-        <Text className="text-lg font-bold text-[#1A1A1A] tracking-tight">{outfit.vibe}</Text>
-        <Text className="text-[#6B6B6B] text-sm mt-1 leading-5">{outfit.color_reasoning}</Text>
+        <Text className="text-lg font-bold text-textPrimary tracking-tight">{outfit.vibe}</Text>
+        <Text className="text-textSecondary text-sm mt-1 leading-5">{outfit.color_reasoning}</Text>
       </View>
 
       {/* Item images grid */}
@@ -62,7 +62,7 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
           </View>
         ))}
         {outfitItems.length === 0 && (
-          <Text className="text-[#A89880] my-4 text-sm">No item images available</Text>
+          <Text className="text-textTertiary my-4 text-sm">No item images available</Text>
         )}
       </View>
 
@@ -73,7 +73,7 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
           style={styles.tryOnButton}
           activeOpacity={0.85}
         >
-          <Text className="text-[#FDFAF6] font-semibold text-sm tracking-wide">✦ Try On</Text>
+          <Text className="text-bgSurface font-semibold text-sm tracking-wide">✦ Try On</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -34,18 +34,18 @@ interface SelectedItemPillProps {
 }
 
 const SelectedItemPill = React.memo(({ item, onRemove }: SelectedItemPillProps) => (
-  <View className="flex-row items-center bg-white/90 rounded-full pl-[6px] pr-[8px] py-[6px] gap-1.5 border border-[#8B7355]/20">
+  <View className="flex-row items-center bg-white/90 rounded-full pl-[6px] pr-[8px] py-[6px] gap-1.5 border border-primary/20">
     <Image
       source={
         typeof item.image_url === 'string' && item.image_url.startsWith('http')
           ? { uri: (item.cutout_url || item.image_url) as string }
           : (item.image_url as any)
       }
-      className="w-7 h-7 rounded-full bg-[#F0EDE8]"
+      className="w-7 h-7 rounded-full bg-bgSurfaceRaised"
       contentFit="cover"
       transition={150}
     />
-    <Text className="text-xs font-medium text-[#1A1A1A] max-w-[50px]" numberOfLines={1}>
+    <Text className="text-xs font-medium text-textPrimary max-w-[50px]" numberOfLines={1}>
       {CATEGORY_LABELS[item.category] || item.category}
     </Text>
     <Pressable onPress={onRemove} className="w-5 h-5 rounded-full bg-black/5 justify-center items-center" hitSlop={8}>
@@ -70,9 +70,9 @@ export const SelectedItemsRow = () => {
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-[#6A8C69] bg-[#6A8C69]/10 border-[#6A8C69]/20';
-    if (score >= 60) return 'text-[#C9A84C] bg-[#C9A84C]/10 border-[#C9A84C]/20';
-    return 'text-[#8B7355] bg-[#8B7355]/10 border-[#8B7355]/20';
+    if (score >= 80) return 'text-stateSuccess bg-stateSuccess/10 border-stateSuccess/20';
+    if (score >= 60) return 'text-goldAccent bg-goldAccent/10 border-goldAccent/20';
+    return 'text-primary bg-primary/10 border-primary/20';
   };
 
   const scoreTheme = getScoreColor(matchScore);
@@ -80,7 +80,7 @@ export const SelectedItemsRow = () => {
   return (
     <View className="absolute left-0 right-0 items-center z-[60]" style={{ bottom: 6 + insets.bottom }} pointerEvents="box-none">
       <BlurView intensity={30} tint="light" className="w-[90%] max-w-[400px] rounded-3xl overflow-hidden">
-        <View className="bg-[#FDFAF6]/90 rounded-3xl py-2 px-3 flex-row items-center border border-[#B09A7A]/20">
+        <View className="bg-bgSurface/90 rounded-3xl py-2 px-3 flex-row items-center border border-primaryLight/20">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -105,7 +105,7 @@ export const SelectedItemsRow = () => {
                 </Text>
               </View>
             ) : (
-              <Text className="text-xs font-semibold text-[#8B7355]">
+              <Text className="text-xs font-semibold text-primary">
                 {selectedItemsArray.length} items
               </Text>
             )}

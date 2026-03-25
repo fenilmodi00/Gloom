@@ -64,11 +64,11 @@ export function OutfitCombinationCard({ combination, onPress }: OutfitCombinatio
   return (
     <Pressable 
       onPress={handlePress} 
-      className="bg-[#FDFAF6] rounded-2xl overflow-hidden shadow-sm border border-black/5"
+      className="bg-bgSurface rounded-2xl overflow-hidden shadow-sm border border-black/5"
     >
       {/* Mini OutfitBoard Preview */}
       <View 
-        className="relative overflow-hidden bg-[#F5F2EE]"
+        className="relative overflow-hidden bg-bgCanvas"
         style={{ width: CARD_WIDTH, height: CARD_WIDTH * ASPECT_RATIO * 0.82 }}
       >
         {/* Centered scaled board - shifted down for top padding */}
@@ -112,16 +112,16 @@ export function OutfitCombinationCard({ combination, onPress }: OutfitCombinatio
             {matchingTags.map((tag) => (
               <View 
                 key={tag} 
-                className="bg-[#8B7355]/5 px-2 py-0.5 rounded-full border border-[#8B7355]/10"
+                className="bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10"
               >
-                <Text className="text-[10px] text-[#8B7355] font-medium capitalize">
+                <Text className="text-[10px] text-primary font-medium capitalize">
                   {tag}
                 </Text>
               </View>
             ))}
           </View>
         ) : (
-          <Text className="text-[11px] text-[#A89880] italic">
+          <Text className="text-[11px] text-textTertiary italic">
             Cohesive Look
           </Text>
         )}

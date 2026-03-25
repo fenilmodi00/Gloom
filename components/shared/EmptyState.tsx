@@ -60,7 +60,7 @@ export function EmptyState({
           {onOutfitPress && (
             <TouchableOpacity
               onPress={onOutfitPress}
-              className="flex-row items-center justify-center border border-[#D4C5B0] py-[15px] px-6 rounded-full gap-2"
+              className="flex-row items-center justify-center border border-accent-light py-[15px] px-6 rounded-full gap-2"
               activeOpacity={0.8}
             >
               <Sparkles size={18} color="#8B7355" />
