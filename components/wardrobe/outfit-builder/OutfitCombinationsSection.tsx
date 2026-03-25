@@ -4,13 +4,13 @@
  * Horizontal scrollable section displaying outfit combination cards.
  * Appears below the category lists when items are selected.
  */
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronRight, Sparkles } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 
 import { OutfitCombinationCard } from './OutfitCombinationCard';
-import type { WardrobeItem, Category } from '@/types/wardrobe';
+import type { WardrobeItem } from '@/types/wardrobe';
 import type { OutfitCombination } from '@/lib/store/outfit-builder.store';
 import {
   useOutfitBuilderStore,
@@ -19,9 +19,8 @@ import {
 } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
 import { OUTFIT_BUILDER_CONSTANTS } from '@/constants/OutfitBuilder';
-import { Typography } from '@/constants/Typography';
 
-const { CARD_WIDTH, GAP, HORIZONTAL_PADDING } = OUTFIT_BUILDER_CONSTANTS;
+const { CARD_WIDTH } = OUTFIT_BUILDER_CONSTANTS;
 
 const GRADIENT_START = THEME.bgCanvas;
 const GRADIENT_END = THEME.bgSurfaceRaised;
@@ -44,9 +43,7 @@ export function OutfitCombinationsSection({
   // Generate combinations when selection changes
   useEffect(() => {
     if (selectedCount > 0) {
-      console.log('[OutfitCombinationsSection] Generating combinations for', items.length, 'items');
       generateRef.current(items);
-      console.log('[OutfitCombinationsSection] Combinations generated');
     }
   }, [selectedCount, items]);
 
@@ -60,29 +57,29 @@ export function OutfitCombinationsSection({
       colors={[GRADIENT_START, GRADIENT_END]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
-      style={styles.container}
+      className="py-4"
     >
       {/* Section header */}
-      <View style={styles.headerRow}>
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
+      <View className="flex-row items-center justify-between px-4 mb-3">
+        <View className="flex-row items-center gap-2">
+          <View className="w-7 h-7 rounded-full bg-gold-soft items-center justify-center">
             <Sparkles size={14} color={THEME.goldAccent} />
           </View>
-          <Text style={styles.headerLabel}>Suggested Looks</Text>
+          <Text className="font-heading text-xl text-text-primary">Suggested Looks</Text>
         </View>
-        <Text style={styles.countText}>{combinations.length} options</Text>
+        <Text className="font-body text-xs text-text-secondary bg-surface px-2.5 py-1 rounded-xl">{combinations.length} options</Text>
       </View>
 
       {/* Horizontal scrollable cards */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerClassName="px-4 pb-2 gap-4 flex-row items-start"
         decelerationRate="fast"
         nestedScrollEnabled
       >
         {combinations.map((combination) => (
-          <View key={combination.id} style={styles.cardWrapper}>
+          <View key={combination.id} className="shrink-0" style={{ width: CARD_WIDTH }}>
             <OutfitCombinationCard
               combination={combination}
               onPress={onCombinationPress}
@@ -93,53 +90,3 @@ export function OutfitCombinationsSection({
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 16,
-    paddingHorizontal: 0, // Removed to allow scroll to touch edge
-  },
-  headerRow: {
-    paddingHorizontal: HORIZONTAL_PADDING,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: THEME.goldSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerLabel: {
-    ...Typography.heading3,
-    color: THEME.textPrimary,
-  },
-  countText: {
-    ...Typography.bodySmall,
-    color: THEME.textSecondary,
-    backgroundColor: THEME.bgSurface,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  scrollContent: {
-    paddingHorizontal: HORIZONTAL_PADDING,
-    paddingBottom: 8,
-    gap: GAP,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  cardWrapper: {
-    width: CARD_WIDTH,
-    flexShrink: 0,
-  },
-});

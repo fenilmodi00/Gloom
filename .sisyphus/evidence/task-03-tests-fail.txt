@@ -1,0 +1,120 @@
+bun test v1.2.14 (6a363a38)
+
+__tests__/outfit-scoring.test.ts:
+ 8 |
+ 9 | describe('Outfit Scoring Part 1: Scoring Functions', () => {
+10 |   describe('calculateStyleScore', () => {
+11 |     it('should calculate style score correctly for matching tags', () => {
+12 |       // not implemented
+13 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:13:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateStyleScore > should calculate style score correctly for matching tags [52.13ms]
+13 |       expect(false).toBe(true);
+14 |     });
+15 |
+16 |     it('should handle missing style tags', () => {
+17 |       // not implemented
+18 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:18:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateStyleScore > should handle missing style tags [0.13ms]
+20 |   });
+21 |
+22 |   describe('calculateVibeScore', () => {
+23 |     it('should calculate vibe score correctly', () => {
+24 |       // not implemented
+25 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:25:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateVibeScore > should calculate vibe score correctly [0.07ms]
+25 |       expect(false).toBe(true);
+26 |     });
+27 |
+28 |     it('should handle mismatched vibes', () => {
+29 |       // not implemented
+30 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:30:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateVibeScore > should handle mismatched vibes [0.04ms]
+32 |   });
+33 |
+34 |   describe('calculateOccasionScore', () => {
+35 |     it('should calculate occasion score correctly for overlapping occasions', () => {
+36 |       // not implemented
+37 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:37:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateOccasionScore > should calculate occasion score correctly for overlapping occasions [0.05ms]
+37 |       expect(false).toBe(true);
+38 |     });
+39 |
+40 |     it('should handle disjoint occasions', () => {
+41 |       // not implemented
+42 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:42:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateOccasionScore > should handle disjoint occasions [0.09ms]
+44 |   });
+45 |
+46 |   describe('calculateColorScore', () => {
+47 |     it('should calculate color score correctly', () => {
+48 |       // not implemented
+49 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:49:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateColorScore > should calculate color score correctly [0.08ms]
+49 |       expect(false).toBe(true);
+50 |     });
+51 |
+52 |     it('should handle missing or empty colors', () => {
+53 |       // not implemented
+54 |       expect(false).toBe(true);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/__tests__/outfit-scoring.test.ts:54:21)
+(fail) Outfit Scoring Part 1: Scoring Functions > calculateColorScore > should handle missing or empty colors [0.04ms]
+
+ 0 pass
+ 8 fail
+ 8 expect() calls
+Ran 8 tests across 1 files. [817.00ms]

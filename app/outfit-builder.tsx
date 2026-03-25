@@ -18,7 +18,6 @@ import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useSelectedItemsArray, useSelectedStyle, useOutfitBuilderStore, useCombinations } from '@/lib/store/outfit-builder.store';
 import type { OutfitCombination } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
-import { Typography } from '@/constants/Typography';
 
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
@@ -113,7 +112,7 @@ const combinations = useCombinations();
 
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-canvas">
       {isVisible && (
         <Animated.View
           entering={FadeInDown.springify().mass(1).damping(18)}
@@ -121,18 +120,18 @@ const combinations = useCombinations();
           style={StyleSheet.absoluteFill}
         >
           {/* Header */}
-          <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.headerTitle}>Build Outfit</Text>
-              <Text style={styles.headerSubtitle}>Mix & match items</Text>
+          <View className="flex-row items-center px-5 pb-4 bg-canvas" style={{ paddingTop: insets.top + 8 }}>
+            <View className="flex-1 justify-center">
+              <Text className="font-heading text-2xl text-text-primary">Build Outfit</Text>
+              <Text className="font-body text-xs text-text-secondary mt-[-2px]">Mix & match items</Text>
             </View>
-            <View style={styles.headerRight}>
-              <View style={styles.actionPill}>
-                <Pressable onPress={navigateToAddItem} style={styles.pillButton}>
+            <View className="items-end justify-center">
+              <View className="flex-row items-center bg-primary rounded-[22px] px-0.5 py-0.5 shadow-md shadow-primary/20 elevation-4">
+                <Pressable onPress={navigateToAddItem} className="w-10 h-9 items-center justify-center rounded-[18px]">
                   <Plus size={18} color={THEME.bgSurface} />
                 </Pressable>
-                <View style={styles.pillDivider} />
-                <Pressable onPress={closeScreen} style={styles.pillButton}>
+                <View className="w-px h-3.5 bg-white/20" />
+                <Pressable onPress={closeScreen} className="w-10 h-9 items-center justify-center rounded-[18px]">
                   <X size={18} color={THEME.bgSurface} />
                 </Pressable>
               </View>
@@ -140,13 +139,10 @@ const combinations = useCombinations();
           </View>
 
           {/* Main content - scrollable item selection + combinations */}
-          <View style={styles.mainContent}>
+          <View className="flex-1">
             <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={[
-                styles.scrollContent,
-                { paddingBottom: insets.bottom + 140 }
-              ]}
+              className="flex-1"
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 140 }}
               showsVerticalScrollIndicator={false}
               contentInsetAdjustmentBehavior="automatic"
             >
@@ -156,7 +152,7 @@ const combinations = useCombinations();
               <SelectItemsSection items={items} />
 
               {/* Outfit combinations section - appears below categories */}
-              <View style={styles.combinationsContainer}>
+              <View className="mt-2">
                 <OutfitCombinationsSection
                   items={items}
                   onCombinationPress={handleCombinationPress}
@@ -173,13 +169,11 @@ const combinations = useCombinations();
 
           {/* Floating Generate Button - right side bottom */}
           <View
-            style={[styles.generateButtonContainer, { bottom: insets.bottom || 16, right: 16 }]}
+            className="absolute z-[100]"
+            style={{ bottom: insets.bottom || 16, right: 16 }}
           >
             <Pressable
-              style={[
-                styles.generateButton,
-                selectedItemsArray.length === 0 && styles.generateButtonDisabled,
-              ]}
+              className={`w-16 h-16 rounded-full items-center justify-center ${selectedItemsArray.length === 0 ? 'bg-muted shadow-none elevation-0' : 'bg-gold-accent shadow-lg shadow-gold-accent/40 elevation-8'}`}
               onPress={handleGenerateOutfit}
               disabled={selectedItemsArray.length === 0}
             >
@@ -194,94 +188,3 @@ const combinations = useCombinations();
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.bgCanvas,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: THEME.bgCanvas,
-  },
-  headerLeft: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    ...Typography.heading2,
-    color: THEME.textPrimary,
-  },
-  headerSubtitle: {
-    ...Typography.bodySmall,
-    color: THEME.textSecondary,
-    marginTop: -2,
-  },
-  actionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: THEME.primary,
-    borderRadius: 22,
-    paddingHorizontal: 2,
-    paddingVertical: 2,
-    shadowColor: THEME.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  pillButton: {
-    width: 40,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 18,
-  },
-  pillDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  mainContent: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-
-  combinationsContainer: {
-    marginTop: 8,
-  },
-  generateButtonContainer: {
-    position: 'absolute',
-    zIndex: 100,
-  },
-  generateButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: THEME.goldAccent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: THEME.goldAccent,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  generateButtonDisabled: {
-    backgroundColor: THEME.bgMuted,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-});

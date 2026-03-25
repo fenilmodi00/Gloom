@@ -22,15 +22,6 @@ export interface ScoringWeights {
   color: number;
 }
 
-export const DEFAULT_WEIGHTS: ScoringWeights = {
-  style: 30,
-  vibe: 20,
-  occasion: 15,
-  functional: 20,
-  silhouette: 10,
-  color: 5,
-};
-
 /**
  * Calculate style compatibility score between two items
  * Matching style_tags = 100, else 0
@@ -145,6 +136,25 @@ function calculateColorScore(item1: WardrobeItem, item2: WardrobeItem): number {
   return 50;
 }
 
+// Memoization cache for pair scores
+const pairScoreCache = new Map<string, number>();
+
+/**
+ * Generates a unique, order-independent cache key for an item pair
+ */
+function getPairCacheKey(item1Id: string, item2Id: string, weightsString: string): string {
+  // Sort IDs so that (A, B) and (B, A) generate the same key
+  const sortedIds = [item1Id, item2Id].sort();
+  return `${sortedIds[0]}|${sortedIds[1]}|${weightsString}`;
+}
+
+/**
+ * Clear the pair score cache (useful for testing or when user wardrobe changes substantially)
+ */
+export function clearPairScoreCache(): void {
+  pairScoreCache.clear();
+}
+
 /**
  * Calculate compatibility score between two items (0-100)
  * Uses weighted scoring across all tag categories
@@ -152,42 +162,61 @@ function calculateColorScore(item1: WardrobeItem, item2: WardrobeItem): number {
 export function calculateItemPairScore(
   item1: WardrobeItem,
   item2: WardrobeItem,
-  weights: ScoringWeights = DEFAULT_WEIGHTS
+  weights?: ScoringWeights
 ): number {
+  const actualWeights = weights || {
+    style: 30,
+    vibe: 20,
+    occasion: 15,
+    functional: 20,
+    silhouette: 10,
+    color: 5,
+  };
+
+  const weightsString = JSON.stringify(actualWeights);
+  const cacheKey = getPairCacheKey(item1.id, item2.id, weightsString);
+
+  if (pairScoreCache.has(cacheKey)) {
+    return pairScoreCache.get(cacheKey)!;
+  }
+
   let totalScore = 0;
   let totalWeight = 0;
 
   // Style compatibility
   const styleScore = calculateStyleScore(item1, item2);
-  totalScore += styleScore * weights.style;
-  totalWeight += weights.style;
+  totalScore += styleScore * actualWeights.style;
+  totalWeight += actualWeights.style;
 
   // Vibe compatibility
   const vibeScore = calculateVibeScore(item1, item2);
-  totalScore += vibeScore * weights.vibe;
-  totalWeight += weights.vibe;
+  totalScore += vibeScore * actualWeights.vibe;
+  totalWeight += actualWeights.vibe;
 
   // Occasion compatibility
   const occasionScore = calculateOccasionScore(item1, item2);
-  totalScore += occasionScore * weights.occasion;
-  totalWeight += weights.occasion;
+  totalScore += occasionScore * actualWeights.occasion;
+  totalWeight += actualWeights.occasion;
 
   // Functional layering compatibility
   const functionalScore = calculateFunctionalScore(item1, item2);
-  totalScore += functionalScore * weights.functional;
-  totalWeight += weights.functional;
+  totalScore += functionalScore * actualWeights.functional;
+  totalWeight += actualWeights.functional;
 
   // Silhouette balance
   const silhouetteScore = calculateSilhouetteScore(item1, item2);
-  totalScore += silhouetteScore * weights.silhouette;
-  totalWeight += weights.silhouette;
+  totalScore += silhouetteScore * actualWeights.silhouette;
+  totalWeight += actualWeights.silhouette;
 
   // Color harmony
   const colorScore = calculateColorScore(item1, item2);
-  totalScore += colorScore * weights.color;
-  totalWeight += weights.color;
+  totalScore += colorScore * actualWeights.color;
+  totalWeight += actualWeights.color;
 
-  return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+  const finalScore = totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+  pairScoreCache.set(cacheKey, finalScore);
+
+  return finalScore;
 }
 
 /**
@@ -225,8 +254,38 @@ const STYLE_TAG_MAP: Record<OutfitStyle, string[]> = {
   sporty: ['athleisure', 'casual'],
 };
 
+// Inverted tag index for O(1) style lookups
+const styleInvertedIndex = new Map<string, Set<string>>();
+let isIndexBuilt = false;
+
 /**
- * Filter items by selected style
+ * Build inverted index for fast item filtering by tag
+ */
+export function buildTagIndex(items: WardrobeItem[]): void {
+  styleInvertedIndex.clear();
+
+  items.forEach(item => {
+    item.style_tags.forEach(tag => {
+      if (!styleInvertedIndex.has(tag)) {
+        styleInvertedIndex.set(tag, new Set());
+      }
+      styleInvertedIndex.get(tag)!.add(item.id);
+    });
+  });
+
+  isIndexBuilt = true;
+}
+
+/**
+ * Clear tag index (useful when wardrobe changes significantly)
+ */
+export function clearTagIndex(): void {
+  styleInvertedIndex.clear();
+  isIndexBuilt = false;
+}
+
+/**
+ * Filter items by selected style using inverted index if built
  * Returns items that have tags matching the style
  */
 export function filterByStyle(items: WardrobeItem[], style: OutfitStyle | null): WardrobeItem[] {
@@ -235,18 +294,65 @@ export function filterByStyle(items: WardrobeItem[], style: OutfitStyle | null):
   const targetTags = STYLE_TAG_MAP[style] || [];
   if (targetTags.length === 0) return items;
 
-  return items.filter((item) =>
-    item.style_tags.some((tag) => targetTags.includes(tag))
-  );
+  // If we haven't built the index yet or it's empty, build it
+  if (!isIndexBuilt) {
+    buildTagIndex(items);
+  }
+
+  // Use inverted index for O(1) item ID retrieval
+  const matchingItemIds = new Set<string>();
+  targetTags.forEach(tag => {
+    const itemIdsForTag = styleInvertedIndex.get(tag);
+    if (itemIdsForTag) {
+      itemIdsForTag.forEach(id => matchingItemIds.add(id));
+    }
+  });
+
+  // Return actual item objects that matched
+  return items.filter(item => matchingItemIds.has(item.id));
+}
+
+// Simple fixed-size Priority Queue for top-K elements
+// Optimized for finding the top N matches without full array sort
+class TopKQueue<T> {
+  private items: { item: T; score: number }[] = [];
+
+  constructor(private readonly k: number) {}
+
+  add(item: T, score: number) {
+    // If queue isn't full, just add and sort
+    if (this.items.length < this.k) {
+      this.items.push({ item, score });
+      this.items.sort((a, b) => b.score - a.score);
+      return;
+    }
+
+    // If score is worse than our worst item, ignore
+    if (score <= this.items[this.items.length - 1].score) return;
+
+    // Otherwise, replace worst item and re-sort
+    this.items[this.items.length - 1] = { item, score };
+    this.items.sort((a, b) => b.score - a.score);
+  }
+
+  getTopItems(): T[] {
+    return this.items.map(i => i.item);
+  }
+
+  isEmpty(): boolean {
+    return this.items.length === 0;
+  }
 }
 
 /**
  * Get items that complement an existing selection for a specific slot
- * Uses scoring to find best matching item
+ * Uses scoring to find best matching item, optimized with a Top-K priority queue
+ * rather than sorting the entire array.
  */
 export function getBestMatchingItem(
   availableItems: WardrobeItem[],
-  currentSelection: { [key: string]: WardrobeItem | undefined }
+  currentSelection: { [key: string]: WardrobeItem | undefined },
+  topK: number = 3
 ): WardrobeItem | null {
   if (availableItems.length === 0) return null;
   if (Object.values(currentSelection).filter(Boolean).length === 0) {
@@ -254,35 +360,44 @@ export function getBestMatchingItem(
     return availableItems[Math.floor(Math.random() * availableItems.length)];
   }
 
-  // Calculate scores for all available items
-  const itemScores = availableItems.map((item) => {
+  const selectedItems = Object.values(currentSelection).filter(Boolean) as WardrobeItem[];
+
+  // Early pruning: use Priority Queue instead of mapping all then sorting all O(N log K) instead of O(N log N)
+  const topMatches = new TopKQueue<WardrobeItem>(topK);
+
+  for (const item of availableItems) {
     let totalScore = 0;
-    let count = 0;
-    const selectedItems = Object.values(currentSelection).filter(Boolean) as WardrobeItem[];
     
+    // Calculate average pair score against current selection
     for (const selected of selectedItems) {
       totalScore += calculateItemPairScore(item, selected);
-      count++;
     }
+    const avgScore = selectedItems.length > 0 ? totalScore / selectedItems.length : 0;
     
-    return {
-      item,
-      score: count > 0 ? totalScore / count : 0,
-    };
-  });
+    // Add to Top-K queue
+    topMatches.add(item, avgScore);
+  }
 
-  // Sort by score descending
-  itemScores.sort((a, b) => b.score - a.score);
+  if (topMatches.isEmpty()) return null;
 
-  // Take top 3 candidates (or fewer if available)
-  const topCandidates = itemScores.slice(0, Math.min(3, itemScores.length));
+  // Take top K candidates
+  const candidates = topMatches.getTopItems();
   
   // Randomly select one from the top candidates
-  const randomIndex = Math.floor(Math.random() * topCandidates.length);
-  return topCandidates[randomIndex].item;
+  const randomIndex = Math.floor(Math.random() * candidates.length);
+  return candidates[randomIndex];
 }
 
 /**
  * Style tag map for external use
  */
 export { STYLE_TAG_MAP };
+
+export const DEFAULT_WEIGHTS: ScoringWeights = {
+  style: 30,
+  vibe: 20,
+  occasion: 15,
+  functional: 20,
+  silhouette: 10,
+  color: 5,
+};

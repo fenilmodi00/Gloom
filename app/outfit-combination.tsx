@@ -21,12 +21,11 @@ import { OutfitCombinationSlide } from '@/components/wardrobe/outfit-builder/Out
 import { FaceSelectionBottomSheet } from '@/components/wardrobe/outfit-builder/FaceSelectionBottomSheet';
 import type { FaceItem } from '@/components/wardrobe/outfit-builder/FaceCarousel';
 import { THEME } from '@/constants/Colors';
-import { Typography } from '@/constants/Typography';
 import {
   useCombinations,
   useOutfitBuilderStore,
 } from '@/lib/store/outfit-builder.store';
-import { Bookmark, ChevronLeft, Edit3, Sparkles, Upload } from 'lucide-react-native';
+import { Bookmark, ChevronLeft, Edit3, Sparkles } from 'lucide-react-native';
 
 // Mock face data for now
 const MOCK_FACES: FaceItem[] = [
@@ -94,15 +93,13 @@ export default function OutfitCombinationScreen() {
     setIsFaceSheetOpen(false);
   }, []);
   
-  const handleConfirmTryOn = useCallback((selectedFace: FaceItem | null) => {
+  const handleConfirmTryOn = useCallback((_selectedFace: FaceItem | null) => {
     setIsFaceSheetOpen(false);
     // TODO: Implement actual try-on with selected face
-    console.log('Try on with face:', selectedFace);
   }, []);
   
   const handleAddFace = useCallback(() => {
     // TODO: Implement add face flow
-    console.log('Add new face');
   }, []);
 
   const handleEdit = useCallback(() => {
@@ -123,13 +120,13 @@ export default function OutfitCombinationScreen() {
   // Handle empty state
   if (safeCombinations.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: THEME.bgCanvas }]}>
+      <View className="flex-1 bg-canvas">
         <Stack.Screen options={{ headerShown: false }} />
         <StatusBar barStyle="dark-content" />
-        <View style={[styles.emptyState, { paddingTop: insets.top + 16 }]}>
-          <Text style={styles.emptyText}>No outfit combinations available</Text>
-          <Pressable onPress={handleClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Close</Text>
+        <View className="flex-1 items-center justify-center" style={{ paddingTop: insets.top + 16 }}>
+          <Text className="font-body text-base text-text-secondary mb-4">No outfit combinations available</Text>
+          <Pressable onPress={handleClose} className="bg-gold-accent px-6 py-3 rounded-[20px]">
+            <Text className="font-ui text-sm font-medium text-surface">Close</Text>
           </Pressable>
         </View>
       </View>
@@ -137,27 +134,27 @@ export default function OutfitCombinationScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: THEME.bgCanvas }]}>
+    <View className="flex-1 bg-canvas">
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="dark-content" />
 
       {/* Static Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={handleClose} style={styles.headerButton}>
+      <View className="flex-row items-center justify-between px-4 pb-4 z-10" style={{ paddingTop: insets.top + 8 }}>
+        <Pressable onPress={handleClose} className="w-11 h-11 rounded-full bg-white/80 items-center justify-center">
           <ChevronLeft size={24} color={THEME.textPrimary} />
         </Pressable>
 
-        <Pressable onPress={handleBookmark} style={styles.headerButton}>
-          <View style={styles.settingsIcon}>
-            <View style={styles.settingsLine} />
-            <View style={styles.settingsLine} />
-            <View style={styles.settingsLine} />
+        <Pressable onPress={handleBookmark} className="w-11 h-11 rounded-full bg-white/80 items-center justify-center">
+          <View className="w-5 h-4 justify-between">
+            <View className="w-5 h-0.5 bg-text-primary rounded-sm" />
+            <View className="w-5 h-0.5 bg-text-primary rounded-sm" />
+            <View className="w-5 h-0.5 bg-text-primary rounded-sm" />
           </View>
         </Pressable>
       </View>
 
       {/* Carousel - only grid + title */}
-      <View style={[styles.carouselContainer, { paddingBottom: 100 }]}>
+      <View className="flex-1 pb-[100px]">
         <Carousel
           width={screenWidth}
           height={carouselHeight} // Dynamic height based on bottom bar visibility
@@ -172,8 +169,8 @@ export default function OutfitCombinationScreen() {
 
       {/* Pagination Indicator - hidden when bottom sheet is open */}
       {!isFaceSheetOpen && (
-        <View style={styles.paginationContainer}>
-          <Text style={styles.paginationText}>
+        <View className="items-center py-2 z-10">
+          <Text className="font-body text-xs text-text-secondary bg-white/80 px-2 py-1 rounded-lg">
             {currentIndex + 1} of {safeCombinations.length}
           </Text>
         </View>
@@ -181,23 +178,23 @@ export default function OutfitCombinationScreen() {
 
       {/* Static Bottom Bar - hidden with opacity when face selection sheet is open */}
       <View 
+        className="absolute bottom-0 left-0 right-0 flex-row items-center justify-center px-4 gap-3 bg-canvas z-10"
         style={[
-          styles.bottomBar, 
           { paddingBottom: insets.bottom + 16 },
           isFaceSheetOpen && { opacity: 0, pointerEvents: 'none' }
         ]}
       >
-        <Pressable style={[styles.actionButton, {backgroundColor: THEME.goldAccent}]} onPress={handleTryOn}>
+        <Pressable className="flex-row items-center justify-center bg-gold-accent px-6 py-3.5 rounded-[20px] gap-2" onPress={handleTryOn}>
           <Sparkles size={18} color={THEME.bgSurface} />
-          <Text style={[styles.actionButtonText, {color: THEME.bgSurface}]}>Try on</Text>
+          <Text className="font-ui text-sm font-medium text-surface">Try on</Text>
         </Pressable>
 
-        <Pressable style={styles.actionButton} onPress={handleEdit}>
+        <Pressable className="flex-row items-center justify-center bg-surface px-6 py-3.5 rounded-[20px] gap-2" onPress={handleEdit}>
           <Edit3 size={18} color={THEME.textPrimary} />
-          <Text style={[styles.actionButtonText, {color: THEME.textPrimary}]}>Edit</Text>
+          <Text className="font-ui text-sm font-medium text-text-primary">Edit</Text>
         </Pressable>
 
-        <Pressable style={styles.iconButton} onPress={handleBookmark}>
+        <Pressable className="w-12 h-12 rounded-full bg-white/90 items-center justify-center" onPress={handleBookmark}>
           <Bookmark size={20} color={THEME.textPrimary} />
         </Pressable>
       </View>
@@ -224,119 +221,3 @@ export default function OutfitCombinationScreen() {
     </View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    ...Typography.body,
-    color: THEME.textSecondary,
-    marginBottom: 16,
-  },
-  closeButton: {
-    backgroundColor: THEME.goldAccent,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 20,
-  },
-  closeButtonText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.bgSurface,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    zIndex: 10, // Ensure header is above carousel
-  },
-  headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  settingsIcon: {
-    width: 20,
-    height: 16,
-    justifyContent: 'space-between',
-  },
-  settingsLine: {
-    width: 20,
-    height: 2,
-    backgroundColor: THEME.textPrimary,
-    borderRadius: 1,
-  },
-  carouselContainer: {
-    flex: 1,
-  },
-  paginationContainer: {
-    alignItems: 'center',
-    paddingVertical: 8,
-    zIndex: 10, // Same level as header and bottom bar
-  },
-  paginationText: {
-    ...Typography.bodySmall,
-    color: THEME.textSecondary,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    gap: 12,
-    backgroundColor: THEME.bgCanvas, // Add background to cover content behind
-    zIndex: 10, // Ensure it's above carousel but below bottom sheet
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: THEME.bgSurface,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 20,
-    gap: 8,
-  },
-  actionButtonText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.bgSurface,
-  },
-  lightButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  lightButtonText: {
-    color: THEME.textPrimary,
-  },
-  iconButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

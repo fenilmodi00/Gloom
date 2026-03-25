@@ -1,4 +1,3 @@
-import { Typography } from '@/constants/Typography';
 /**
  * FaceCarousel - Carousel for face selection in try-on flow
  *
@@ -7,11 +6,10 @@ import { Typography } from '@/constants/Typography';
  */
 import { Image } from 'expo-image';
 import { useCallback, useMemo } from 'react';
-import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Pressable, View } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { Text } from '@/components/ui/text';
-import { THEME } from '@/constants/Colors';
 
 // ============================================================================
 // Types
@@ -94,7 +92,7 @@ export function FaceCarousel({
   }
 
   return (
-    <View style={styles.carouselContainer}>
+    <View className="h-[140px] items-center justify-center">
       <Carousel
         width={CARD_WIDTH}
         height={CARD_HEIGHT}
@@ -130,85 +128,26 @@ function FaceCard({ item, isSelected, onPress }: FaceCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={[
-        styles.faceCard,
-        isSelected && styles.faceCardSelected,
-      ]}
+      className={`items-center justify-center gap-2 ${isSelected ? '' : ''}`}
+      style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
     >
       {item.isAddButton ? (
-        <View style={styles.addFaceButton}>
-          <View style={styles.addFaceIcon} />
-          <View style={[styles.addFaceIcon, styles.addFaceIconCenter]} />
+        <View className="w-20 h-20 rounded-full bg-black/5 items-center justify-center border border-black/10 border-dashed relative">
+          <View className="absolute w-6 h-0.5 bg-text-secondary rounded-sm" />
+          <View className="absolute w-6 h-0.5 bg-text-secondary rounded-sm rotate-90" />
         </View>
       ) : (
         <Image
           source={typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl}
-          style={styles.faceImage}
+          className="w-20 h-20 rounded-full border-2 border-transparent"
           contentFit="cover"
         />
       )}
       {item.name && !item.isAddButton && (
-        <Text style={styles.faceName} numberOfLines={1}>
+        <Text className="font-body text-xs text-text-secondary text-center" numberOfLines={1}>
           {item.name}
         </Text>
       )}
     </Pressable>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  carouselContainer: {
-    height: 140,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  faceCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  faceCardSelected: {
-    // Add some visual indicator for selected face
-  },
-  faceImage: {
-    width: FACE_IMAGE_SIZE,
-    height: FACE_IMAGE_SIZE,
-    borderRadius: FACE_IMAGE_SIZE / 2,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  addFaceButton: {
-    width: FACE_IMAGE_SIZE,
-    height: FACE_IMAGE_SIZE,
-    borderRadius: FACE_IMAGE_SIZE / 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    borderStyle: 'dashed',
-  },
-  addFaceIcon: {
-    position: 'absolute',
-    width: 24,
-    height: 2,
-    backgroundColor: THEME.textSecondary,
-    borderRadius: 1,
-  },
-  addFaceIconCenter: {
-    transform: [{ rotate: '90deg' }],
-  },
-  faceName: {
-    ...Typography.bodySmall,
-    color: THEME.textSecondary,
-    textAlign: 'center',
-  },
-});

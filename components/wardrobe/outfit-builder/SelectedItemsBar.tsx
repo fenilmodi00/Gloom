@@ -5,7 +5,7 @@
  * Tap to expand horizontally — reveals remove (X) buttons on each item.
  */
 import React, { useState } from 'react';
-import { View, Pressable, StyleSheet, Text as RNText, useWindowDimensions, ScrollView } from 'react-native';
+import { View, Pressable, Text as RNText, useWindowDimensions, ScrollView } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -20,9 +20,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { WardrobeItem } from '@/types/wardrobe';
-import { THEME } from '@/constants/Colors';
 import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit-builder.store';
-import { Typography } from '@/constants/Typography';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -50,12 +48,13 @@ const ItemIcon = ({ item, index, expanded, onRemove }: ItemIconProps) => {
   return (
     <Animated.View 
       layout={LinearTransition.springify().mass(0.8)}
-      style={[styles.itemWrapper, animatedWrapperStyle]}
+      className="w-12 h-12 relative"
+      style={animatedWrapperStyle}
     >
-      <View style={styles.itemImageContainer}>
+      <View className="w-12 h-12 rounded-full bg-surface border-2 border-surface shadow-sm justify-center items-center overflow-hidden">
         <Image
           source={item.cutout_url || item.image_url}
-          style={styles.itemImage}
+          className="w-full h-full"
           contentFit="contain"
         />
       </View>
@@ -66,7 +65,7 @@ const ItemIcon = ({ item, index, expanded, onRemove }: ItemIconProps) => {
           exiting={FadeOut.duration(150)}
           onPress={() => onRemove(item.id)}
           hitSlop={8}
-          style={styles.removeButton}
+          className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-state-error justify-center items-center border-2 border-white shadow-sm z-20"
         >
           <X size={12} color="#fff" strokeWidth={3} />
         </AnimatedPressable>
@@ -114,19 +113,24 @@ export const SelectedItemsBar = () => {
   return (
     <Animated.View
       layout={LinearTransition.springify().mass(0.8)}
-      style={[styles.container, { bottom: insets.bottom + 16 }]}
+      className="absolute left-4 z-[100]"
+      style={{ bottom: insets.bottom + 16 }}
     >
       <Pressable onPress={toggleExpand}>
         <BlurView
           intensity={85}
           tint="light"
-          style={[styles.blurContainer, { maxWidth: MAX_BAR_WIDTH }]}
+          className="rounded-[30px] overflow-hidden border-[1.5px] border-white/50 bg-white/15"
+          style={{ maxWidth: MAX_BAR_WIDTH }}
         >
-          <Animated.View style={[styles.innerContent, animatedInnerStyle]}>
+          <Animated.View
+            className="flex-row items-center h-16"
+            style={animatedInnerStyle}
+          >
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
+              contentContainerClassName="items-center"
               scrollEnabled={expanded}
               keyboardShouldPersistTaps="always"
             >
@@ -146,15 +150,15 @@ export const SelectedItemsBar = () => {
               })}
 
               {!expanded && selectedItems.length > 4 && (
-                <View style={styles.moreBadge}>
-                  <RNText style={styles.moreText}>+{selectedItems.length - 4}</RNText>
+                <View className="w-11 h-11 rounded-[22px] bg-muted -ml-6 z-10 justify-center items-center border-2 border-surface">
+                  <RNText className="font-ui text-[10px] tracking-wider uppercase text-text-secondary">+{selectedItems.length - 4}</RNText>
                 </View>
               )}
             </ScrollView>
 
             {!expanded && (
-              <View style={styles.countPill}>
-                <RNText style={styles.countText}>{selectedItems.length}</RNText>
+              <View className="ml-3 px-2 py-0.5 bg-[#1a1a1a]/10 rounded-xl">
+                <RNText className="font-ui text-xs tracking-wider uppercase font-medium text-text-primary">{selectedItems.length}</RNText>
               </View>
             )}
           </Animated.View>
@@ -163,97 +167,5 @@ export const SelectedItemsBar = () => {
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: 16,
-    zIndex: 100,
-  },
-  blurContainer: {
-    borderRadius: 30,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  innerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 64,
-  },
-  scrollContent: {
-    alignItems: 'center',
-  },
-  itemWrapper: {
-    width: ITEM_SIZE,
-    height: ITEM_SIZE,
-    position: 'relative',
-  },
-  itemImageContainer: {
-    width: ITEM_SIZE,
-    height: ITEM_SIZE,
-    borderRadius: ITEM_SIZE / 2,
-    backgroundColor: THEME.bgSurface,
-    borderWidth: 2,
-    borderColor: THEME.bgSurface,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  itemImage: {
-    width: '100%',
-    height: '100%',
-  },
-  removeButton: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: REMOVE_BUTTON_SIZE,
-    height: REMOVE_BUTTON_SIZE,
-    borderRadius: REMOVE_BUTTON_SIZE / 2,
-    backgroundColor: THEME.stateError,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    zIndex: 20,
-  },
-  moreBadge: {
-    width: ITEM_SIZE - 4,
-    height: ITEM_SIZE - 4,
-    borderRadius: (ITEM_SIZE - 4) / 2,
-    backgroundColor: THEME.bgMuted,
-    marginLeft: -24,
-    zIndex: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: THEME.bgSurface,
-  },
-  moreText: {
-    ...Typography.uiLabel,
-    color: THEME.textSecondary,
-  },
-  countPill: {
-    marginLeft: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    backgroundColor: 'rgba(26, 26, 26, 0.08)',
-    borderRadius: 12,
-  },
-  countText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.textPrimary,
-  },
-});
 
 export default SelectedItemsBar;

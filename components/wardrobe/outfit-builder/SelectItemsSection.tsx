@@ -6,7 +6,7 @@
  * Shows skeleton when category is empty.
  */
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,7 +15,6 @@ import { Check, ChevronRight } from 'lucide-react-native';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
-import { Typography } from '@/constants/Typography';
 
 const CATEGORY_CONFIG: { key: Category; label: string }[] = [
   { key: 'tops', label: 'Tops' },
@@ -42,20 +41,20 @@ interface ItemCardProps {
 }
 
 const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => (
-  <Pressable onPress={onPress} style={styles.cardContainer}>
+  <Pressable onPress={onPress} className="w-[120px] h-[150px] mr-3 bg-transparent">
     <Image
       source={
         typeof item.image_url === 'string' && item.image_url.startsWith('http')
           ? (item.cutout_url || item.image_url)
           : item.image_url
       }
-      style={styles.cardImage}
+      className="w-full h-full bg-transparent rounded-xl"
       contentFit="contain"
       transition={200}
     />
     {isSelected && (
-      <View style={styles.selectedOverlay}>
-        <View style={styles.checkCircle}>
+      <View className="absolute inset-0 bg-[#8B7355]/15 rounded-xl justify-center items-center">
+        <View className="w-7 h-7 rounded-full bg-primary justify-center items-center">
           <Check size={14} color="#FFFFFF" />
         </View>
       </View>
@@ -65,11 +64,11 @@ const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => (
 
 // Skeleton for empty categories
 const CategorySkeleton = () => (
-  <View style={styles.skeletonContainer}>
-    <View style={styles.skeletonHeader} />
-    <View style={styles.skeletonRow}>
+  <View className="mt-2">
+    <View className="w-[120px] h-4 bg-surface-raised rounded mb-3" />
+    <View className="flex-row gap-3">
       {[1, 2, 3].map((i) => (
-        <View key={i} style={styles.skeletonCard} />
+        <View key={i} className="w-[120px] h-[150px] bg-surface-raised rounded-xl" />
       ))}
     </View>
   </View>
@@ -116,10 +115,10 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
           colors={[GRADIENT_START, GRADIENT_END]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={styles.headerGradient}
+          className="pb-4 px-4"
         >
-          <Text style={styles.emptyText}>No items in your wardrobe yet</Text>
-          <Text style={styles.emptySubtext}>Add some clothes to start building outfits!</Text>
+          <Text className="font-heading text-lg font-semibold text-text-primary text-center mt-10">No items in your wardrobe yet</Text>
+          <Text className="font-body text-sm text-text-secondary text-center mt-2">Add some clothes to start building outfits!</Text>
         </LinearGradient>
       );
     }
@@ -132,17 +131,17 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
         colors={[GRADIENT_START, GRADIENT_END]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={styles.headerGradient}
+        className="pb-4 px-4"
       >
         {/* Header row */}
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Select Items</Text>
+        <View className="flex-row justify-between items-center">
+          <Text className="font-heading text-2xl text-text-primary">Select Items</Text>
         </View>
 
         {/* First category - part of same gradient */}
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>{first.label}</Text>
+        <View className="mt-4 mb-2">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-body text-base font-medium text-text-secondary">{first.label}</Text>
             <ChevronRight size={16} color={THEME.textSecondary} />
           </View>
         </View>
@@ -153,7 +152,7 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.sectionContent}
+            contentContainerClassName="gap-3 pr-4"
             nestedScrollEnabled
           >
             {firstItems.map((item) => (
@@ -184,11 +183,11 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
           colors={[GRADIENT_START, GRADIENT_END]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={styles.categorySection}
+          className="py-4 px-4"
         >
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>{label}</Text>
+          <View className="mt-4 mb-2">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-body text-base font-medium text-text-secondary">{label}</Text>
               <ChevronRight size={16} color={THEME.textSecondary} />
             </View>
           </View>
@@ -199,7 +198,7 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.sectionContent}
+              contentContainerClassName="gap-3 pr-4"
               nestedScrollEnabled
             >
               {categoryItems.map((item) => (
@@ -218,7 +217,7 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
   }, [categoriesWithItems, groupedItems, isSelected, toggleItem]);
 
   return (
-    <View style={styles.container}>
+    <View className="pb-5">
       {/* First category with header */}
       {renderFirstSection()}
       
@@ -227,109 +226,5 @@ export const SelectItemsSection = ({ items }: SelectItemsSectionProps) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 20,
-  },
-  headerGradient: {
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    ...Typography.heading1,
-    color: THEME.textPrimary,
-  },
-  sectionHeaderRow: {
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionLabel: {
-    ...Typography.body,
-    fontWeight: '500',
-    color: THEME.textSecondary,
-  },
-  sectionContent: {
-    gap: 12,
-    paddingRight: 16,
-  },
-  categorySection: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-  },
-  // Transparent cards matching wardrobe screen
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginRight: 12,
-    backgroundColor: 'transparent',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'transparent',
-    borderRadius: 12,
-  },
-  selectedOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(139, 115, 85, 0.15)',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: THEME.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Empty state
-  emptyText: {
-    ...Typography.body,
-    fontWeight: '600',
-    color: THEME.textPrimary,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  emptySubtext: {
-    ...Typography.bodySmall,
-    color: THEME.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  // Skeleton
-  skeletonContainer: {
-    marginTop: 8,
-  },
-  skeletonHeader: {
-    width: 120,
-    height: 16,
-    backgroundColor: THEME.skeleton,
-    borderRadius: 4,
-    marginBottom: 12,
-  },
-  skeletonRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  skeletonCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    backgroundColor: THEME.skeleton,
-    borderRadius: 12,
-  },
-});
 
 export default SelectItemsSection;

@@ -1,4 +1,3 @@
-import { Typography } from '@/constants/Typography';
 /**
  * OutfitCombinationSlide
  *
@@ -7,11 +6,10 @@ import { Typography } from '@/constants/Typography';
  * No header, no bottom buttons - those are in the parent screen.
  */
 import React from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { OutfitBoard } from '@/components/outfit-board';
 import type { OutfitCombination } from '@/lib/store/outfit-builder.store';
-import { THEME } from '@/constants/Colors';
 
 // ============================================================================
 // Types
@@ -63,7 +61,7 @@ export function OutfitCombinationSlide({ combination }: OutfitCombinationSlidePr
   const title = getCombinationTitle(combination);
   
   return (
-    <View style={styles.slide}>
+    <View className="flex-1 items-center justify-center relative">
       {/* Outfit Board - 2x2 grid with DotGrid background */}
       <OutfitBoard
         selection={combination.selection}
@@ -75,30 +73,9 @@ export function OutfitCombinationSlide({ combination }: OutfitCombinationSlidePr
       />
       
       {/* Title overlaid on DotGrid */}
-      <Text style={styles.overlaidTitle} numberOfLines={1}>
+      <Text className="absolute top-[60px] left-0 right-0 font-heading text-3xl text-text-secondary text-center" numberOfLines={1}>
         {title}
       </Text>
     </View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  slide: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  overlaidTitle: {
-    position: 'absolute',
-    top: 60, // Position below header area
-    left: 0,
-    right: 0,
-    ...Typography.heading1,
-    color: THEME.textSecondary,
-    textAlign: 'center',
-  },
-});

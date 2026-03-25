@@ -226,7 +226,7 @@ generateCombinations: (allItems: WardrobeItem[]) => {
       if (slotItems && slotItems.length > 0) {
         // Use best matching item (which now has internal randomness)
         const bestItem = getBestMatchingItem(slotItems, combination as { [key: string]: WardrobeItem | undefined });
-        if (bestItem) {
+        if (bestItem !== null && bestItem !== undefined) {
           combination[slot] = bestItem;
         }
       }

@@ -1,0 +1,2 @@
+73:    it('should return null when input array is empty', () => {
+78:    it('should return null when selected item is missing', () => {

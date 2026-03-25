@@ -1,0 +1,1 @@
+No TypeScript errors in fixture creation.
