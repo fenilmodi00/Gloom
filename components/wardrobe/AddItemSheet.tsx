@@ -32,7 +32,7 @@ export const AddItemSheet = forwardRef<BottomSheet, AddItemSheetProps>(
         handleIndicatorStyle={{ backgroundColor: '#EAE4DA', width: 40 }} // bgMuted
       >
         <View className="flex-1 p-6 space-y-4">
-          <Text className="text-xl font-bold text-textPrimary mb-2">Add to Wardrobe</Text>
+          <Text className="text-xl font-ui uppercase text-textPrimary mb-2">Add to Wardrobe</Text>
           <Pressable
             onPress={() => onSelectMethod('camera')}
             className="flex-row items-center w-full bg-bgCanvas p-4 rounded-xl mb-3"
@@ -41,8 +41,8 @@ export const AddItemSheet = forwardRef<BottomSheet, AddItemSheetProps>(
               <Camera size={20} color="#8B7355" />
             </View>
             <View className="flex-1">
-              <Text className="text-base font-bold text-textPrimary">Take photo</Text>
-              <Text className="text-sm text-textSecondary">Use camera to capture item</Text>
+              <Text className="text-base font-heading text-textPrimary">Take photo</Text>
+              <Text className="text-sm text-textSecondary font-body">Use camera to capture item</Text>
             </View>
           </Pressable>
           <Pressable
@@ -53,8 +53,8 @@ export const AddItemSheet = forwardRef<BottomSheet, AddItemSheetProps>(
               <ImageIcon size={20} color="#8B7355" />
             </View>
             <View className="flex-1">
-              <Text className="text-base font-bold text-textPrimary">Choose from gallery</Text>
-              <Text className="text-sm text-textSecondary">Upload an existing photo</Text>
+              <Text className="text-base font-heading text-textPrimary">Choose from gallery</Text>
+              <Text className="text-sm text-textSecondary font-body">Upload an existing photo</Text>
             </View>
           </Pressable>
         </View>

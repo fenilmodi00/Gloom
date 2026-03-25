@@ -146,7 +146,7 @@ function CarouselItem({ item, onPress }: CarouselItemProps) {
           <View className="gap-1">
             {item.name && (
               <Animated.Text
-                className="text-lg font-semibold text-white"
+                className="text-lg font-heading text-white"
                 style={{ textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}
               >
                 {item.name}

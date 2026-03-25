@@ -45,7 +45,7 @@ const SelectedItemPill = React.memo(({ item, onRemove }: SelectedItemPillProps) 
       contentFit="cover"
       transition={150}
     />
-    <Text className="text-xs font-medium text-textPrimary max-w-[50px]" numberOfLines={1}>
+    <Text className="text-xs font-product text-textPrimary max-w-[50px]" numberOfLines={1}>
       {CATEGORY_LABELS[item.category] || item.category}
     </Text>
     <Pressable onPress={onRemove} className="w-5 h-5 rounded-full bg-black/5 justify-center items-center" hitSlop={8}>
@@ -100,12 +100,12 @@ export const SelectedItemsRow = () => {
             {matchScore > 0 ? (
               <View className={`flex-row items-center px-2 py-1 rounded-full border ${scoreTheme}`}>
                 <Sparkles size={10} color={scoreTheme.split(' ')[0].replace('text-[', '').replace(']', '')} className="mr-1" />
-                <Text className={`text-[10px] font-bold ${scoreTheme.split(' ')[0]}`}>
+                <Text className={`text-[10px] font-heading ${scoreTheme.split(' ')[0]}`}>
                   {matchScore}% match
                 </Text>
               </View>
             ) : (
-              <Text className="text-xs font-semibold text-primary">
+              <Text className="text-xs font-heading text-primary">
                 {selectedItemsArray.length} items
               </Text>
             )}

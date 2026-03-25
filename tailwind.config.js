@@ -1,3 +1,5 @@
+
+const Typography = require('./constants/Typography').Typography;
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -63,6 +65,37 @@ module.exports = {
         'accent-light': '#D4C5B0',
         error: '#C0392B',
         success: '#27AE60',
+      },
+
+      fontSize: {
+        'hero': ['48px', { lineHeight: '56px', letterSpacing: '-1px' }],
+        'heading1': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px' }],
+        'heading2': ['24px', { lineHeight: '32px', letterSpacing: '-0.5px' }],
+        'heading3': ['20px', { lineHeight: '28px', letterSpacing: '-0.5px' }],
+        'productName': ['18px', { lineHeight: '24px', letterSpacing: '0px' }],
+        'uiLabel': ['12px', { lineHeight: '16px', letterSpacing: '1.5px' }],
+        'uiLabelMedium': ['14px', { lineHeight: '20px', letterSpacing: '1px' }],
+        'body': ['16px', { lineHeight: '24px', letterSpacing: '0px' }],
+        'bodySmall': ['14px', { lineHeight: '20px', letterSpacing: '0.2px' }],
+      },
+
+      fontSize: {
+        'hero': [Typography.hero.fontSize + 'px', { lineHeight: Typography.hero.lineHeight + 'px', letterSpacing: Typography.hero.letterSpacing + 'px' }],
+        'heading1': [Typography.heading1.fontSize + 'px', { lineHeight: Typography.heading1.lineHeight + 'px', letterSpacing: Typography.heading1.letterSpacing + 'px' }],
+        'heading2': [Typography.heading2.fontSize + 'px', { lineHeight: Typography.heading2.lineHeight + 'px', letterSpacing: Typography.heading2.letterSpacing + 'px' }],
+        'heading3': [Typography.heading3.fontSize + 'px', { lineHeight: Typography.heading3.lineHeight + 'px', letterSpacing: Typography.heading3.letterSpacing + 'px' }],
+        'productName': [Typography.productName.fontSize + 'px', { lineHeight: Typography.productName.lineHeight + 'px', letterSpacing: Typography.productName.letterSpacing + 'px' }],
+        'uiLabel': [Typography.uiLabel.fontSize + 'px', { lineHeight: Typography.uiLabel.lineHeight + 'px', letterSpacing: Typography.uiLabel.letterSpacing + 'px' }],
+        'uiLabelMedium': [Typography.uiLabelMedium.fontSize + 'px', { lineHeight: Typography.uiLabelMedium.lineHeight + 'px', letterSpacing: Typography.uiLabelMedium.letterSpacing + 'px' }],
+        'body': [Typography.body.fontSize + 'px', { lineHeight: Typography.body.lineHeight + 'px', letterSpacing: Typography.body.letterSpacing + 'px' }],
+        'bodySmall': [Typography.bodySmall.fontSize + 'px', { lineHeight: Typography.bodySmall.lineHeight + 'px', letterSpacing: Typography.bodySmall.letterSpacing + 'px' }],
+      },
+      fontFamily: {
+        hero: ['BodoniModa_700Bold'],
+        heading: ['PlayfairDisplay_600SemiBold'],
+        product: ['CormorantGaramond_500Medium'],
+        ui: ['InstrumentSans_500Medium'],
+        body: ['DMSans_400Regular'],
       },
     },
   },

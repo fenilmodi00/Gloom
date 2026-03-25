@@ -78,7 +78,7 @@ export const HeaderActionButton = React.memo(
             accessibilityLabel="Add Item"
           >
             <Plus size={18} color="white" />
-            <Text className="text-white text-[14px] font-semibold">Add Item</Text>
+            <Text className="text-white text-[14px] font-ui uppercase">Add Item</Text>
           </Pressable>
         </Animated.View>
 
@@ -92,7 +92,7 @@ export const HeaderActionButton = React.memo(
             className="flex-1 h-8 bg-primaryDark rounded-full items-center justify-center mr-1"
             accessibilityLabel="Add Item"
           >
-            <Text className="text-white text-[13px] font-semibold">Add Item</Text>
+            <Text className="text-white text-[13px] font-ui uppercase">Add Item</Text>
           </Pressable>
           <Pressable 
             onPress={onClose} 

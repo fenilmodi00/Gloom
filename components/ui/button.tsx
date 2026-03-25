@@ -73,7 +73,7 @@ export function Button({
 
 export function ButtonText({ className = '', children, variant = 'solid' }: ButtonTextProps) {
   return (
-    <Text className={`font-semibold text-center ${textColorClasses[variant]} ${className}`}>
+    <Text className={`font-ui uppercase tracking-widest text-center ${textColorClasses[variant]} ${className}`}>
       {children}
     </Text>
   );

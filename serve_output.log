@@ -1,0 +1,82 @@
+npm warn exec The following package was not found and will be installed: serve@14.2.6
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /inspo
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 28 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /assets/assets/fonts/SpaceMono-Regular.49a79d66bdea2debf1832bf4d7aca127.ttf
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /_expo/static/css/web-84742d15ea49060f61de4dc905054342.css
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /assets/node_modules/@expo-google-fonts/bodoni-moda/700Bold/BodoniModa_700Bold.6838c341642d6d66a9ebd9f4f35b3620.ttf
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /assets/node_modules/@expo-google-fonts/playfair-display/600SemiBold/PlayfairDisplay_600SemiBold.f0713720c230460d5430d96d46f5cd28.ttf
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /assets/node_modules/@expo-google-fonts/cormorant-garamond/500Medium/CormorantGaramond_500Medium.a658532edc2b8919aa61752708c4e7cf.ttf
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /assets/node_modules/@expo-google-fonts/instrument-sans/500Medium/InstrumentSans_500Medium.e0b177a490e51f6ceac9eedac735288c.ttf
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 10 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 10 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 12 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 14 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 10 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /assets/node_modules/@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.74f9bb7405caec741a24db735b2c5733.ttf
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 7 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 34 ms
+ HTTP  3/25/2026 8:48:08 AM ::1 GET /_expo/static/js/web/entry-d044a7bc5ecf32b76f1ac9c89b955f80.js
+ HTTP  3/25/2026 8:48:08 AM ::1 Returned 200 in 30 ms
+ HTTP  3/25/2026 8:48:49 AM ::1 GET /
+ HTTP  3/25/2026 8:48:49 AM ::1 Returned 200 in 10 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /login.html
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 301 in 1 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /login
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /assets/assets/fonts/SpaceMono-Regular.49a79d66bdea2debf1832bf4d7aca127.ttf
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 3 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /_expo/static/css/web-84742d15ea49060f61de4dc905054342.css
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /assets/node_modules/@expo-google-fonts/bodoni-moda/700Bold/BodoniModa_700Bold.6838c341642d6d66a9ebd9f4f35b3620.ttf
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /assets/node_modules/@expo-google-fonts/playfair-display/600SemiBold/PlayfairDisplay_600SemiBold.f0713720c230460d5430d96d46f5cd28.ttf
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 3 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /assets/node_modules/@expo-google-fonts/cormorant-garamond/500Medium/CormorantGaramond_500Medium.a658532edc2b8919aa61752708c4e7cf.ttf
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /assets/node_modules/@expo-google-fonts/instrument-sans/500Medium/InstrumentSans_500Medium.e0b177a490e51f6ceac9eedac735288c.ttf
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 1 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /assets/node_modules/@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.74f9bb7405caec741a24db735b2c5733.ttf
+ HTTP  3/25/2026 8:50:59 AM ::1 GET /_expo/static/js/web/entry-d044a7bc5ecf32b76f1ac9c89b955f80.js
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 6 ms
+ HTTP  3/25/2026 8:50:59 AM ::1 Returned 200 in 8 ms
+ HTTP  3/25/2026 8:51:34 AM ::1 GET /
+ HTTP  3/25/2026 8:51:34 AM ::1 Returned 200 in 3 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /inspo
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /assets/assets/fonts/SpaceMono-Regular.49a79d66bdea2debf1832bf4d7aca127.ttf
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /_expo/static/css/web-84742d15ea49060f61de4dc905054342.css
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /assets/node_modules/@expo-google-fonts/bodoni-moda/700Bold/BodoniModa_700Bold.6838c341642d6d66a9ebd9f4f35b3620.ttf
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /assets/node_modules/@expo-google-fonts/playfair-display/600SemiBold/PlayfairDisplay_600SemiBold.f0713720c230460d5430d96d46f5cd28.ttf
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 3 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /assets/node_modules/@expo-google-fonts/cormorant-garamond/500Medium/CormorantGaramond_500Medium.a658532edc2b8919aa61752708c4e7cf.ttf
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /assets/node_modules/@expo-google-fonts/instrument-sans/500Medium/InstrumentSans_500Medium.e0b177a490e51f6ceac9eedac735288c.ttf
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 3 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 3 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /assets/node_modules/@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.74f9bb7405caec741a24db735b2c5733.ttf
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 3 ms
+ HTTP  3/25/2026 8:51:35 AM ::1 GET /_expo/static/js/web/entry-d044a7bc5ecf32b76f1ac9c89b955f80.js
+ HTTP  3/25/2026 8:51:35 AM ::1 Returned 200 in 1 ms
+ HTTP  3/25/2026 8:52:04 AM ::1 GET /
+ HTTP  3/25/2026 8:52:04 AM ::1 Returned 200 in 5 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /inspo
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /assets/assets/fonts/SpaceMono-Regular.49a79d66bdea2debf1832bf4d7aca127.ttf
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /_expo/static/css/web-84742d15ea49060f61de4dc905054342.css
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 1 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 1 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /assets/node_modules/@expo-google-fonts/bodoni-moda/700Bold/BodoniModa_700Bold.6838c341642d6d66a9ebd9f4f35b3620.ttf
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 1 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /assets/node_modules/@expo-google-fonts/playfair-display/600SemiBold/PlayfairDisplay_600SemiBold.f0713720c230460d5430d96d46f5cd28.ttf
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /assets/node_modules/@expo-google-fonts/cormorant-garamond/500Medium/CormorantGaramond_500Medium.a658532edc2b8919aa61752708c4e7cf.ttf
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /assets/node_modules/@expo-google-fonts/instrument-sans/500Medium/InstrumentSans_500Medium.e0b177a490e51f6ceac9eedac735288c.ttf
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 2 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /assets/node_modules/@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.74f9bb7405caec741a24db735b2c5733.ttf
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 6 ms
+ HTTP  3/25/2026 8:52:14 AM ::1 GET /_expo/static/js/web/entry-d044a7bc5ecf32b76f1ac9c89b955f80.js
+ HTTP  3/25/2026 8:52:14 AM ::1 Returned 200 in 0 ms

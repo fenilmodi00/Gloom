@@ -142,18 +142,18 @@ export default function LoginScreen() {
         {/* Logo / Header */}
         <View className="items-center mb-12">
           <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-4">
-            <Text className="text-4xl text-primary">✦</Text>
+            <Text className="text-4xl text-primary font-body">✦</Text>
           </View>
-          <Text className="text-4xl font-bold italic tracking-tight text-textPrimary">StyleAI</Text>
-          <Text className="text-base text-textSecondary mt-2">Your Personal AI Stylist</Text>
+          <Text className="text-4xl font-hero italic tracking-tight text-textPrimary">StyleAI</Text>
+          <Text className="text-base text-textSecondary mt-2 font-body">Your Personal AI Stylist</Text>
         </View>
 
         {/* Error Message */}
         {error && (
           <View className="flex-row items-center justify-between bg-stateError/10 p-4 rounded-xl mb-6">
-            <Text className="flex-1 text-stateError text-sm">{error}</Text>
+            <Text className="flex-1 text-stateError text-sm font-body">{error}</Text>
             <TouchableOpacity onPress={() => setError(null)}>
-              <Text className="text-stateError text-lg ml-3 font-semibold">✕</Text>
+              <Text className="text-stateError text-lg ml-3 font-heading">✕</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -162,12 +162,12 @@ export default function LoginScreen() {
           <>
             {/* Phone Input Section */}
             <View className="mb-6">
-              <Text className="text-lg font-semibold text-textPrimary mb-4">Continue with Phone</Text>
+              <Text className="text-lg font-ui uppercase text-textPrimary mb-4">Continue with Phone</Text>
               
               <View className="flex-row items-center bg-bgSurface rounded-xl px-4 border border-bgMuted mb-4">
-                <Text className="text-base text-textPrimary font-medium mr-2">+91</Text>
+                <Text className="text-base text-textPrimary font-product mr-2">+91</Text>
                 <TextInput
-                  className="flex-1 text-base text-textPrimary py-4"
+                  className="flex-1 text-base text-textPrimary py-4 font-body"
                   placeholder="Enter phone number"
                   placeholderTextColor="#A89880"
                   value={phone}
@@ -185,7 +185,7 @@ export default function LoginScreen() {
                 {otpLoading ? (
                   <ActivityIndicator color="#FDFAF6" />
                 ) : (
-                  <Text className="text-textOnDark text-base font-semibold">Send OTP</Text>
+                  <Text className="text-textOnDark text-base font-heading">Send OTP</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -193,7 +193,7 @@ export default function LoginScreen() {
             {/* Divider */}
             <View className="flex-row items-center my-6">
               <View className="flex-1 h-[1px] bg-bgMuted" />
-              <Text className="text-textSecondary text-sm mx-4">or</Text>
+              <Text className="text-textSecondary text-sm mx-4 font-body">or</Text>
               <View className="flex-1 h-[1px] bg-bgMuted" />
             </View>
 
@@ -207,8 +207,8 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#1A1A1A" />
               ) : (
                 <>
-                  <Text className="text-blue-500 font-bold text-lg mr-3">G</Text>
-                  <Text className="text-textPrimary text-base font-medium">Continue with Google</Text>
+                  <Text className="text-blue-500 font-heading text-lg mr-3">G</Text>
+                  <Text className="text-textPrimary text-base font-ui uppercase">Continue with Google</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -221,14 +221,14 @@ export default function LoginScreen() {
                 <TouchableOpacity onPress={() => setOtpSent(false)} className="mr-3">
                   <ArrowLeft size={20} color="#1A1A1A" />
                 </TouchableOpacity>
-                <Text className="text-lg font-semibold text-textPrimary">Enter OTP</Text>
+                <Text className="text-lg font-heading text-textPrimary">Enter OTP</Text>
               </View>
-              <Text className="text-sm text-textSecondary mb-4">
+              <Text className="text-sm text-textSecondary mb-4 font-body">
                 We sent a 6-digit code to +91{phone}
               </Text>
               
               <TextInput
-                className="bg-bgSurface rounded-xl py-4 px-6 text-2xl text-center tracking-[8px] text-textPrimary border border-bgMuted mb-6"
+                className="bg-bgSurface rounded-xl py-4 px-6 text-2xl text-center tracking-[8px] text-textPrimary border border-bgMuted mb-6 font-body"
                 placeholder="------"
                 placeholderTextColor="#A89880"
                 value={otp}
@@ -246,7 +246,7 @@ export default function LoginScreen() {
                 {loading ? (
                   <ActivityIndicator color="#FDFAF6" />
                 ) : (
-                  <Text className="text-textOnDark text-base font-semibold">Verify & Continue</Text>
+                  <Text className="text-textOnDark text-base font-ui uppercase">Verify & Continue</Text>
                 )}
               </TouchableOpacity>
 
@@ -257,16 +257,16 @@ export default function LoginScreen() {
                   setOtp('');
                 }}
               >
-                <Text className="text-primary text-sm font-medium">Change phone number</Text>
+                <Text className="text-primary text-sm font-ui uppercase">Change phone number</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
 
         {/* Footer */}
-        <Text className="text-xs text-textSecondary text-center mt-12 leading-5">
+        <Text className="text-xs text-textSecondary text-center mt-12 leading-5 font-body">
           By continuing, you agree to our{'\n'}
-          <Text className="underline font-medium">Terms of Service</Text> and <Text className="underline font-medium">Privacy Policy</Text>
+          <Text className="underline font-product">Terms of Service</Text> and <Text className="underline font-product">Privacy Policy</Text>
         </Text>
       </View>
     </KeyboardAvoidingView>

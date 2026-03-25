@@ -97,7 +97,7 @@ export function OutfitCombinationCard({ combination, onPress }: OutfitCombinatio
         >
           <Sparkles size={10} color={scoreColor} />
           <Text 
-            className="ml-1 text-[10px] font-bold" 
+            className="ml-1 text-[10px] font-heading"
             style={{ color: scoreColor }}
           >
             {matchScore}%
@@ -114,14 +114,14 @@ export function OutfitCombinationCard({ combination, onPress }: OutfitCombinatio
                 key={tag} 
                 className="bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10"
               >
-                <Text className="text-[10px] text-primary font-medium capitalize">
+                <Text className="text-[10px] text-primary font-product capitalize">
                   {tag}
                 </Text>
               </View>
             ))}
           </View>
         ) : (
-          <Text className="text-[11px] text-textTertiary italic">
+          <Text className="text-[11px] text-textTertiary italic font-body">
             Cohesive Look
           </Text>
         )}

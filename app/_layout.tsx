@@ -6,6 +6,11 @@ import { ActivityIndicator, View, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
+import { BodoniModa_700Bold } from '@expo-google-fonts/bodoni-moda';
+import { PlayfairDisplay_600SemiBold } from '@expo-google-fonts/playfair-display';
+import { CormorantGaramond_500Medium } from '@expo-google-fonts/cormorant-garamond';
+import { InstrumentSans_500Medium } from '@expo-google-fonts/instrument-sans';
+import { DMSans_400Regular } from '@expo-google-fonts/dm-sans';
 import { Stack, useRouter, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -121,6 +126,11 @@ export default function RootLayout() {
 
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    BodoniModa_700Bold,
+    PlayfairDisplay_600SemiBold,
+    CormorantGaramond_500Medium,
+    InstrumentSans_500Medium,
+    DMSans_400Regular,
   });
 
   useEffect(() => {

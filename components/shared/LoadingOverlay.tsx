@@ -12,7 +12,7 @@ export function LoadingOverlay({ message = "Loading..." }: { message?: string })
       >
         <View className="bg-surface px-8 py-6 rounded-3xl shadow-sm items-center border border-accent-light/30">
           <ActivityIndicator size="large" color="#8B7355" className="mb-4" />
-          <Text className="text-text-primary font-medium">{message}</Text>
+          <Text className="text-text-primary font-product">{message}</Text>
         </View>
       </BlurView>
     </View>

@@ -24,14 +24,14 @@ export function EmptyState({
       <View className="bg-white py-10 px-7 rounded-[28px] w-full max-w-[340px] items-center shadow-sm">
         {/* Icon */}
         <View className="w-[72px] h-[72px] rounded-full bg-bgCanvas items-center justify-center mb-5">
-          <Text className="text-3xl">👕</Text>
+          <Text className="text-3xl font-body">👕</Text>
         </View>
 
         {/* Text */}
-        <Text className="text-lg font-bold text-textPrimary text-center mb-2 tracking-tight">
+        <Text className="text-lg font-heading text-textPrimary text-center mb-2 tracking-tight">
           {title}
         </Text>
-        <Text className="text-sm font-normal text-textSecondary text-center leading-5 mb-7">
+        <Text className="text-sm font-normal text-textSecondary text-center leading-5 mb-7 font-body">
           {description}
         </Text>
 
@@ -43,7 +43,7 @@ export function EmptyState({
             activeOpacity={0.8}
           >
             <Camera size={18} color="#FFFFFF" />
-            <Text className="text-[15px] font-semibold text-white">{buttonTitle}</Text>
+            <Text className="text-[15px] font-heading text-white">{buttonTitle}</Text>
           </TouchableOpacity>
 
           {onSearchPress && (
@@ -53,7 +53,7 @@ export function EmptyState({
               activeOpacity={0.8}
             >
               <Search size={18} color="#1A1A1A" />
-              <Text className="text-[15px] font-semibold text-textPrimary">Search web</Text>
+              <Text className="text-[15px] font-ui uppercase text-textPrimary">Search web</Text>
             </TouchableOpacity>
           )}
 
@@ -64,7 +64,7 @@ export function EmptyState({
               activeOpacity={0.8}
             >
               <Sparkles size={18} color="#8B7355" />
-              <Text className="text-[15px] font-semibold text-primary">Add items from outfit</Text>
+              <Text className="text-[15px] font-ui uppercase text-primary">Add items from outfit</Text>
             </TouchableOpacity>
           )}
         </View>
