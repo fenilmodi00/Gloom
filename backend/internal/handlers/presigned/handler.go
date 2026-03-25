@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -77,6 +78,7 @@ func (h *Handler) GenerateUploadURL(c *fiber.Ctx) error {
 
 	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
+		log.Printf("ERROR: generate_presigned_url operation=request_creation err=%v", err)
 		return response.InternalError(c, "failed to create request")
 	}
 	httpReq.Header.Set("Authorization", "Bearer "+h.serviceRoleKey)
@@ -85,16 +87,19 @@ func (h *Handler) GenerateUploadURL(c *fiber.Ctx) error {
 	client := &http.Client{}
 	resp, err := client.Do(httpReq)
 	if err != nil {
+		log.Printf("ERROR: generate_presigned_url operation=storage_call err=%v", err)
 		return response.InternalError(c, "failed to call storage service")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("ERROR: generate_presigned_url operation=storage_response status=%d err=%v", resp.StatusCode, err)
 		return response.InternalError(c, "storage service returned non-200 status")
 	}
 
 	var storageResp SupabaseStorageResponse
 	if err := json.NewDecoder(resp.Body).Decode(&storageResp); err != nil {
+		log.Printf("ERROR: generate_presigned_url operation=decode_response err=%v", err)
 		return response.InternalError(c, "failed to decode storage response")
 	}
 

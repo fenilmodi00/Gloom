@@ -3,6 +3,7 @@ package profile
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"backend/internal/db"
@@ -47,6 +48,7 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 		if err == pgx.ErrNoRows {
 			return response.NotFound(c, "profile not found")
 		}
+		log.Printf("ERROR: get_profile userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error fetching profile")
 	}
 
@@ -117,6 +119,7 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 		if err == pgx.ErrNoRows {
 			return response.NotFound(c, "profile not found")
 		}
+		log.Printf("ERROR: update_profile userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error updating profile")
 	}
 

@@ -3,6 +3,7 @@ package wardrobe
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"backend/internal/db"
@@ -54,6 +55,7 @@ func (h *Handler) ListItems(c *fiber.Ctx) error {
 
 	rows, err := h.db.Query(context.Background(), query, args...)
 	if err != nil {
+		log.Printf("ERROR: list_wardrobe userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error fetching wardrobe items")
 	}
 	defer rows.Close()
@@ -62,6 +64,7 @@ func (h *Handler) ListItems(c *fiber.Ctx) error {
 	for rows.Next() {
 		var item db.WardrobeItem
 		if err := rows.Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FabricGuess, &item.CreatedAt); err != nil {
+			log.Printf("ERROR: list_wardrobe userID=%s err=%v", userID, err)
 			return response.InternalError(c, "error mapping wardrobe items")
 		}
 		items = append(items, item)
@@ -94,6 +97,7 @@ func (h *Handler) CreateItem(c *fiber.Ctx) error {
 	var item db.WardrobeItem
 	err := h.db.QueryRow(context.Background(), query, userID, req.ImageURL, req.Category, req.SubCategory, req.Colors, req.StyleTags, req.OccasionTags).Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FabricGuess, &item.CreatedAt)
 	if err != nil {
+		log.Printf("ERROR: create_wardrobe userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error creating wardrobe item")
 	}
 
@@ -114,6 +118,7 @@ func (h *Handler) GetItem(c *fiber.Ctx) error {
 		if err == pgx.ErrNoRows {
 			return response.NotFound(c, "wardrobe item not found")
 		}
+		log.Printf("ERROR: get_wardrobe userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error fetching wardrobe item")
 	}
 
@@ -202,6 +207,7 @@ func (h *Handler) UpdateItem(c *fiber.Ctx) error {
 		if err == pgx.ErrNoRows {
 			return response.NotFound(c, "wardrobe item not found")
 		}
+		log.Printf("ERROR: update_wardrobe userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error updating wardrobe item")
 	}
 
@@ -218,6 +224,7 @@ func (h *Handler) DeleteItem(c *fiber.Ctx) error {
 
 	tag, err := h.db.Exec(context.Background(), `DELETE FROM wardrobe_items WHERE id = $1 AND user_id = $2`, id, userID)
 	if err != nil {
+		log.Printf("ERROR: delete_wardrobe userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error deleting wardrobe item")
 	}
 

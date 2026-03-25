@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"log"
 )
 
 type Handler struct {
@@ -54,6 +55,7 @@ func (h *Handler) ListOutfits(c *fiber.Ctx) error {
 
 	rows, err := h.db.Query(context.Background(), query, args...)
 	if err != nil {
+		log.Printf("ERROR: list_outfits userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error fetching outfits")
 	}
 	defer rows.Close()
@@ -62,6 +64,7 @@ func (h *Handler) ListOutfits(c *fiber.Ctx) error {
 	for rows.Next() {
 		var outfit db.Outfit
 		if err := rows.Scan(&outfit.ID, &outfit.UserID, &outfit.ItemIDs, &outfit.Occasion, &outfit.Vibe, &outfit.ColorReasoning, &outfit.AIScore, &outfit.CoverImageURL, &outfit.CreatedAt); err != nil {
+			log.Printf("ERROR: list_outfits userID=%s err=%v", userID, err)
 			return response.InternalError(c, "error mapping outfits")
 		}
 		outfits = append(outfits, outfit)
@@ -89,6 +92,7 @@ func (h *Handler) CreateOutfit(c *fiber.Ctx) error {
 	var outfit db.Outfit
 	err := h.db.QueryRow(context.Background(), query, userID, req.ItemIDs, req.Occasion, req.Vibe, req.ColorReasoning, req.AIScore, req.CoverImageURL).Scan(&outfit.ID, &outfit.UserID, &outfit.ItemIDs, &outfit.Occasion, &outfit.Vibe, &outfit.ColorReasoning, &outfit.AIScore, &outfit.CoverImageURL, &outfit.CreatedAt)
 	if err != nil {
+		log.Printf("ERROR: create_outfit userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error creating outfit")
 	}
 
@@ -109,6 +113,7 @@ func (h *Handler) GetOutfit(c *fiber.Ctx) error {
 		if err == pgx.ErrNoRows {
 			return response.NotFound(c, "outfit not found")
 		}
+		log.Printf("ERROR: get_outfit userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error fetching outfit")
 	}
 
@@ -125,6 +130,7 @@ func (h *Handler) DeleteOutfit(c *fiber.Ctx) error {
 
 	tag, err := h.db.Exec(context.Background(), `DELETE FROM outfits WHERE id = $1 AND user_id = $2`, id, userID)
 	if err != nil {
+		log.Printf("ERROR: delete_outfit userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error deleting outfit")
 	}
 
