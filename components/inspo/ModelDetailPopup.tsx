@@ -3,17 +3,18 @@
  *
  * - Appears as a centered pop-up over the live inspo screen
  * - Full-screen blur backdrop keeps inspo content visible but dimmed
- * - Horizontal swipe navigates between model image and outfit grid
+ * - Horizontal swipe navigates between model image and outfit board
  * - Scale+fade animation (not bottom-sheet slide-up)
+ * - Uses react-native-reanimated-carousel for reliable swiping
  */
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Modal,
   Pressable,
+  Dimensions,
   BackHandler,
   Text,
-  useWindowDimensions,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
@@ -32,237 +33,155 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Carousel from 'react-native-reanimated-carousel';
 
-import { OutfitGrid } from '@/components/shared/OutfitGrid';
-import { DotGrid } from '@/components/outfit-board/DotGrid';
-import { THEME } from '@/constants/Colors';
+import { OutfitBoard } from '@/components/outfit-board/OutfitBoard';
+import type { ClothingItem } from '@/lib/store/outfit-board.store';
 import type { ModelCard, OutfitItem } from '@/types/inspo';
+import { Brand, Backgrounds, Typography } from '@/constants/Colors';
 
-// Swipe gesture thresholds (relative to container width)
-const SWIPE_THRESHOLD_RATIO = 0.3; // 30% of container width
-const VELOCITY_THRESHOLD = 500;
-
-// Physics-based spring config for smooth carousel
-const SWIPE_SPRING = {
-  damping: 20,
-  stiffness: 200,
-  mass: 0.8,
-};
-
-// Popup entry animation config
-const POPUP_SPRING = {
-  damping: 18,
-  stiffness: 200,
-  mass: 0.7,
-};
-
-// Save model image to gallery
-async function handleSave(imageSource: any) {
-  try {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please allow access to save images.');
-      return;
-    }
-
-    let uri: string;
-    if (typeof imageSource === 'string') {
-      uri = imageSource;
-    } else if (imageSource.uri) {
-      uri = imageSource.uri;
-    } else {
-      const asset = await Asset.fromModule(imageSource).downloadAsync();
-      uri = asset.localUri || asset.uri;
-    }
-
-    await MediaLibrary.saveToLibraryAsync(uri);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  } catch (err) {
-    console.error('Save error:', err);
-    Alert.alert('Error', 'Failed to save image.');
-  }
-}
-
-// Share model image
-async function handleShare(imageSource: any) {
-  try {
-    let uri: string;
-    if (typeof imageSource === 'string') {
-      uri = imageSource;
-    } else if (imageSource.uri) {
-      uri = imageSource.uri;
-    } else {
-      const asset = await Asset.fromModule(imageSource).downloadAsync();
-      uri = asset.localUri || asset.uri;
-    }
-
-    const canShare = await Sharing.isAvailableAsync();
-    if (!canShare) {
-      Alert.alert('Error', 'Sharing is not available on this device.');
-      return;
-    }
-    await Sharing.shareAsync(uri);
-  } catch (err) {
-    console.error('Share error:', err);
-    Alert.alert('Error', 'Failed to share image.');
-  }
-}
-
-// Design tokens - using actual hex values for StyleSheet
 const COLORS = {
-  background: '#F5F2EE',
-  surface: '#FDFAF6',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  accent: '#8B7355',
-  accentLight: '#D4C5B0',
+  background: Backgrounds.bgCanvas,
+  surface: Backgrounds.bgSurface,
+  textPrimary: Typography.textPrimary,
+  textSecondary: Typography.textSecondary,
+  accent: Brand.primary,
 };
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// The popup width/height
+const CARD_WIDTH = SCREEN_WIDTH;
+// The slides take the remaining height.
+// We know top/bottom constraints: top: SCREEN_HEIGHT*0.10, bottom: SCREEN_HEIGHT*0.10
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.80;
+// Header is around 60, Footer is around 100. Let's let the carousel fill the remaining space flexibly.
+// But reanimated-carousel needs explicit height, or we can use `flex: 1` if we set height to 100%.
+// We will measure the content area or use flex, actually reanimated-carousel supports width={width} and handles height with `flex: 1` if `height` is not provided but sometimes it needs it.
+// We will calculate exact height or use a dynamic onLayout.
 
 export interface ModelDetailPopupProps {
   visible: boolean;
-  model: ModelCard | null;
-  clothItems: OutfitItem[];
   onClose: () => void;
+  model: ModelCard | null;
+  clothItems: OutfitItem[]; // For OutfitBoard
 }
 
 export function ModelDetailPopup({
   visible,
+  onClose,
   model,
   clothItems,
-  onClose,
 }: ModelDetailPopupProps) {
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const carouselRef = React.useRef<any>(null);
 
-  // ── Container width measured from onLayout (accurate for modal) ──
-  const containerWidth = useSharedValue(windowWidth);
-
-  // ── Pop-up animation values (scale + fade) ──
-  const scale = useSharedValue(0.88);
-  const popupOpacity = useSharedValue(0);
+  // -- Animations --
   const backdropOpacity = useSharedValue(0);
+  const popupOpacity = useSharedValue(0);
+  const scale = useSharedValue(0.85);
 
-  // ── Swipe animation value ──
-  const translateX = useSharedValue(0);
+  const safeClose = useCallback(() => {
+    backdropOpacity.value = withTiming(0, { duration: 200 });
+    scale.value = withTiming(0.9, { duration: 200 });
+    popupOpacity.value = withTiming(0, { duration: 200 }, () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setCurrentSlide(0);
+      onClose();
+    });
+  }, [backdropOpacity, scale, popupOpacity, onClose]);
 
-  // ── Worklet-safe slide index ──
-  const currentSlideShared = useSharedValue(0);
-
-  // ── Sync shared value with React state ──
-  useEffect(() => {
-    currentSlideShared.value = currentSlide;
-  }, [currentSlide, currentSlideShared]);
-
-  // ── Sync translateX with currentSlide ──
-  useEffect(() => {
-    translateX.value = withSpring(-currentSlide * containerWidth.value, SWIPE_SPRING);
-  }, [currentSlide, containerWidth, translateX]);
-
-  // ── Entry animation ──
+  // Entrance
   useEffect(() => {
     if (visible) {
-      setCurrentSlide(0);
-      backdropOpacity.value = withTiming(1, { duration: 200 });
-      scale.value = withSpring(1, POPUP_SPRING);
-      popupOpacity.value = withSpring(1, {
-        damping: POPUP_SPRING.damping,
-        stiffness: POPUP_SPRING.stiffness,
+      backdropOpacity.value = withTiming(1, { duration: 300 });
+      popupOpacity.value = withTiming(1, { duration: 250 });
+      scale.value = withSpring(1, {
+        damping: 24,
+        stiffness: 250,
+        mass: 0.8,
       });
-    } else {
-      backdropOpacity.value = withTiming(0, { duration: 180 });
-      scale.value = withTiming(0.88, { duration: 180 });
-      popupOpacity.value = withTiming(0, { duration: 180 });
     }
-  }, [visible, backdropOpacity, scale, popupOpacity]);
+  }, [visible, backdropOpacity, popupOpacity, scale]);
 
-  // ── Reset slide when model changes ──
-  const prevModelIdRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    if (model?.id && model.id !== prevModelIdRef.current) {
-      prevModelIdRef.current = model.id;
-      setCurrentSlide(0);
-    }
-  }, [model?.id]);
-
-  // ── Close helper ──
-  const safeClose = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    backdropOpacity.value = withTiming(0, { duration: 150 });
-    scale.value = withTiming(0.88, { duration: 150 });
-    popupOpacity.value = withTiming(0, { duration: 150 }, () => {
-      runOnJS(onClose)();
-    });
-  }, [onClose, backdropOpacity, scale, popupOpacity]);
-
-  // ── Android hardware back ──
+  // Back handler
   useEffect(() => {
     if (!visible) return;
-    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       safeClose();
       return true;
     });
-    return () => handler.remove();
+    return () => sub.remove();
   }, [visible, safeClose]);
 
-  // ── Safe state setter for gesture callbacks ──
-  const setSlideIndex = useCallback((index: number) => {
-    setCurrentSlide(index);
-  }, []);
+  const navigateToSlide = (index: number) => {
+    carouselRef.current?.scrollTo({ index, animated: true });
+  };
 
-  // ── Programmatic slide navigation ──
-  const navigateToSlide = useCallback((index: number) => {
-    setCurrentSlide(index);
-    translateX.value = withSpring(-index * containerWidth.value, SWIPE_SPRING);
-  }, [translateX, containerWidth]);
+  // Convert clothItems to OutfitBoard format
+  const mappedOutfit = React.useMemo(() => {
+    const result: {
+      top?: ClothingItem;
+      bottom?: ClothingItem;
+      shoes?: ClothingItem;
+      accessory?: ClothingItem;
+    } = {};
 
-  // ── Measure container width for accurate slide positioning ──
-  const onContainerLayout = useCallback((event: any) => {
-    const { width } = event.nativeEvent.layout;
-    if (width > 0) {
-      containerWidth.value = width;
-    }
-  }, [containerWidth]);
+    clothItems.forEach(item => {
+      // Typecast uri since OutfitBoard expects ClothingItem format
+      const clothingItem: ClothingItem = {
+        id: item.id,
+        uri: item.image as number | string,
+        name: item.label
+      };
 
-  // ── Horizontal swipe gesture (simplified for 2-slide carousel) ──
-  const swipeGesture = Gesture.Pan()
-    .activeOffsetX([-15, 15]) // Ignore small horizontal movements (prevents accidental swipes)
-    .failOffsetY([-25, 25]) // Block vertical scroll conflicts
-    .onUpdate((e) => {
-      'worklet';
-      // 1:1 drag feel — translate from current position
-      translateX.value = e.translationX - currentSlideShared.value * containerWidth.value;
-    })
-    .onEnd((e) => {
-      'worklet';
-      const drag = e.translationX;
-      const velocity = e.velocityX;
-      const currentIdx = currentSlideShared.value;
-      const width = containerWidth.value;
-
-      // Calculate thresholds based on container width
-      const positionThreshold = width * SWIPE_THRESHOLD_RATIO;
-
-      // Determine if we should navigate (combine position + velocity)
-      const shouldNavigateLeft = currentIdx === 0 && (drag < -positionThreshold || velocity < -VELOCITY_THRESHOLD);
-      const shouldNavigateRight = currentIdx === 1 && (drag > positionThreshold || velocity > VELOCITY_THRESHOLD);
-
-      const shouldNavigate = shouldNavigateLeft || shouldNavigateRight;
-      const targetSlide = shouldNavigate ? 1 - currentIdx : currentIdx;
-
-      translateX.value = withSpring(-targetSlide * width, {
-        ...SWIPE_SPRING,
-        velocity: e.velocityX,
-      });
-
-      if (targetSlide !== currentIdx) {
-        runOnJS(setSlideIndex)(targetSlide);
-      }
+      const lbl = item.label.toLowerCase();
+      if (lbl.includes('top')) result.top = clothingItem;
+      else if (lbl.includes('bottom')) result.bottom = clothingItem;
+      else if (lbl.includes('shoe')) result.shoes = clothingItem;
+      else if (lbl.includes('accessori') || lbl.includes('accessory')) result.accessory = clothingItem;
     });
 
-  // ── Animated styles ──
+    return result;
+  }, [clothItems]);
+
+  const handleSave = async (source: any) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      Alert.alert('Saved!', 'Look added to your boards.', [{ text: 'OK' }]);
+    } catch (err) {
+      console.log('Error saving image:', err);
+    }
+  };
+
+  const handleShare = async (source: any) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      let localUri = source.uri;
+
+      if (!localUri && typeof source === 'number') {
+        const [asset] = await Asset.loadAsync(source);
+        localUri = asset.localUri || asset.uri;
+      }
+
+      if (localUri) {
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(localUri);
+        } else {
+          Alert.alert('Sharing is not available on this device');
+        }
+      } else {
+        Alert.alert('Image not available for sharing');
+      }
+    } catch (error) {
+      console.log('Error sharing image:', error);
+      Alert.alert('Error', 'Could not share the image.');
+    }
+  };
+
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
   }));
@@ -272,10 +191,6 @@ export function ModelDetailPopup({
     transform: [{ scale: scale.value }],
   }));
 
-  const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
   const imageSource =
     model?.imageUrl
       ? typeof model.imageUrl === 'string'
@@ -283,9 +198,63 @@ export function ModelDetailPopup({
         : model.imageUrl
       : require('../../assets/modal.png');
 
-  // Responsive popup dimensions
-  const popupTop = windowHeight * 0.08;
-  const popupBottom = windowHeight * 0.08;
+  // We need to measure the container of the carousel so it sizes perfectly.
+  const [carouselHeight, setCarouselHeight] = useState<number>(0);
+
+  const renderItem = ({ index }: { index: number }) => {
+    if (index === 0) {
+      return (
+        <View style={styles.slide}>
+          <View style={styles.imageContainer}>
+            <Image
+              source={imageSource}
+              style={styles.modelImage}
+              contentFit="cover"
+              transition={200}
+            />
+          </View>
+          <View style={styles.swipeHint}>
+            <Feather name="chevron-left" size={13} color={COLORS.textSecondary} />
+            <Text style={styles.hintText}>Swipe for outfit details</Text>
+            <Feather name="chevron-right" size={13} color={COLORS.textSecondary} />
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.slide}>
+        <View style={styles.outfitHeader}>
+          <Pressable
+            onPress={() => navigateToSlide(0)}
+            style={styles.backButton}
+          >
+            <Feather name="arrow-left" size={18} color={COLORS.textPrimary} />
+          </Pressable>
+          <Text style={styles.outfitTitle}>Complete Look</Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        {clothItems.length > 0 ? (
+          <View style={styles.outfitBoardContainer}>
+            <OutfitBoard
+              top={mappedOutfit.top}
+              bottom={mappedOutfit.bottom}
+              shoes={mappedOutfit.shoes}
+              accessory={mappedOutfit.accessory}
+              transparent={true} // blends with background
+              disableShadow={true}
+              noBorderRadius={true}
+            />
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No outfit items</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <Modal
@@ -296,36 +265,30 @@ export function ModelDetailPopup({
       statusBarTranslucent
     >
       <GestureHandlerRootView style={styles.gestureRoot}>
-        {/* ── Backdrop: frosted glass effect ── */}
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={safeClose}
-        >
-          <LinearGradient
-            colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)']}
+        {/* Backdrop */}
+        <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
+          <Pressable
             style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)']}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['rgba(255,255,255,0.08)', 'transparent', 'transparent', 'rgba(0,0,0,0.1)']}
-            locations={[0, 0.15, 0.85, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </Pressable>
+            onPress={safeClose}
+          >
+            <LinearGradient
+              colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)']}
+              style={StyleSheet.absoluteFill}
+            />
+            <LinearGradient
+              colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)']}
+              style={StyleSheet.absoluteFill}
+            />
+            <LinearGradient
+              colors={['rgba(255,255,255,0.08)', 'transparent', 'transparent', 'rgba(0,0,0,0.1)']}
+              locations={[0, 0.15, 0.85, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          </Pressable>
+        </Animated.View>
 
-        {/* ── Popup card: centered, scale+fade animation ── */}
-        <Animated.View
-          style={[
-            styles.popupCard,
-            { top: popupTop, bottom: popupBottom },
-            popupStyle,
-          ]}
-          onLayout={onContainerLayout}
-        >
-          {/* Header */}
+        {/* Popup Card */}
+        <Animated.View style={[styles.popupCard, popupStyle]}>
           <View style={styles.header}>
             <View style={styles.headerSpacer} />
             <Pressable onPress={safeClose} style={styles.closeButton}>
@@ -333,95 +296,40 @@ export function ModelDetailPopup({
             </Pressable>
           </View>
 
-          {/* ── Swipeable slide content ── */}
-          <GestureDetector gesture={swipeGesture}>
-            <Animated.View style={styles.slideOuter}>
-              <Animated.View
-                style={[
-                  styles.slideTrack,
-                  { width: containerWidth.value * 2 },
-                  slideStyle,
-                ]}
-              >
-                {/* ── Slide 0: Model image ── */}
-                <View style={styles.slide}>
-                  <View style={styles.imageContainer}>
-                    <Image
-                      source={imageSource}
-                      style={styles.modelImage}
-                      contentFit="cover"
-                      transition={200}
-                    />
-                  </View>
+          {/* Swipeable slides using Carousel */}
+          <View
+            style={styles.slideOuter}
+            onLayout={(e) => setCarouselHeight(e.nativeEvent.layout.height)}
+          >
+            {carouselHeight > 0 && (
+              <Carousel
+                ref={carouselRef}
+                loop={false}
+                width={SCREEN_WIDTH}
+                height={carouselHeight}
+                data={[0, 1]}
+                onSnapToItem={(index) => setCurrentSlide(index)}
+                renderItem={renderItem}
+                enabled={true}
+                defaultIndex={0}
+              />
+            )}
+          </View>
 
-                  {/* Swipe hint */}
-                  <DotGrid
-                    width={containerWidth.value * 0.8}
-                    height={60}
-                    dotColor={THEME.goldAccent}
-                    backgroundColor="transparent"
-                  />
-                </View>
-
-                {/* ── Slide 1: Outfit grid ── */}
-                <View style={styles.slide}>
-                  <View style={styles.outfitHeader}>
-                    <Pressable
-                      onPress={() => navigateToSlide(0)}
-                      style={styles.backButton}
-                    >
-                      <Feather name="arrow-left" size={18} color={COLORS.textPrimary} />
-                    </Pressable>
-                    <Text className="text-base font-heading font-semibold text-textPrimary">Complete Look</Text>
-                    <View style={{ width: 36 }} />
-                  </View>
-
-                  {clothItems.length > 0 ? (
-                    <View className="bg-bgSurface rounded-2xl overflow-hidden shadow-sm border border-black/5 mx-4 flex-1">
-                      <OutfitGrid items={clothItems} />
-                    </View>
-                  ) : (
-                    <View style={styles.emptyState}>
-                      <Text style={styles.emptyText}>No outfit items</Text>
-                    </View>
-                  )}
-                </View>
-              </Animated.View>
-            </Animated.View>
-          </GestureDetector>
-
-          {/* Footer: pagination + buttons */}
+          {/* Footer */}
           <View style={styles.footer}>
-            {/* Pagination dots */}
             <View style={styles.pagination}>
-              <View
-                style={[
-                  styles.dot,
-                  currentSlide === 0 && styles.dotActive,
-                ]}
-              />
-              <View
-                style={[
-                  styles.dot,
-                  currentSlide === 1 && styles.dotActive,
-                ]}
-              />
+              <View style={[styles.dot, currentSlide === 0 && styles.dotActive]} />
+              <View style={[styles.dot, currentSlide === 1 && styles.dotActive]} />
             </View>
 
-            {/* Save + Share */}
             <View style={styles.actions}>
-              <Pressable
-                style={styles.saveBtn}
-                onPress={() => handleSave(imageSource)}
-              >
+              <Pressable style={styles.saveBtn} onPress={() => handleSave(imageSource)}>
                 <Feather name="bookmark" size={18} color={COLORS.accent} />
                 <Text style={styles.saveBtnText}>Save</Text>
               </Pressable>
 
-              <Pressable
-                style={styles.shareBtn}
-                onPress={() => handleShare(imageSource)}
-              >
+              <Pressable style={styles.shareBtn} onPress={() => handleShare(imageSource)}>
                 <Feather name="share" size={18} color={COLORS.surface} />
                 <Text style={styles.shareBtnText}>Share</Text>
               </Pressable>
@@ -437,9 +345,10 @@ const styles = StyleSheet.create({
   gestureRoot: {
     flex: 1,
   },
-
   popupCard: {
     position: 'absolute',
+    top: SCREEN_HEIGHT * 0.10,
+    bottom: SCREEN_HEIGHT * 0.10,
     left: 0,
     right: 0,
     zIndex: 2,
@@ -452,7 +361,6 @@ const styles = StyleSheet.create({
     elevation: 8,
     overflow: 'hidden',
   },
-
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -471,20 +379,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   slideOuter: {
     flex: 1,
     overflow: 'hidden',
-  },
-  slideTrack: {
-    flex: 1,
-    flexDirection: 'row',
+    backgroundColor: COLORS.background,
   },
   slide: {
     flex: 1,
+    width: SCREEN_WIDTH,
     backgroundColor: COLORS.background,
   },
-
   imageContainer: {
     flex: 1,
     marginHorizontal: 16,
@@ -497,7 +401,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-
+  swipeHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+  },
+  hintText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
   outfitHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -519,7 +433,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.textPrimary,
   },
-
+  outfitBoardContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -529,7 +449,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
   },
-
   footer: {
     paddingHorizontal: 20,
     paddingTop: 14,
@@ -555,7 +474,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: COLORS.accent,
   },
-
   actions: {
     flexDirection: 'row',
     gap: 12,
