@@ -12,8 +12,9 @@ module.exports = {
         primary: '#8B7355',
         primaryDark: '#6B5840',
         primaryLight: '#B09A7A',
-        goldAccent: '#C9A84C',
+        goldAccent: '#bc921cfa',
         goldSoft: '#E8D5A3',
+        secondary: 'rgba(251, 249, 242, 0.98)',
 
         // Backgrounds
         bgCanvas: '#F5F2EE',
@@ -44,6 +45,14 @@ module.exports = {
         stateError: '#B85C4A',
         stateWarning: '#C9A84C',
         stateInfo: '#7A8FAB',
+
+        // Modal & Sheet Components
+        sheetBg: '#FDFAF6',
+        sectionHeaderBg: '#EAE4DA',
+        dragHandle: '#C4B8A8',
+        scrimColor: 'rgba(26, 26, 26, 0.45)',
+        goldBtn: '#bc921cfa',
+        ghostBtn: '#F0EBE3',
 
         // Legacy (keeping for compatibility during refactor)
         background: '#F5F2EE',

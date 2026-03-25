@@ -51,7 +51,7 @@ export function OutfitGridCell({ item, onPress }: { item: OutfitItem; onPress?: 
             transition={200}
           />
         </View>
-        <Text className="text-sm font-medium text-[#6B6B6B] text-center">
+        <Text className="text-sm font-medium text-textSecondary text-center">
           {item.label}
         </Text>
       </Pressable>
