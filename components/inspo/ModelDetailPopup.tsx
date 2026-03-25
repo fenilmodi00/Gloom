@@ -8,6 +8,8 @@
  * - Uses react-native-reanimated-carousel for reliable swiping
  */
 import React, { useEffect, useState, useCallback } from 'react';
+import { Typography } from '@/constants/Typography';
+import Colors from '@/constants/Colors';
 import {
   View,
   Modal,
@@ -40,15 +42,9 @@ import Carousel from 'react-native-reanimated-carousel';
 import { OutfitBoard } from '@/components/outfit-board/OutfitBoard';
 import type { ClothingItem } from '@/lib/store/outfit-board.store';
 import type { ModelCard, OutfitItem } from '@/types/inspo';
-import { Brand, Backgrounds, Typography } from '@/constants/Colors';
 
-const COLORS = {
-  background: Backgrounds.bgCanvas,
-  surface: Backgrounds.bgSurface,
-  textPrimary: Typography.textPrimary,
-  textSecondary: Typography.textSecondary,
-  accent: Brand.primary,
-};
+
+// COLORS removed in favor of Colors.light
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -214,9 +210,9 @@ export function ModelDetailPopup({
             />
           </View>
           <View style={styles.swipeHint}>
-            <Feather name="chevron-left" size={13} color={COLORS.textSecondary} />
+            <Feather name="chevron-left" size={13} color={Colors.light.textSecondary} />
             <Text style={styles.hintText}>Swipe for outfit details</Text>
-            <Feather name="chevron-right" size={13} color={COLORS.textSecondary} />
+            <Feather name="chevron-right" size={13} color={Colors.light.textSecondary} />
           </View>
         </View>
       );
@@ -229,7 +225,7 @@ export function ModelDetailPopup({
             onPress={() => navigateToSlide(0)}
             style={styles.backButton}
           >
-            <Feather name="arrow-left" size={18} color={COLORS.textPrimary} />
+            <Feather name="arrow-left" size={18} color={Colors.light.textPrimary} />
           </Pressable>
           <Text style={styles.outfitTitle}>Complete Look</Text>
           <View style={{ width: 36 }} />
@@ -292,7 +288,7 @@ export function ModelDetailPopup({
           <View style={styles.header}>
             <View style={styles.headerSpacer} />
             <Pressable onPress={safeClose} style={styles.closeButton}>
-              <Feather name="x" size={20} color={COLORS.textPrimary} />
+              <Feather name="x" size={20} color={Colors.light.textPrimary} />
             </Pressable>
           </View>
 
@@ -325,12 +321,12 @@ export function ModelDetailPopup({
 
             <View style={styles.actions}>
               <Pressable style={styles.saveBtn} onPress={() => handleSave(imageSource)}>
-                <Feather name="bookmark" size={18} color={COLORS.accent} />
+                <Feather name="bookmark" size={18} color={Colors.light.primary} />
                 <Text style={styles.saveBtnText}>Save</Text>
               </Pressable>
 
               <Pressable style={styles.shareBtn} onPress={() => handleShare(imageSource)}>
-                <Feather name="share" size={18} color={COLORS.surface} />
+                <Feather name="share" size={18} color={Colors.light.bgSurface} />
                 <Text style={styles.shareBtnText}>Share</Text>
               </Pressable>
             </View>
@@ -352,7 +348,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 2,
-    backgroundColor: COLORS.background,
+    backgroundColor: Colors.light.bgCanvas,
     borderRadius: 28,
     shadowColor: '#1A1A1A',
     shadowOffset: { width: 0, height: -4 },
@@ -366,7 +362,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.surface,
+    backgroundColor: Colors.light.bgSurface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
@@ -375,19 +371,19 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.background,
+    backgroundColor: Colors.light.bgCanvas,
     alignItems: 'center',
     justifyContent: 'center',
   },
   slideOuter: {
     flex: 1,
     overflow: 'hidden',
-    backgroundColor: COLORS.background,
+    backgroundColor: Colors.light.bgCanvas,
   },
   slide: {
     flex: 1,
     width: SCREEN_WIDTH,
-    backgroundColor: COLORS.background,
+    backgroundColor: Colors.light.bgCanvas,
   },
   imageContainer: {
     flex: 1,
@@ -395,7 +391,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: COLORS.surface,
+    backgroundColor: Colors.light.bgSurface,
   },
   modelImage: {
     width: '100%',
@@ -409,8 +405,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   hintText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
+    ...Typography.bodySmall,
+    color: Colors.light.textSecondary,
   },
   outfitHeader: {
     flexDirection: 'row',
@@ -418,20 +414,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.surface,
+    backgroundColor: Colors.light.bgSurface,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.background,
+    backgroundColor: Colors.light.bgCanvas,
     alignItems: 'center',
     justifyContent: 'center',
   },
   outfitTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    ...Typography.heading3,
+    color: Colors.light.textPrimary,
   },
   outfitBoardContainer: {
     flex: 1,
@@ -446,14 +441,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    ...Typography.body,
+    color: Colors.light.textSecondary,
   },
   footer: {
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 28,
-    backgroundColor: COLORS.surface,
+    backgroundColor: Colors.light.bgSurface,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     gap: 14,
@@ -472,7 +467,7 @@ const styles = StyleSheet.create({
   dotActive: {
     width: 24,
     borderRadius: 3,
-    backgroundColor: COLORS.accent,
+    backgroundColor: Colors.light.primary,
   },
   actions: {
     flexDirection: 'row',
@@ -487,13 +482,12 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.surface,
+    borderColor: Colors.light.primary,
+    backgroundColor: Colors.light.bgSurface,
   },
   saveBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.accent,
+    ...Typography.uiLabelMedium,
+    color: Colors.light.primary,
   },
   shareBtn: {
     flex: 1,
@@ -503,11 +497,10 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 13,
     borderRadius: 999,
-    backgroundColor: COLORS.accent,
+    backgroundColor: Colors.light.primary,
   },
   shareBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.surface,
+    ...Typography.uiLabelMedium,
+    color: Colors.light.bgSurface,
   },
 });

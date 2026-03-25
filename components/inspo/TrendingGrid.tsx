@@ -3,6 +3,8 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 import type { TrendingItem, TrendingSection } from '@/types/inspo';
+import Colors from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 
 // ============================================================================
 // Types
@@ -203,9 +205,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   mainTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#1A1A1A', // textPrimary
+    ...Typography.heading2,
+    color: Colors.light.textPrimary,
     marginBottom: 16,
     marginHorizontal: 24,
   },
@@ -221,21 +222,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: '#FDFAF6', // bgSurface
+    backgroundColor: Colors.light.bgSurface,
     borderWidth: 1,
-    borderColor: '#EAE4DA', // bgMuted
+    borderColor: Colors.light.bgMuted,
   },
   categoryChipActive: {
-    backgroundColor: '#8B7355', // primary
-    borderColor: '#8B7355',
+    backgroundColor: Colors.light.primary,
+    borderColor: Colors.light.primary,
   },
   categoryText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B6B6B', // textSecondary
+    ...Typography.bodySmall,
+    color: Colors.light.textSecondary,
   },
   categoryTextActive: {
-    color: '#FDFAF6', // textOnDark
+    color: Colors.light.textOnDark,
     fontWeight: '600',
   },
   // Section
@@ -243,9 +243,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A', // textPrimary
+    ...Typography.heading3,
+    color: Colors.light.textPrimary,
     marginBottom: 12,
     marginLeft: 24,
   },
@@ -263,7 +262,7 @@ const styles = StyleSheet.create({
     height: CARD_HEIGHT,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#F0EBE3', // bgSurfaceRaised
+    backgroundColor: Colors.light.bgSurfaceRaised,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -287,8 +286,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   outfitName: {
-    fontSize: 13,
-    fontWeight: '600',
+    ...Typography.productName,
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
@@ -305,8 +303,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.97 }],
   },
   tryOnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1A1A1A', // textPrimary
+    ...Typography.uiLabel,
+    color: Colors.light.textPrimary,
   },
 });

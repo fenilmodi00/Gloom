@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TrendingItem, TrendingSection } from '@/types/inspo';
 import { TrendingGrid } from './TrendingGrid';
+import Colors from '@/constants/Colors';
 
 // Ref type forwarded by @gorhom/bottom-sheet — exposes snapToIndex(), expand(), close()
 type BottomSheetRef = React.ElementRef<typeof BottomSheet>;
@@ -36,14 +37,14 @@ export const InspoBottomSheet = forwardRef<BottomSheetRef, InspoBottomSheetProps
         topInset={insets.top + 65}
         onChange={handleChange}
         backgroundStyle={{
-          backgroundColor: '#FDFAF6', // bgSurface
+          backgroundColor: Colors.light.bgSurface,
           borderTopLeftRadius: 32,
           borderTopRightRadius: 32,
         }}
         handleIndicatorStyle={{
           width: 48,
           height: 6,
-          backgroundColor: '#EAE4DA', // bgMuted
+          backgroundColor: Colors.light.bgMuted,
           borderRadius: 3,
         }}
         handleStyle={{

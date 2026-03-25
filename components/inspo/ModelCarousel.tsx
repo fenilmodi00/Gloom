@@ -10,6 +10,8 @@ import { View, Dimensions, Pressable, type ImageSourcePropType } from 'react-nat
 import Carousel from 'react-native-reanimated-carousel';
 import { Image } from 'expo-image';
 import Animated from 'react-native-reanimated';
+import { Typography } from '@/constants/Typography';
+import Colors from '@/constants/Colors';
 
 import type { ModelCard as ModelCardType } from '@/types/inspo';
 
@@ -146,16 +148,14 @@ function CarouselItem({ item, onPress }: CarouselItemProps) {
           <View className="gap-1">
             {item.name && (
               <Animated.Text
-                className="text-lg font-heading text-white"
-                style={{ textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}
+                style={{ ...Typography.heading3, color: Colors.light.textOnDark, textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}
               >
                 {item.name}
               </Animated.Text>
             )}
             {item.outfit && (
               <Animated.Text
-                className="text-sm font-normal text-white/90"
-                style={{ textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}
+                style={{ ...Typography.bodySmall, color: 'rgba(255, 255, 255, 0.9)', textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}
               >
                 {item.outfit}
               </Animated.Text>

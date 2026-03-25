@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
@@ -211,11 +212,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
+    ...Typography.heading1,
     fontSize: 34,
-    fontWeight: '600',
     color: Colors.light.textPrimary,
     fontStyle: 'italic',
-    letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   uploadText: {
-    fontSize: 14,
+    ...Typography.uiLabelMedium,
     fontWeight: '600',
     color: Colors.light.bgSurface,
   },
