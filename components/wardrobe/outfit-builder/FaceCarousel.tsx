@@ -8,11 +8,10 @@ import { Typography } from '@/constants/Typography';
 import { Image } from 'expo-image';
 import { useCallback, useMemo } from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 import Carousel from 'react-native-reanimated-carousel';
 
-import { Text } from '@/components/ui/text';
 import { THEME } from '@/constants/Colors';
 
 // ============================================================================
@@ -80,18 +79,27 @@ export function FaceCarousel({
     ({ item, animationValue }: { item: FaceItem; animationValue: SharedValue<number> }) => (
       <AnimatedFaceCard
         item={item}
-        isSelected={item.id === selectedFaceId}
+        selectedFaceId={selectedFaceId}
         animationValue={animationValue}
-        onPress={() => {
-          if (item.isAddButton && onAddFace) {
-            onAddFace();
-          } else {
-            onSelectFace(item);
-          }
-        }}
+        onPress={() => item.isAddButton && onAddFace?.()}
       />
     ),
-    [selectedFaceId, onSelectFace, onAddFace]
+    [selectedFaceId, onAddFace]
+  );
+
+  const handleSnapToItem = useCallback(
+    (index: number) => {
+      const item = carouselData[index];
+      if (item && !item.isAddButton) {
+        // Strip duplicate suffix for selection
+        const originalId = item.id.split('-dup')[0];
+        const originalItem = faces.find((f) => f.id === originalId);
+        if (originalItem && originalItem.id !== selectedFaceId) {
+          onSelectFace(originalItem);
+        }
+      }
+    },
+    [carouselData, faces, onSelectFace, selectedFaceId]
   );
 
   if (carouselData.length === 0) {
@@ -106,15 +114,16 @@ export function FaceCarousel({
         data={carouselData}
         defaultIndex={0}
         renderItem={renderItem}
+        onSnapToItem={handleSnapToItem}
         mode="parallax"
         modeConfig={{
-          parallaxScrollingScale: 0.9,
-          parallaxScrollingOffset:  CARD_WIDTH * 1.0,
+          parallaxScrollingScale: 1.0,
+          parallaxScrollingOffset:CARD_WIDTH * 1.0, // Tighter offset for better centering
           parallaxAdjacentItemScale: 0.7,
         }}
-        loop={carouselData.length > 2}
+        loop={false}
         snapEnabled
-        pagingEnabled
+        pagingEnabled={true}
         windowSize={3}
       />
     </View>
@@ -127,24 +136,37 @@ export function FaceCarousel({
 
 interface AnimatedFaceCardProps {
   item: FaceItem;
-  isSelected: boolean;
+  selectedFaceId?: string;
   animationValue: SharedValue<number>;
   onPress: () => void;
 }
 
-function AnimatedFaceCard({ item, isSelected, animationValue, onPress }: AnimatedFaceCardProps) {
+function AnimatedFaceCard({ item, selectedFaceId, animationValue, onPress }: AnimatedFaceCardProps) {
   const animatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      animationValue.value,
+      [-1, 0, 1],
+      [0.85, 1, 0.85]
+    );
+
     const opacity = interpolate(
       animationValue.value,
       [-1, 0, 1],
-      [0.4, 1, 0.4]
+      [0.6, 1, 0.6]
     );
-    return { opacity };
+
+    return {
+      transform: [{ scale }],
+      opacity,
+    };
   });
+
+  // Calculate if this card is effectively "selected" for initial/static state
+  const isSelected = item.id.split('-dup')[0] === selectedFaceId;
 
   return (
     <Animated.View style={animatedStyle}>
-      <FaceCard item={item} isSelected={isSelected} onPress={onPress} />
+      <FaceCard item={item} isSelected={isSelected} onPress={onPress} animationValue={animationValue} />
     </Animated.View>
   );
 }
@@ -155,33 +177,43 @@ interface FaceCardProps {
   onPress: () => void;
 }
 
-function FaceCard({ item, isSelected, onPress }: FaceCardProps) {
-  return (
+function FaceCard({ item, isSelected, onPress, animationValue }: FaceCardProps & { animationValue?: SharedValue<number> }) {
+  const borderStyle = useAnimatedStyle(() => {
+    if (!animationValue || item.isAddButton) return {};
+    
+    const borderColor = interpolateColor(
+      animationValue.value,
+      [-0.1, 0, 0.1],
+      ['transparent', THEME.goldAccent, 'transparent']
+    );
+
+    return { borderColor };
+  });
+
+  const content = item.isAddButton ? (
     <Pressable
       onPress={onPress}
-      style={[
-        styles.faceCard,
-        isSelected && styles.faceCardSelected,
-      ]}
+      style={styles.addFaceButton}
     >
-      {item.isAddButton ? (
-        <View style={styles.addFaceButton}>
-          <View style={styles.addFaceIcon} />
-          <View style={[styles.addFaceIcon, styles.addFaceIconCenter]} />
-        </View>
-      ) : (
+      <View style={styles.addFaceIcon} />
+      <View style={[styles.addFaceIcon, styles.addFaceIconCenter]} />
+    </Pressable>
+  ) : (
+    <View style={styles.faceImageContainer}>
+      <Animated.View style={[styles.faceImageWrapper, borderStyle]}>
         <Image
           source={typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl}
           style={styles.faceImage}
           contentFit="cover"
         />
-      )}
-      {item.name && !item.isAddButton && (
-        <Text style={styles.faceName} numberOfLines={1}>
-          {item.name}
-        </Text>
-      )}
-    </Pressable>
+      </Animated.View>
+    </View>
+  );
+
+  return (
+    <View style={styles.faceCard}>
+      {content}
+    </View>
   );
 }
 
@@ -194,12 +226,13 @@ function FaceCard({ item, isSelected, onPress }: FaceCardProps) {
 const styles = StyleSheet.create({
   carouselContainer: {
     height: CARD_HEIGHT,
+    width: SCREEN_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: -16,
   },
   faceCard: {
-    width: CARD_WIDTH,
+    width: SCREEN_WIDTH,
     height: CARD_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -208,13 +241,24 @@ const styles = StyleSheet.create({
   faceCardSelected: {
     // Add some visual indicator for selected face
   },
-  faceImage: {
+  faceImageContainer: {
+    width: FACE_IMAGE_WIDTH,
+    height: FACE_IMAGE_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  faceImageWrapper: {
     width: FACE_IMAGE_WIDTH,
     height: FACE_IMAGE_HEIGHT,
     borderRadius: FACE_IMAGE_RADIUS,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: 'transparent',
     overflow: 'hidden',
+  },
+  faceImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   addFaceButton: {
     width: FACE_IMAGE_WIDTH,
@@ -231,7 +275,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 24,
     height: 2,
-    backgroundColor: THEME.textSecondary,
+    backgroundColor: THEME.textTertiary,
     borderRadius: 1,
   },
   addFaceIconCenter: {

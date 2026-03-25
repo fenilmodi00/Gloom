@@ -29,7 +29,7 @@ export function FaceSelectionBottomSheet({
   onAddFace,
 }: FaceSelectionBottomSheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['50%'], []);
+  const snapPoints = useMemo(() => ['40%'], []);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -105,13 +105,6 @@ export function FaceSelectionBottomSheet({
           onSelectFace={onSelectFace}
           onAddFace={onAddFace}
         />
-
-        {/* Selected Face Info */}
-        {selectedFace && !selectedFace.isAddButton && (
-          <Text style={styles.selectedFaceName}>
-            {selectedFace.name || 'Selected Face'}
-          </Text>
-        )}
 
         {/* Try On Button */}
         <Pressable
