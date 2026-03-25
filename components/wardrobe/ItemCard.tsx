@@ -34,7 +34,6 @@ export function ItemCard({ item, onPress, size }: ItemCardProps) {
           height: '100%',
         }}
         contentFit="contain"
-        transition={200}
       />
     </Pressable>
   );

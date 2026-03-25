@@ -44,7 +44,7 @@ export function FaceSelectionBottomSheet({
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Snap points
-  const snapPoints = useMemo(() => ['40%'], []);
+  const snapPoints = useMemo(() => ['35%'], []);
 
   // Backdrop component
   const renderBackdrop = useCallback(

@@ -76,7 +76,6 @@ export default function OutfitCombinationScreen() {
   // Handle swipe
   const handleSnapToItem = useCallback((index: number) => {
     setCurrentIndex(index);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, []);
 
   // Placeholder actions
@@ -187,14 +186,14 @@ export default function OutfitCombinationScreen() {
           isFaceSheetOpen && { opacity: 0, pointerEvents: 'none' }
         ]}
       >
-        <Pressable style={[styles.actionButton, styles.lightButton]} onPress={handleTryOn}>
-          <Sparkles size={18} color={THEME.textPrimary} />
-          <Text style={[styles.actionButtonText, styles.lightButtonText]}>Try on</Text>
+        <Pressable style={[styles.actionButton, {backgroundColor: THEME.goldAccent}]} onPress={handleTryOn}>
+          <Sparkles size={18} color={THEME.bgSurface} />
+          <Text style={[styles.actionButtonText, {color: THEME.bgSurface}]}>Try on</Text>
         </Pressable>
 
         <Pressable style={styles.actionButton} onPress={handleEdit}>
-          <Edit3 size={18} color={THEME.bgSurface} />
-          <Text style={styles.actionButtonText}>Edit</Text>
+          <Edit3 size={18} color={THEME.textPrimary} />
+          <Text style={[styles.actionButtonText, {color: THEME.textPrimary}]}>Edit</Text>
         </Pressable>
 
         <Pressable style={styles.iconButton} onPress={handleBookmark}>
@@ -315,7 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: THEME.goldAccent,
+    backgroundColor: THEME.bgSurface,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 20,
