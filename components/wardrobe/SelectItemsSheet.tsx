@@ -1,3 +1,4 @@
+import { Typography } from '@/constants/Typography';
 /**
  * SelectItemsSheet
  * 
@@ -257,8 +258,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '500',
+    ...Typography.heading2,
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
   },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionLabel: {
-    fontSize: 15,
+    ...Typography.body,
     fontWeight: '500',
     color: COLORS.textSecondary,
   },

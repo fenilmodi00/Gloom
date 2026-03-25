@@ -70,4 +70,4 @@ const Typography = {
   },
 };
 
-module.exports = { Fonts, Typography };
+export { Fonts, Typography };

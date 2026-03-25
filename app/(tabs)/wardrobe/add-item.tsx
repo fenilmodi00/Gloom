@@ -13,6 +13,7 @@ import { Text } from '@/components/ui/text';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
+import { Typography } from '@/constants/Typography';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { tagWardrobeItem } from '@/lib/gemini';
 import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
@@ -394,18 +395,16 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   uploadTitle: {
-    fontSize: 28,
-    fontWeight: '600',
+    ...Typography.heading2,
     color: COLORS.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
   uploadSubtitle: {
-    fontSize: 16,
+    ...Typography.body,
     color: COLORS.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
-    lineHeight: 24,
   },
   actionButtons: {
     width: '100%',
@@ -428,9 +427,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   captureButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1c1917',
+    ...Typography.uiLabelMedium,
+    color: COLORS.textPrimary,
   },
   galleryButton: {
     flexDirection: 'row',
@@ -450,8 +448,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   galleryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: COLORS.textPrimary,
   },
 
@@ -468,7 +465,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   permissionText: {
-    fontSize: 16,
+    ...Typography.body,
     color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: 24,
@@ -480,9 +477,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   permissionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1c1917',
+    ...Typography.uiLabelMedium,
+    color: COLORS.textPrimary,
   },
   cameraHeader: {
     flexDirection: 'row',
@@ -497,9 +493,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cameraTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'white',
+    ...Typography.uiLabelMedium,
+    color: COLORS.white,
   },
   cameraPreview: {
     flex: 1,
@@ -529,8 +524,7 @@ const styles = StyleSheet.create({
     right: 0,
     textAlign: 'center',
     color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    fontWeight: '500',
+    ...Typography.uiLabelMedium,
   },
   cameraControls: {
     flexDirection: 'row',
@@ -567,8 +561,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   previewTitle: {
-    fontSize: 16,
-    fontWeight: '500',
+    ...Typography.uiLabelMedium,
     color: COLORS.textPrimary,
   },
   previewImageContainer: {
@@ -607,8 +600,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   retakeButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: COLORS.brand,
     textAlign: 'center',
   },
@@ -630,8 +622,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   saveButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...Typography.uiLabelMedium,
     color: COLORS.white,
     textAlign: 'center',
   },

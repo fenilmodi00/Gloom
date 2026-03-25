@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { WardrobeItem } from '@/types/wardrobe';
 import { THEME } from '@/constants/Colors';
 import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit-builder.store';
+import { Typography } from '@/constants/Typography';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -239,8 +240,7 @@ const styles = StyleSheet.create({
     borderColor: THEME.bgSurface,
   },
   moreText: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...Typography.uiLabel,
     color: THEME.textSecondary,
   },
   countPill: {
@@ -251,8 +251,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   countText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...Typography.uiLabelMedium,
     color: THEME.textPrimary,
   },
 });

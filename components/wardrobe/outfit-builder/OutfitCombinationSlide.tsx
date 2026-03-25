@@ -1,3 +1,4 @@
+import { Typography } from '@/constants/Typography';
 /**
  * OutfitCombinationSlide
  *
@@ -96,10 +97,8 @@ const styles = StyleSheet.create({
     top: 60, // Position below header area
     left: 0,
     right: 0,
-    fontSize: 32,
-    fontWeight: '800',
+    ...Typography.heading1,
     color: THEME.textSecondary,
     textAlign: 'center',
-    letterSpacing: -0.5,
   },
 });
