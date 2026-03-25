@@ -3,7 +3,7 @@
  * Luxury + Soft Modern typography for an elegant fashion app experience.
  */
 
-const Fonts = {
+export const Fonts = {
   hero: 'BodoniModa_700Bold',
   heading: 'PlayfairDisplay_600SemiBold',
   product: 'CormorantGaramond_500Medium',
@@ -11,7 +11,7 @@ const Fonts = {
   body: 'DMSans_400Regular',
 };
 
-const Typography = {
+export const Typography = {
   hero: {
     fontFamily: Fonts.hero,
     fontSize: 48,
@@ -70,4 +70,4 @@ const Typography = {
   },
 };
 
-module.exports = { Fonts, Typography };
+export default Typography;

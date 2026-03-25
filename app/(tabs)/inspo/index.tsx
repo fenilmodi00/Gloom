@@ -213,12 +213,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.heading1,
-    fontSize: 34,
+    fontSize: 40,
     color: Colors.light.textPrimary,
-    fontStyle: 'italic',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowRadius: 2,
   },
   uploadButton: {
     backgroundColor: Colors.light.primary,
