@@ -13,6 +13,7 @@ import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { FlashList } from '@shopify/flash-list';
 import { Typography } from '@/constants/Typography';
+import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -75,15 +76,15 @@ const CategoryCard = memo(
     variant?: SkeletonVariant;
   }) => {
     const [isLoaded, setIsLoaded] = useState(false);
-    const uri = item.cutout_url || item.image_url;
-    const source = typeof uri === 'string' ? { uri } : uri;
+    const imageUrl = getWardrobeItemImageUrl(item);
+    const source = imageUrl ? { uri: imageUrl } : undefined;
 
     return (
       <View style={styles.cardContainer}>
         {/* ← CHANGED: pass variant so skeleton matches the category */}
         {!isLoaded && <SkeletonCard variant={variant} />}
         <Image
-          source={source as any}
+          source={source}
           style={[styles.cardImage, { opacity: isLoaded ? 1 : 0 }]}
           contentFit="contain"
           onLoad={() => setIsLoaded(true)}

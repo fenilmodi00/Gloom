@@ -3,7 +3,9 @@ package wardrobe
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"strings"
 
 	"backend/internal/db"
@@ -16,15 +18,19 @@ import (
 )
 
 type Handler struct {
-	db *db.DB
-	v  *validator.Validate
+	db             *db.DB
+	supabaseURL    string
+	serviceRoleKey string
+	v              *validator.Validate
 }
 
-func New(database *db.DB) *Handler {
+func New(database *db.DB, supabaseURL, serviceRoleKey string) *Handler {
 	v := validator.New()
 	return &Handler{
-		db: database,
-		v:  v,
+		db:             database,
+		supabaseURL:    supabaseURL,
+		serviceRoleKey: serviceRoleKey,
+		v:              v,
 	}
 }
 
@@ -37,6 +43,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 	wardrobeGroup.Get("/:id", h.GetItem)
 	wardrobeGroup.Patch("/:id", h.UpdateItem)
 	wardrobeGroup.Delete("/:id", h.DeleteItem)
+	wardrobeGroup.Get("/images/*", h.GetImage)
 }
 
 func (h *Handler) ListItems(c *fiber.Ctx) error {
@@ -233,4 +240,68 @@ func (h *Handler) DeleteItem(c *fiber.Ctx) error {
 	}
 
 	return response.NoContent(c)
+}
+
+// GetImage proxies image requests from Supabase Storage through the backend
+func (h *Handler) GetImage(c *fiber.Ctx) error {
+	path := c.Params("*")
+	if path == "" {
+		return response.BadRequest(c, "image path is required")
+	}
+
+	// Validate path to prevent directory traversal
+	if strings.Contains(path, "..") || strings.HasPrefix(path, "/") {
+		return response.BadRequest(c, "invalid path")
+	}
+
+	// Construct Supabase Storage URL
+	storageURL := fmt.Sprintf("%s/storage/v1/object/public/wardrobe-images/%s", h.supabaseURL, path)
+
+	// Forward the request to Supabase Storage
+	httpReq, err := http.NewRequest("GET", storageURL, nil)
+	if err != nil {
+		log.Printf("ERROR: get_image path=%s err=%v", path, err)
+		return response.InternalError(c, "failed to create request")
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		log.Printf("ERROR: get_image path=%s err=%v", path, err)
+		return response.InternalError(c, "failed to fetch image")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return response.NotFound(c, "image not found")
+		}
+		log.Printf("ERROR: get_image path=%s status=%d", path, resp.StatusCode)
+		return response.InternalError(c, "failed to fetch image")
+	}
+
+	// Read image data
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("ERROR: get_image path=%s err=%v", path, err)
+		return response.InternalError(c, "failed to read image")
+	}
+
+	// Set content type based on extension
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		// Fallback based on extension
+		switch {
+		case strings.HasSuffix(strings.ToLower(path), ".png"):
+			contentType = "image/png"
+		case strings.HasSuffix(strings.ToLower(path), ".webp"):
+			contentType = "image/webp"
+		default:
+			contentType = "image/jpeg"
+		}
+	}
+
+	c.Set("Content-Type", contentType)
+	c.Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
+	return c.Send(data)
 }

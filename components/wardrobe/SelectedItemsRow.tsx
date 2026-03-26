@@ -16,6 +16,7 @@ import type { WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore, useSelectedItemsArray, useSelectedItems } from '@/lib/store/outfit-builder.store';
 import { categoryToSlot } from '@/lib/outfit-mapping';
 import { calculateOutfitScore } from '@/lib/outfit-scoring';
+import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 
 // Category labels for pills
 const CATEGORY_LABELS: Record<string, string> = {
@@ -33,26 +34,25 @@ interface SelectedItemPillProps {
   onRemove: () => void;
 }
 
-const SelectedItemPill = React.memo(({ item, onRemove }: SelectedItemPillProps) => (
-  <View className="flex-row items-center bg-white/90 rounded-full pl-[6px] pr-[8px] py-[6px] gap-1.5 border border-primary/20">
-    <Image
-      source={
-        typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? { uri: (item.cutout_url || item.image_url) as string }
-          : (item.image_url as any)
-      }
-      className="w-7 h-7 rounded-full bg-bgSurfaceRaised"
-      contentFit="cover"
-      transition={150}
-    />
-    <Text className="text-xs font-product text-textPrimary max-w-[50px]" numberOfLines={1}>
-      {CATEGORY_LABELS[item.category] || item.category}
-    </Text>
-    <Pressable onPress={onRemove} className="w-5 h-5 rounded-full bg-black/5 justify-center items-center" hitSlop={8}>
-      <X size={12} color="#6B6B6B" />
-    </Pressable>
-  </View>
-));
+const SelectedItemPill = React.memo(({ item, onRemove }: SelectedItemPillProps) => {
+  const imageUrl = getWardrobeItemImageUrl(item);
+  return (
+    <View className="flex-row items-center bg-white/90 rounded-full pl-[6px] pr-[8px] py-[6px] gap-1.5 border border-primary/20">
+      <Image
+        source={imageUrl ? { uri: imageUrl } : undefined}
+        className="w-7 h-7 rounded-full bg-bgSurfaceRaised"
+        contentFit="cover"
+        transition={150}
+      />
+      <Text className="text-xs font-product text-textPrimary max-w-[50px]" numberOfLines={1}>
+        {CATEGORY_LABELS[item.category] || item.category}
+      </Text>
+      <Pressable onPress={onRemove} className="w-5 h-5 rounded-full bg-black/5 justify-center items-center" hitSlop={8}>
+        <X size={12} color="#6B6B6B" />
+      </Pressable>
+    </View>
+  );
+});
 
 export const SelectedItemsRow = () => {
   const insets = useSafeAreaInsets();

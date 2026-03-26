@@ -57,7 +57,7 @@ func New(cfg *config.Config, database *db.DB) *Server {
 	profileHandler := profile.New(database)
 	profileHandler.RegisterRoutes(api)
 
-	wardrobeHandler := wardrobe.New(database)
+	wardrobeHandler := wardrobe.New(database, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	wardrobeHandler.RegisterRoutes(api)
 
 	outfitHandler := outfit.New(database)

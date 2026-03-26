@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import type { WardrobeItem } from '@/types/wardrobe';
+import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ITEM_MARGIN = 8;
@@ -16,6 +17,7 @@ interface ItemCardProps {
 
 export function ItemCard({ item, onPress, size }: ItemCardProps) {
   const cardSize = size || ITEM_SIZE;
+  const imageUrl = getWardrobeItemImageUrl(item);
 
   return (
     <Pressable
@@ -28,7 +30,7 @@ export function ItemCard({ item, onPress, size }: ItemCardProps) {
       }}
     >
       <Image
-        source={(item.cutout_url || item.image_url) as any}
+        source={imageUrl ? { uri: imageUrl } : undefined}
         style={{
           width: '100%',
           height: '100%',

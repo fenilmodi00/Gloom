@@ -16,6 +16,7 @@ import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
+import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 
 const CATEGORY_CONFIG: { key: Category; label: string }[] = [
   { key: 'tops', label: 'Tops' },
@@ -41,27 +42,26 @@ interface ItemCardProps {
   onPress: () => void;
 }
 
-const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => (
-  <Pressable onPress={onPress} style={styles.cardContainer}>
-    <Image
-      source={
-        typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? (item.cutout_url || item.image_url)
-          : item.image_url
-      }
-      style={styles.cardImage}
-      contentFit="contain"
-      transition={200}
-    />
-    {isSelected && (
-      <View style={styles.selectedOverlay}>
-        <View style={styles.checkCircle}>
-          <Check size={14} color="#FFFFFF" />
+const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => {
+  const imageUrl = getWardrobeItemImageUrl(item);
+  return (
+    <Pressable onPress={onPress} style={styles.cardContainer}>
+      <Image
+        source={imageUrl ? { uri: imageUrl } : undefined}
+        style={styles.cardImage}
+        contentFit="contain"
+        transition={200}
+      />
+      {isSelected && (
+        <View style={styles.selectedOverlay}>
+          <View style={styles.checkCircle}>
+            <Check size={14} color="#FFFFFF" />
+          </View>
         </View>
-      </View>
-    )}
-  </Pressable>
-));
+      )}
+    </Pressable>
+  );
+});
 
 // Skeleton for empty categories
 const CategorySkeleton = () => (

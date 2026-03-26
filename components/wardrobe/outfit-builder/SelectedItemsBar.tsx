@@ -23,6 +23,7 @@ import type { WardrobeItem } from '@/types/wardrobe';
 import { THEME } from '@/constants/Colors';
 import { useOutfitBuilderStore, useSelectedItemsArray } from '@/lib/store/outfit-builder.store';
 import { Typography } from '@/constants/Typography';
+import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -47,6 +48,8 @@ const ItemIcon = ({ item, index, expanded, onRemove }: ItemIconProps) => {
     };
   });
 
+  const imageUrl = getWardrobeItemImageUrl(item);
+
   return (
     <Animated.View 
       layout={LinearTransition.springify().mass(0.8)}
@@ -54,7 +57,7 @@ const ItemIcon = ({ item, index, expanded, onRemove }: ItemIconProps) => {
     >
       <View style={styles.itemImageContainer}>
         <Image
-          source={item.cutout_url || item.image_url}
+          source={imageUrl ? { uri: imageUrl } : undefined}
           style={styles.itemImage}
           contentFit="contain"
         />
