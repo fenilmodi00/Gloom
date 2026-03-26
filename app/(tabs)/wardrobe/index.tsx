@@ -1,25 +1,24 @@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 import {
-  WardrobeSkeleton,
   SkeletonCard,
-  SkeletonVariant,       // ← CHANGED: import the type
+  SkeletonVariant
 } from '@/components/shared/WardrobeSkeleton';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 
-import { useWardrobeStore } from '@/lib/store/wardrobe.store';
-import type { Category, WardrobeItem } from '@/types/wardrobe';
-import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
-import { FlashList } from '@shopify/flash-list';
 import { Typography } from '@/constants/Typography';
+import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
+import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
+import type { Category, WardrobeItem } from '@/types/wardrobe';
+import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Shirt, Plus } from 'lucide-react-native';
+import { ChevronRight, Shirt } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View, ScrollView } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -173,7 +172,7 @@ export default function WardrobeScreen() {
     navigateToOutfitBuilder();
   }, [navigateToOutfitBuilder]);
 
-  const handleCloseSelectSheet = useCallback(() => {}, []);
+  const handleCloseSelectSheet = useCallback(() => { }, []);
 
   const handleEmptyAdd = () => {
     navigateToAddItem('camera');

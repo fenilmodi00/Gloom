@@ -6,18 +6,18 @@
  * Layer 3 (Overlay): Bottom sheet with trending ideas
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
  */
+import Colors from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
+import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '@/constants/Colors';
-import { Typography } from '@/constants/Typography';
-import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
