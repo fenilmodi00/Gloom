@@ -22,6 +22,7 @@ export const supabase = createClient(
 // Storage bucket names
 export const STORAGE_BUCKETS = {
   WARDROBE_IMAGES: 'wardrobe-images',
+  MODEL_CORROSION_IMAGES: 'model-corrosion-images',
 } as const;
 
 export type Database = {

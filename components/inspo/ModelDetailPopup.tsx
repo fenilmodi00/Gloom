@@ -9,6 +9,7 @@
  */
 import Colors from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
+import { useModelImageStore } from '@/lib/store/model-image.store';
 import { Feather } from '@expo/vector-icons';
 import { Asset } from 'expo-asset';
 import * as Haptics from 'expo-haptics';
@@ -120,6 +121,8 @@ export function ModelDetailPopup({
     Haptics.selectionAsync();
   };
 
+  const { uploadImage } = useModelImageStore();
+
   // Convert clothItems to OutfitBoard format
   const mappedOutfit = React.useMemo(() => {
     const result: {
@@ -149,9 +152,22 @@ export function ModelDetailPopup({
 
   const handleSave = async (source: any) => {
     try {
-      Alert.alert('Saved!', 'Look added to your boards.', [{ text: 'OK' }]);
+      let localUri = source.uri;
+
+      if (!localUri && typeof source === 'number') {
+        const [asset] = await Asset.loadAsync(source);
+        localUri = asset.localUri || asset.uri;
+      }
+
+      if (localUri) {
+        await uploadImage(localUri);
+        Alert.alert('Saved!', 'Look added to your profile.', [{ text: 'OK' }]);
+      } else {
+        Alert.alert('Error', 'Image not available for saving');
+      }
     } catch (err) {
       console.log('Error saving image:', err);
+      Alert.alert('Error', 'Could not save the image.');
     }
   };
 
