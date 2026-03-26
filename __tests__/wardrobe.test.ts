@@ -1,5 +1,6 @@
 // Test for wardrobe store
 import { useWardrobeStore } from '../lib/store/wardrobe.store';
+import { useAuthStore } from '../lib/store/auth.store';
 
 // Mock supabase before importing store
 jest.mock('../lib/supabase', () => ({
@@ -16,12 +17,23 @@ jest.mock('../lib/supabase', () => ({
 
 describe('Wardrobe Store', () => {
   beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 'test-user', email: 'test@example.com' } as any,
+      session: 'test-session',
+    });
     useWardrobeStore.setState({
       items: [],
       selectedCategory: 'all',
       isLoading: false,
       error: null,
     });
+    // mock fetch
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 'item-1', image_url: 'test' } }),
+      })
+    ) as jest.Mock;
   });
 
   it('should have empty items initially', () => {

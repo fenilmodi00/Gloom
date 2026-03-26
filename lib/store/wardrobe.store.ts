@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { WardrobeItem, WardrobeItemInput, Category } from '../../types';
-import { supabase, isSupabaseConfigured, STORAGE_BUCKETS } from '../supabase';
 import { zustandAsyncStorage } from '../storage';
 import { useAuthStore } from './auth.store';
 
@@ -92,6 +91,9 @@ export const useWardrobeStore = create<WardrobeState>()(
        const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
        const response = await fetch(`${backendUrl}/api/v1/wardrobe/${id}`, {
          method: 'DELETE',
+         headers: {
+           'Authorization': 'Bearer ' + (useAuthStore.getState().session || ''),
+         },
        });
 
        if (!response.ok) {
@@ -125,15 +127,19 @@ export const useWardrobeStore = create<WardrobeState>()(
 
      try {
        const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-       const response = await fetch(`${backendUrl}/api/v1/wardrobe`);
+       const response = await fetch(`${backendUrl}/api/v1/wardrobe`, {
+         headers: {
+           'Authorization': 'Bearer ' + (useAuthStore.getState().session || ''),
+         },
+       });
        
        if (!response.ok) {
          const errorData = await response.json();
          throw new Error(errorData.error?.message || 'Failed to fetch items');
        }
 
-       const { data } = await response.json();
-       set({ items: (data || []) as WardrobeItem[], isLoading: false });
+       const json = await response.json();
+       set({ items: (json.data || []) as WardrobeItem[], isLoading: false });
      } catch (error) {
        set({ 
          error: error instanceof Error ? error.message : 'Failed to fetch items',
@@ -146,25 +152,51 @@ export const useWardrobeStore = create<WardrobeState>()(
       const { user } = useAuthStore.getState();
       if (!user) throw new Error('User not authenticated');
 
-      // Always use Supabase, even with placeholder user ID
       try {
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        const fileExt = uri.split('.').pop();
+        const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+        const fileExt = uri.split('.').pop() || 'jpg';
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
-          .upload(filePath, blob);
+        // Get presigned URL
+        const presignResponse = await fetch(`${backendUrl}/api/v1/presigned-url`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (useAuthStore.getState().session || ''),
+          },
+          body: JSON.stringify({
+            bucket: 'wardrobe-images',
+            path: filePath,
+          }),
+        });
 
-        if (uploadError) throw uploadError;
+        if (!presignResponse.ok) {
+          const errorData = await presignResponse.json();
+          throw new Error(errorData.error?.message || 'Failed to get presigned URL');
+        }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
-          .getPublicUrl(filePath);
+        const { url, path } = await presignResponse.json();
 
-        return publicUrl;
+        // Get image blob
+        const response = await fetch(uri);
+        const blob = await response.blob();
+
+        // Upload to signed URL
+        const uploadResponse = await fetch(url, {
+          method: 'PUT',
+          body: blob,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image to storage');
+        }
+
+        // Construct public URL
+        const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+        if (!supabaseUrl) throw new Error('Supabase URL not configured');
+
+        return `${supabaseUrl}/storage/v1/object/public/wardrobe-images/${path}`;
       } catch (error) {
         console.error('Error uploading image:', error);
         throw error;
