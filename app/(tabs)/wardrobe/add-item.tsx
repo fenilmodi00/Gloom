@@ -16,7 +16,6 @@ import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { Typography } from '@/constants/Typography';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { tagWardrobeItem } from '@/lib/gemini';
-import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
 import type { Category } from '@/types/wardrobe';
 
 // Design tokens from Stitch
@@ -41,7 +40,7 @@ export default function AddItemScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Processing...');
 
-  const { addItem } = useWardrobeStore();
+  const { addItem, uploadImage } = useWardrobeStore();
   const { user } = useAuthStore();
 
   // Show upload screen first (Stitch design) - always show upload screen, let user choose
@@ -158,19 +157,8 @@ export default function AddItemScreen() {
     setLoadingMessage('Uploading image...');
 
     try {
-      const fileName = `${user.id}/${Date.now()}.jpg`;
-      const response = await fetch(photoUri);
-      const blob = await response.blob();
+      const publicUrl = await uploadImage(photoUri);
 
-      const { error: uploadError } = await supabase.storage
-        .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
-        .upload(fileName, blob, { contentType: 'image/jpeg' });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(STORAGE_BUCKETS.WARDROBE_IMAGES)
-        .getPublicUrl(fileName);
 
       setLoadingMessage('Analyzing item with AI...');
 
