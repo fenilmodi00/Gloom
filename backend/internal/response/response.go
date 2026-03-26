@@ -15,11 +15,11 @@ type ErrorResponse struct {
 }
 
 func Success(c *fiber.Ctx, data interface{}) error {
-	return c.Status(fiber.StatusOK).JSON(data)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"data": data})
 }
 
 func Created(c *fiber.Ctx, data interface{}) error {
-	return c.Status(fiber.StatusCreated).JSON(data)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"data": data})
 }
 
 func NoContent(c *fiber.Ctx) error {
