@@ -1,9 +1,9 @@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
+import { WardrobeSkeleton, SkeletonCard } from '@/components/shared/WardrobeSkeleton';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 
-import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
@@ -13,7 +13,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Shirt, Plus } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -50,21 +50,24 @@ interface CategorySectionProps {
   onSeeAll?: () => void;
 }
 
-// Memoized card renderer
-const CategoryCard = ({ item }: { item: WardrobeItem }) => {
+// Memoized card renderer with skeleton support
+const CategoryCard = memo(({ item }: { item: WardrobeItem }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
   const uri = item.cutout_url || item.image_url;
   const source = typeof uri === 'string' ? { uri } : uri;
   
   return (
     <View style={styles.cardContainer}>
+      {!isLoaded && <SkeletonCard />}
       <Image
         source={source as any}
-        style={styles.cardImage}
+        style={[styles.cardImage, { opacity: isLoaded ? 1 : 0 }]}
         contentFit="contain"
+        onLoad={() => setIsLoaded(true)}
       />
     </View>
   );
-};
+});
 
 function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
   const renderItem = useCallback(
@@ -106,19 +109,20 @@ function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
 export default function WardrobeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { items: storeItems, isLoading, fetchItems } = useWardrobeStore();
+  const { items: storeItems, isLoading, isHydrated, fetchItems } = useWardrobeStore();
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const { animatedStyle } = useTabAnimation('wardrobe/index');
 
-  // Use mock data if store is empty
-  const items = useMemo(() => {
-    return storeItems.length > 0 ? storeItems : getMockWardrobeItemsWithAssets();
-  }, [storeItems]);
+  // Use store items directly
+  const items = storeItems;
 
-  // Initial fetch
+  // Background fetch - doesn't block UI
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    // Only fetch if hydrated (AsyncStorage loaded) to avoid race conditions
+    if (isHydrated) {
+      fetchItems();
+    }
+  }, [fetchItems, isHydrated]);
 
    // Group items by category
    const groupedItems = useMemo(() => {
@@ -236,7 +240,8 @@ export default function WardrobeScreen() {
     return ['header', ...sections] as (typeof sections[0] | 'header')[];
   }, [sections]);
 
-  if (isLoading && items.length === 0) {
+  // First launch - no cached data and not hydrated yet
+  if (!isHydrated && items.length === 0) {
     return <LoadingOverlay message="Loading wardrobe..." />;
   }
 

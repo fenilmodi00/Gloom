@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, StyleSheet, Pressable, Alert, BackHandler, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +13,6 @@ import { SelectedItemsBar } from '@/components/wardrobe/outfit-builder/SelectedI
 import { OutfitCombinationsSection } from '@/components/wardrobe/outfit-builder/OutfitCombinationsSection';
 import { OutfitBoardSheet } from '@/components/wardrobe/outfit-builder/OutfitBoardSheet';
 
-import { getMockWardrobeItemsWithAssets } from '@/lib/mock-wardrobe';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useSelectedItemsArray, useSelectedStyle, useOutfitBuilderStore, useCombinations } from '@/lib/store/outfit-builder.store';
 import type { OutfitCombination } from '@/lib/store/outfit-builder.store';
@@ -31,10 +30,8 @@ const selectedStyle = useSelectedStyle();
 const openCombinationSheet = useOutfitBuilderStore((s) => s.openCombinationSheet);
 const combinations = useCombinations();
 
-  // Use mock data if store is empty
-  const items = useMemo(() => {
-    return storeItems.length > 0 ? storeItems : getMockWardrobeItemsWithAssets();
-  }, [storeItems]);
+  // Use real store items
+  const items = storeItems;
 
 
   const [isVisible, setIsVisible] = React.useState(true);
