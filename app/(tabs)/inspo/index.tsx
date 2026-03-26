@@ -79,8 +79,6 @@ const TRENDING_SECTIONS: TrendingSection[] = [
   },
 ];
 
-// No longer needed, using Colors.ts directly
-
 // ============================================================================
 // Component
 // ============================================================================
@@ -135,20 +133,18 @@ export default function InspoScreen() {
     });
   }, [router]);
 
-   const handleTryOnPress = useCallback((item: TrendingItem) => {
-     console.log('Try on pressed for:', item.id);
-     
-     // In production, this would call AI to generate the model image
-     // For now, simulate with mock data
-     const mockGeneratedImage: ModelCard = {
-       id: `generated-${Date.now()}`,
-       imageUrl: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600',
-       name: `Try-On ${item.id}`,
-       outfit: item.id, // Using item.id as outfit reference
-     };
-     
-     setGeneratedImages((prev) => [mockGeneratedImage, ...prev]);
-   }, []);
+  const handleTryOnPress = useCallback((item: TrendingItem) => {
+    console.log('Try on pressed for:', item.id);
+    // Create a mock generated image using the modal.png asset
+    const mockGeneratedImage: ModelCard = {
+      id: `generated-${Date.now()}`,
+      imageUrl: MODAL_MODEL_IMAGE,
+      name: `Try-On ${item.id}`,
+      outfit: item.id, // Store the outfit ID for reference
+    };
+    
+    setGeneratedImages((prev) => [mockGeneratedImage, ...prev]);
+  }, []);
 
   // Upload button spring scale animation
   const uploadScale = useSharedValue(1);
@@ -161,10 +157,10 @@ export default function InspoScreen() {
       {/* ======================================== */}
       {/* Layer 1: Top-aligned model carousel */}
       {/* ======================================== */}
-       <ModelCarousel
-         models={[...generatedImages, ...MODEL_CARDS]}
-         onCardPress={handleModelPress}
-       />
+      <ModelCarousel
+        models={[...generatedImages, ...MODEL_CARDS]}
+        onCardPress={handleModelPress}
+      />
 
       {/* ======================================== */}
       {/* Layer 2: Floating Header                 */}

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { BlurView } from 'expo-blur';
 
-export function LoadingOverlay({ message = "Loading..." }: { message?: string }) {
+export function LoadingOverlay({ visible, message = "Loading..." }: { visible?: boolean, message?: string }) {
+  if (!visible) return null;
   return (
     <View className="absolute inset-0 z-50">
       <BlurView 

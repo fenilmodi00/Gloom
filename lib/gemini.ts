@@ -13,6 +13,7 @@ interface TagWardrobeItemResult {
   colors: string[];
   style_tags: string[];
   occasion_tags: string[];
+  vibe_tags: string[];
   fabric_guess: string;
 }
 
@@ -33,6 +34,7 @@ export async function tagWardrobeItem(base64Image: string): Promise<TagWardrobeI
       colors: ["White"],
       style_tags: ["Minimalist", "Casual"],
       occasion_tags: ["Daily", "Casual"],
+      vibe_tags: ["minimalist", "classic"],
       fabric_guess: "Cotton"
     };
   }
@@ -54,6 +56,7 @@ export async function tagWardrobeItem(base64Image: string): Promise<TagWardrobeI
     colors: ["Default Color"],
     style_tags: ["Classic"],
     occasion_tags: ["Casual", "Work"],
+    vibe_tags: ["classic", "trendy"],
     fabric_guess: "Linen-Mix"
   };
 }

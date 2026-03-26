@@ -1,63 +1,46 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Pressable, StyleSheet, ScrollView, BackHandler } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Pressable, StyleSheet, BackHandler } from 'react-native';
+import { useRouter, useLocalSearchParams, Href } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { X, Camera as CameraIcon, Check, Image as ImageIcon } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import Animated, { ZoomIn, FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { Typography } from '@/constants/Typography';
+import { Colors } from '@/constants/Colors';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { tagWardrobeItem } from '@/lib/gemini';
 import type { Category } from '@/types/wardrobe';
 
-// Design tokens from Stitch
-const COLORS = {
-  brand: '#D0BB95',
-  brandLight: '#f5f1e8',
-  surface: '#FCF9F5',
-  textPrimary: '#1c1917',
-  textSecondary: '#78716c',
-  white: '#FFFFFF',
-  border: '#e7e5e4',
-};
-
 export default function AddItemScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { method, origin, ts } = useLocalSearchParams<{ method: string; origin?: string; ts?: string }>();
+  const { origin, ts } = useLocalSearchParams<{ origin?: string; ts?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Processing...');
+  const [showUploadScreen, setShowUploadScreen] = useState(true);
 
   const { addItem, uploadImage } = useWardrobeStore();
   const { user } = useAuthStore();
 
-  // Show upload screen first (Stitch design) - always show upload screen, let user choose
-  const [showUploadScreen, setShowUploadScreen] = useState(true);
-
-  // Reset state ONLY on first mount (key={ts} change = fresh navigation).
-  // Does NOT run on router.back() returns — those keep component alive.
-  const isFirstMount = useRef(true);
+  // Reset state on entry
   useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      setPhotoUri(null);
-      setShowUploadScreen(true);
-    }
-  }, []);
+    setPhotoUri(null);
+    setShowUploadScreen(true);
+  }, [ts]);
 
-  // Handle hardware back button — step back through the add-item flow
+  // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
       if (photoUri) {
@@ -68,7 +51,6 @@ export default function AddItemScreen() {
         setShowUploadScreen(true);
         return true;
       }
-      // Upload screen: let default back behavior (close to origin)
       return false;
     };
 
@@ -76,32 +58,25 @@ export default function AddItemScreen() {
     return () => backHandler.remove();
   }, [photoUri, showUploadScreen]);
 
-  // Go back one step in the add-item flow
-  const goBack = () => {
-    if (photoUri) {
-      // Preview → camera
-      setPhotoUri(null);
-    } else if (!showUploadScreen) {
-      // Camera → upload
-      setShowUploadScreen(true);
-    } else {
-      // Upload → origin tab
-      closeScreen();
-    }
-  };
-
-  // Map origin keys to tab paths — deterministic, no navigation stack dependency
   const ORIGIN_PATHS: Record<string, string> = {
     wardrobe: '/(tabs)/wardrobe',
     inspo: '/(tabs)/inspo',
     outfits: '/(tabs)/outfits',
   };
 
-  // Close: use origin param to directly navigate to the correct tab.
-  // This bypasses Expo Router's broken back-stack for hidden tab routes.
   const closeScreen = () => {
-    const dest = origin ? ORIGIN_PATHS[origin] : ORIGIN_PATHS.wardrobe;
-    router.replace(dest as any);
+    const dest = origin ? ORIGIN_PATHS[origin as keyof typeof ORIGIN_PATHS] : ORIGIN_PATHS.wardrobe;
+    router.replace(dest as Href);
+  };
+
+  const goBack = () => {
+    if (photoUri) {
+      setPhotoUri(null);
+    } else if (!showUploadScreen) {
+      setShowUploadScreen(true);
+    } else {
+      closeScreen();
+    }
   };
 
   const pickImage = async () => {
@@ -116,16 +91,10 @@ export default function AddItemScreen() {
 
       if (!result.canceled && result.assets[0]) {
         setPhotoUri(result.assets[0].uri);
-      } else {
-        setShowUploadScreen(true);
       }
-    } catch {
-      setShowUploadScreen(true);
+    } catch (error) {
+      console.error('Gallery error:', error);
     }
-  };
-
-  const openCamera = () => {
-    setShowUploadScreen(false);
   };
 
   const takePhoto = async () => {
@@ -139,87 +108,61 @@ export default function AddItemScreen() {
         if (photo) {
           setPhotoUri(photo.uri);
         }
-      } catch {
-        // Handle error silently
+      } catch (error) {
+         console.error('Camera error:', error);
       }
     }
   };
 
-  const handleRetake = () => {
-    setPhotoUri(null);
-    setShowUploadScreen(true);
-  };
-
   const handleSave = async () => {
-    if (!photoUri || !user) return;
+    if (!photoUri || (!user && !__DEV__)) return;
 
     setIsProcessing(true);
     setLoadingMessage('Uploading image...');
 
     try {
       const publicUrl = await uploadImage(photoUri);
-
-
-      setLoadingMessage('Analyzing item with AI...');
-
-      const fileData = await fetch(photoUri);
-      const fileBlob = await fileData.blob();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          const b64 = result.split(',')[1];
-          resolve(b64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(fileBlob);
-      });
-
-      const tags = await tagWardrobeItem(base64);
-
+      
+      setLoadingMessage('Analyzing with AI...');
+      const tags = await tagWardrobeItem(photoUri);
+      
       setLoadingMessage('Saving to wardrobe...');
-
       await addItem({
         image_url: publicUrl,
-        category: tags.category as Category,
+        category: tags.category,
         sub_category: tags.sub_category,
         colors: tags.colors,
         style_tags: tags.style_tags,
         occasion_tags: tags.occasion_tags,
+        vibe_tags: tags.vibe_tags,
         fabric_guess: tags.fabric_guess,
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       closeScreen();
     } catch (error) {
-      console.error('Error adding item:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      console.error('Save error:', error);
       setIsProcessing(false);
     }
   };
 
-  if (isProcessing) {
-    return <LoadingOverlay message={loadingMessage} />;
-  }
-
-  // Stitch-inspired Upload Screen with animated transitions
+  // 1. Initial Choice Screen
   if (showUploadScreen && !photoUri) {
     return (
       <Animated.View 
-        key={ts}
         entering={ZoomIn.duration(350)}
         style={[styles.uploadContainer, { paddingTop: insets.top }]}
       >
-          <View style={styles.uploadHeader}>
-            <Pressable onPress={closeScreen} style={styles.backButton}>
-              <X size={24} color={COLORS.textPrimary} />
-            </Pressable>
+        <View style={styles.uploadHeader}>
+          <Pressable onPress={closeScreen} style={styles.backButton}>
+            <X size={24} color={Colors.light.textPrimary} />
+          </Pressable>
         </View>
 
         <View style={styles.uploadContent}>
           <View style={styles.illustrationCard}>
             <View style={styles.illustrationImage}>
-              <CameraIcon size={48} color={COLORS.brand} />
+              <CameraIcon size={48} color={Colors.light.primary} />
             </View>
           </View>
 
@@ -233,7 +176,7 @@ export default function AddItemScreen() {
           <View style={styles.actionButtons}>
             <Pressable
               style={styles.captureButton}
-              onPress={openCamera}
+              onPress={() => setShowUploadScreen(false)}
             >
               <CameraIcon size={20} color="#1c1917" />
               <Text style={styles.captureButtonText}>Capture</Text>
@@ -243,47 +186,40 @@ export default function AddItemScreen() {
               style={styles.galleryButton}
               onPress={pickImage}
             >
-              <ImageIcon size={20} color={COLORS.textPrimary} />
+              <ImageIcon size={20} color={Colors.light.textPrimary} />
               <Text style={styles.galleryButtonText}>Upload from Gallery</Text>
             </Pressable>
           </View>
         </View>
-
-        <View style={{ height: insets.bottom + 32 }} />
       </Animated.View>
     );
   }
 
-  // Camera Screen with animated transitions
+  // 2. Camera View
   if (!showUploadScreen && !photoUri) {
-    if (!permission) {
-      return <View style={styles.cameraContainer} />;
-    }
-    if (!permission.granted) {
+    if (!permission?.granted) {
       return (
-        <View 
-          style={[styles.permissionContainer, { paddingTop: insets.top }]}
-        >
-          <Text style={styles.permissionText}>We need your permission to show the camera</Text>
+        <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
+          <Text style={styles.permissionText}>We need camera permission to continue</Text>
           <Pressable style={styles.permissionButton} onPress={requestPermission}>
             <Text style={styles.permissionButtonText}>Grant Permission</Text>
+          </Pressable>
+          <Pressable onPress={closeScreen} style={{ marginTop: 24 }}>
+            <Text style={{ color: Colors.light.textSecondary }}>Cancel</Text>
           </Pressable>
         </View>
       );
     }
 
     return (
-      <Animated.View 
-        entering={ZoomIn.duration(350)}
-        style={styles.cameraContainer}
-      >
-          <View style={[styles.cameraHeader, { paddingTop: insets.top }]}>
-            <Pressable onPress={goBack} style={styles.headerButton}>
-              <X size={24} color="white" />
-            </Pressable>
-            <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
-            <View style={styles.headerButton} />
-          </View>
+      <View style={styles.cameraContainer}>
+        <View style={[styles.cameraHeader, { paddingTop: insets.top }]}>
+          <Pressable onPress={() => setShowUploadScreen(true)} style={styles.headerButton}>
+            <X size={24} color="white" />
+          </Pressable>
+          <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
+          <View style={styles.headerButton} />
+        </View>
 
         <View style={styles.cameraPreview}>
           <CameraView ref={cameraRef} style={styles.cameraView} facing="back" />
@@ -296,19 +232,19 @@ export default function AddItemScreen() {
             <View style={styles.captureButtonInner} />
           </Pressable>
         </View>
-      </Animated.View>
+      </View>
     );
   }
 
-  // Preview Screen with animated transitions
+  // 3. Preview Screen
   if (photoUri) {
     return (
-      <View 
-        style={[styles.previewContainer, { paddingTop: insets.top }]}
-      >
+      <View style={[styles.previewContainer, { paddingTop: insets.top }]}>
+        <LoadingOverlay visible={isProcessing} message={loadingMessage} />
+        
         <View style={styles.previewHeader}>
-          <Pressable onPress={goBack} style={styles.headerButton}>
-            <X size={24} color={COLORS.textPrimary} />
+          <Pressable onPress={() => setPhotoUri(null)} style={styles.headerButton}>
+            <X size={24} color={Colors.light.textPrimary} />
           </Pressable>
           <Text style={styles.previewTitle}>Preview</Text>
           <View style={styles.headerButton} />
@@ -319,7 +255,7 @@ export default function AddItemScreen() {
         </View>
 
         <View style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>
-          <Pressable style={styles.retakeButton} onPress={handleRetake}>
+          <Pressable style={styles.retakeButton} onPress={() => setPhotoUri(null)}>
             <Text style={styles.retakeButtonText}>Retake</Text>
           </Pressable>
           <Pressable style={styles.saveButton} onPress={handleSave}>
@@ -335,21 +271,17 @@ export default function AddItemScreen() {
 }
 
 const styles = StyleSheet.create({
-  // Upload Screen (Stitch-inspired)
   uploadContainer: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: Colors.light.background,
   },
   uploadHeader: {
     paddingHorizontal: 24,
     paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   backButton: {
     padding: 8,
     marginLeft: -8,
-    borderRadius: 999,
   },
   uploadContent: {
     flex: 1,
@@ -360,7 +292,7 @@ const styles = StyleSheet.create({
   illustrationCard: {
     width: '100%',
     maxWidth: 280,
-    backgroundColor: COLORS.white,
+    backgroundColor: Colors.light.bgSurface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 40,
@@ -374,7 +306,7 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 3 / 4,
     borderRadius: 12,
-    backgroundColor: COLORS.brandLight,
+    backgroundColor: Colors.light.bgSurfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -384,15 +316,14 @@ const styles = StyleSheet.create({
   },
   uploadTitle: {
     ...Typography.heading2,
-    color: COLORS.textPrimary,
+    color: Colors.light.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
   uploadSubtitle: {
     ...Typography.body,
-    color: COLORS.textSecondary,
+    color: Colors.light.textSecondary,
     textAlign: 'center',
-    maxWidth: 280,
   },
   actionButtons: {
     width: '100%',
@@ -404,102 +335,81 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: COLORS.brand,
+    backgroundColor: Colors.light.primary,
     paddingVertical: 16,
-    paddingHorizontal: 32,
     borderRadius: 999,
-    shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 4,
   },
   captureButtonText: {
     ...Typography.uiLabelMedium,
-    color: COLORS.textPrimary,
+    color: Colors.light.textPrimary,
   },
   galleryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: COLORS.white,
+    backgroundColor: Colors.light.bgSurface,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: Colors.light.navbarBorder,
     paddingVertical: 16,
-    paddingHorizontal: 32,
     borderRadius: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   galleryButtonText: {
     ...Typography.uiLabelMedium,
-    color: COLORS.textPrimary,
-  },
-
-  // Camera Screen
-  cameraContainer: {
-    flex: 1,
-    backgroundColor: 'black',
+    color: Colors.light.textPrimary,
   },
   permissionContainer: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: Colors.light.background,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    padding: 32,
   },
   permissionText: {
     ...Typography.body,
-    color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: 24,
   },
   permissionButton: {
-    backgroundColor: COLORS.brand,
+    backgroundColor: Colors.light.primary,
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 999,
   },
   permissionButtonText: {
     ...Typography.uiLabelMedium,
-    color: COLORS.textPrimary,
+    color: Colors.light.bgSurface,
+  },
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: 'black',
   },
   cameraHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
   },
   headerButton: {
     padding: 8,
     width: 40,
-    alignItems: 'center',
   },
   cameraTitle: {
     ...Typography.uiLabelMedium,
-    color: COLORS.white,
+    color: 'white',
   },
   cameraPreview: {
     flex: 1,
     margin: 16,
     borderRadius: 24,
     overflow: 'hidden',
-    position: 'relative',
   },
   cameraView: {
     flex: 1,
   },
   guideOverlay: {
-    position: 'absolute',
-    top: 40,
-    left: 40,
-    right: 40,
-    bottom: 40,
+    ...StyleSheet.absoluteFillObject,
+    margin: 40,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.3)',
     borderStyle: 'dashed',
@@ -511,14 +421,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: 'center',
-    color: 'rgba(255,255,255,0.8)',
-    ...Typography.uiLabelMedium,
+    color: 'white',
+    opacity: 0.8,
   },
   cameraControls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 24,
   },
   captureButtonOuter: {
     width: 80,
@@ -535,83 +443,58 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     backgroundColor: 'white',
   },
-
-  // Preview Screen
   previewContainer: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: Colors.light.background,
   },
   previewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
   },
   previewTitle: {
     ...Typography.uiLabelMedium,
-    color: COLORS.textPrimary,
   },
   previewImageContainer: {
     flex: 1,
     margin: 16,
     borderRadius: 24,
+    backgroundColor: 'white',
     overflow: 'hidden',
-    backgroundColor: COLORS.white,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   previewImage: {
     flex: 1,
   },
   previewActions: {
     flexDirection: 'row',
-    gap: 12,
     paddingHorizontal: 16,
-    paddingTop: 16,
-    minHeight: 56,
+    gap: 12,
   },
   retakeButton: {
     flex: 1,
-    minHeight: 48,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: COLORS.brand,
-    backgroundColor: COLORS.white,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1,
+    borderColor: Colors.light.navbarBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    flexShrink: 1,
   },
   retakeButtonText: {
     ...Typography.uiLabelMedium,
-    color: COLORS.brand,
-    textAlign: 'center',
   },
   saveButton: {
-    flex: 1,
-    minHeight: 48,
-    paddingHorizontal: 20,
+    flex: 1.5,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: Colors.light.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: COLORS.brand,
-    borderRadius: 24,
-    shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 4,
-    flexShrink: 1,
   },
   saveButtonText: {
     ...Typography.uiLabelMedium,
-    color: COLORS.white,
-    textAlign: 'center',
+    color: 'white',
   },
 });
