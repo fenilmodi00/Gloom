@@ -16,57 +16,6 @@ export interface TrendingGridProps {
 }
 
 // ============================================================================
-// Mock Data
-// ============================================================================
-
-const MOCK_SECTIONS: TrendingSection[] = [
-  {
-    id: 'today-trend',
-    title: "Today's Trend",
-    items: [
-      { id: 'tt-1', imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600', outfitName: 'Urban Edge' },
-      { id: 'tt-2', imageUrl: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600', outfitName: 'City Layers' },
-      { id: 'tt-3', imageUrl: 'https://images.unsplash.com/photo-1551028719-001579e1403f?w=600', outfitName: 'Street Chic' },
-      { id: 'tt-4', imageUrl: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600', outfitName: 'Casual Cool' },
-      { id: 'tt-5', imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600', outfitName: 'Retro Vibes' },
-    ],
-  },
-  {
-    id: 'minimalist',
-    title: 'Minimalist',
-    items: [
-      { id: 'min-1', imageUrl: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600', outfitName: 'Clean Lines' },
-      { id: 'min-2', imageUrl: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600', outfitName: 'Pure White' },
-      { id: 'min-3', imageUrl: 'https://images.unsplash.com/photo-1485968579169-a6d4e6e6e9d3?w=600', outfitName: 'Simple Luxe' },
-      { id: 'min-4', imageUrl: 'https://images.unsplash.com/photo-1505022610485-0249ba5b3675?w=600', outfitName: 'Monochrome' },
-      { id: 'min-5', imageUrl: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600', outfitName: 'Less is More' },
-    ],
-  },
-  {
-    id: 'street-style',
-    title: 'Street Style',
-    items: [
-      { id: 'ss-1', imageUrl: 'https://images.unsplash.com/photo-1515347619252-60a6bf4fffce?w=600', outfitName: 'Urban Edge' },
-      { id: 'ss-2', imageUrl: 'https://images.unsplash.com/photo-1507679798250-c81457d57f47?w=600', outfitName: 'City Runner' },
-      { id: 'ss-3', imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600', outfitName: 'Street Pro' },
-      { id: 'ss-4', imageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600', outfitName: 'Night Out' },
-      { id: 'ss-5', imageUrl: 'https://images.unsplash.com/photo-1495385794356-15371f348c71?w=600', outfitName: 'Graffiti Chic' },
-    ],
-  },
-  {
-    id: 'bohemian',
-    title: 'Bohemian',
-    items: [
-      { id: 'bo-1', imageUrl: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600', outfitName: 'Free Spirit' },
-      { id: 'bo-2', imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600', outfitName: 'Festival Ready' },
-      { id: 'bo-3', imageUrl: 'https://images.unsplash.com/photo-1473286715294-ff073486671c?w=600', outfitName: 'Boho Dreams' },
-      { id: 'bo-4', imageUrl: 'https://images.unsplash.com/photo-1469504512102-900f29606341?w=600', outfitName: 'Wanderlust' },
-      { id: 'bo-5', imageUrl: 'https://images.unsplash.com/photo-1497312647135-16d78a307da5?w=600', outfitName: 'Earth Tones' },
-    ],
-  },
-];
-
-// ============================================================================
 // Constants
 // ============================================================================
 
@@ -82,7 +31,7 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
 
   // Use provided sections or fallback to mock data
   const displaySections = useMemo(() => {
-    return sections && sections.length > 0 ? sections : MOCK_SECTIONS;
+    return sections && sections.length > 0 ? sections : [];
   }, [sections]);
 
   // Get unique categories from sections + "All"
@@ -164,6 +113,15 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
     </View>
   );
 
+  if (displaySections.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.mainTitle}>Trending Ideas</Text>
+        <Text style={styles.emptyText}>No trending ideas available</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Main Title */}
@@ -206,6 +164,13 @@ const styles = StyleSheet.create({
     ...Typography.heading2,
     color: Colors.light.textPrimary,
     marginBottom: 16,
+    marginHorizontal: 24,
+  },
+  emptyText: {
+    ...Typography.body,
+    color: Colors.light.textSecondary,
+    textAlign: 'center',
+    marginTop: 40,
     marginHorizontal: 24,
   },
   // Category Filter - wraps to multiple lines
