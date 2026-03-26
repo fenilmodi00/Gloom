@@ -57,7 +57,7 @@ func (h *Handler) GenerateUploadURL(c *fiber.Ctx) error {
 		return response.ValidationError(c, errs)
 	}
 
-	if req.Bucket != "wardrobe-images" {
+	if req.Bucket != "wardrobe-images" && req.Bucket != "model-corrosion-images" {
 		return response.ValidationError(c, []string{"bucket: invalid bucket"})
 	}
 
