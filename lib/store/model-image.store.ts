@@ -34,6 +34,7 @@ export const useModelImageStore = create<ModelImageState>()(
         const { user, session } = useAuthStore.getState();
         if (!user || !session) return;
 
+<<<<<<< HEAD
         set({ isLoading: true, error: null });
 
         try {
