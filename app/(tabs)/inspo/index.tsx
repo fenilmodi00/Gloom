@@ -7,8 +7,9 @@
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
  */
 import { useRouter } from 'expo-router';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTrendingSections, useTrendingStore } from '@/lib/store/trending.store';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -46,38 +47,7 @@ const MODEL_CARDS: ModelCard[] = [
   { id: 'model-4', imageUrl: MODAL_MODEL_IMAGE, name: 'Style 4' },
 ];
 
-const TRENDING_SECTIONS: TrendingSection[] = [
-  {
-    id: 'leather-trench',
-    title: 'Leather Trench',
-    items: [
-      { id: 'lt-1', imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600' },
-      { id: 'lt-2', imageUrl: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600' },
-      { id: 'lt-3', imageUrl: 'https://images.unsplash.com/photo-1551028719-001579e1403f?w=600' },
-      { id: 'lt-4', imageUrl: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600' },
-    ],
-  },
-  {
-    id: 'lace-renaissance',
-    title: 'Lace Renaissance',
-    items: [
-      { id: 'lr-1', imageUrl: 'https://images.unsplash.com/photo-1515347619252-60a6bf4fffce?w=600' },
-      { id: 'lr-2', imageUrl: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600' },
-      { id: 'lr-3', imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600' },
-      { id: 'lr-4', imageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600' },
-    ],
-  },
-  {
-    id: 'minimalist-whites',
-    title: 'Minimalist Whites',
-    items: [
-      { id: 'mw-1', imageUrl: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600' },
-      { id: 'mw-2', imageUrl: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600' },
-      { id: 'mw-3', imageUrl: 'https://images.unsplash.com/photo-1485968579169-a6d4e6e6e9d3?w=600' },
-      { id: 'mw-4', imageUrl: 'https://images.unsplash.com/photo-1505022610485-0249ba5b3675?w=600' },
-    ],
-  },
-];
+// Trending sections now loaded from remote config via Zustand store
 
 // No longer needed, using Colors.ts directly
 
@@ -97,6 +67,13 @@ export default function InspoScreen() {
   // ── Two-stage bottom sheet state ──
   // Track current sheet index to know position on tap
   const currentSheetIndex = useRef<number>(SNAP_INDEX_60);
+
+  const sections = useTrendingSections();
+  const { fetchSections } = useTrendingStore();
+
+  useEffect(() => {
+    fetchSections();
+  }, []);
 
   // Handle model tap — TWO-stage flow:
   //   @ 60% (index 1) → shrink to 34% (carousel stays interactive)
@@ -175,7 +152,7 @@ export default function InspoScreen() {
       <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none" className="z-30">
         <InspoBottomSheet
           ref={bottomSheetRef}
-          sections={TRENDING_SECTIONS}
+          sections={sections}
           onTryOnPress={handleTryOnPress}
           onIndexChange={handleSheetChange}
         />
