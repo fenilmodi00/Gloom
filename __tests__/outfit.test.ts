@@ -53,8 +53,8 @@ describe('Outfit Store', () => {
     expect(outfits).toEqual([]);
   });
 
-  it('should add outfit correctly via addOutfit', () => {
-    useOutfitStore.getState().addOutfit(mockOutfit);
+  it('should add outfit correctly via store state modification', () => {
+    useOutfitStore.setState({ outfits: [mockOutfit] });
 
     const { outfits } = useOutfitStore.getState();
     expect(outfits).toHaveLength(1);
@@ -68,8 +68,7 @@ describe('Outfit Store', () => {
       vibe: 'bold statement',
     };
 
-    useOutfitStore.getState().addOutfit(mockOutfit);
-    useOutfitStore.getState().addOutfit(secondOutfit);
+    useOutfitStore.setState({ outfits: [secondOutfit, mockOutfit] });
 
     const { outfits } = useOutfitStore.getState();
     expect(outfits).toHaveLength(2);

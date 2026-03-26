@@ -5,6 +5,7 @@ import (
 
 	"backend/internal/config"
 	"backend/internal/db"
+	"backend/internal/handlers/modelimage"
 	"backend/internal/handlers/outfit"
 	"backend/internal/handlers/presigned"
 	"backend/internal/handlers/profile"
@@ -62,6 +63,9 @@ func New(cfg *config.Config, database *db.DB) *Server {
 
 	outfitHandler := outfit.New(database)
 	outfitHandler.RegisterRoutes(api)
+
+	modelImageHandler := modelimage.New(database)
+	modelImageHandler.RegisterRoutes(api)
 
 	presignedHandler := presigned.New(database, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	presignedHandler.RegisterRoutes(api)

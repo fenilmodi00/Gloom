@@ -21,7 +21,7 @@ describe('Gemini Module', () => {
     
     try {
       await gemini.tagWardrobeItem('base64image');
-      fail('Should have thrown an error');
+      throw new Error('Should have thrown an error');
     } catch (error: any) {
       expect(error.message).toContain('EXPO_PUBLIC_GEMINI_API_KEY');
     } finally {
@@ -40,7 +40,7 @@ describe('Gemini Module', () => {
     
     try {
       await gemini.generateOutfitSuggestions([]);
-      fail('Should have thrown an error');
+      throw new Error('Should have thrown an error');
     } catch (error: any) {
       expect(error.message).toContain('EXPO_PUBLIC_GEMINI_API_KEY');
     } finally {
