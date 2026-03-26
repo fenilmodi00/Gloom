@@ -35,21 +35,21 @@ export const useWardrobeStore = create<WardrobeState>()(
       setItems: (items) => set({ items }),
       
       setHydrated: (hydrated) => set({ isHydrated: hydrated }),
-     addItem: async (itemInput: WardrobeItemInput) => {
-     const { user } = useAuthStore.getState();
-     if (!user) throw new Error('User not authenticated');
-     
-     set({ isLoading: true, error: null });
-     
-     try {
-       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-       const response = await fetch(`${backendUrl}/api/v1/wardrobe`, {
-         method: 'POST',
-         headers: {
-           'Content-Type': 'application/json',
-           // Authorization header omitted in dev, middleware handles it
-         },
-         body: JSON.stringify({
+      addItem: async (itemInput: WardrobeItemInput) => {
+      const { user, session } = useAuthStore.getState();
+      if (!user && !__DEV__) throw new Error('User not authenticated');
+      
+      set({ isLoading: true, error: null });
+      
+      try {
+         const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+         if (session) headers['Authorization'] = `Bearer ${session}`;
+         
+         const response = await fetch(`${backendUrl}/api/v1/wardrobe`, {
+           method: 'POST',
+           headers,
+          body: JSON.stringify({
            image_url: itemInput.image_url,
            cutout_url: itemInput.cutout_url,
            category: itemInput.category,
@@ -83,18 +83,19 @@ export const useWardrobeStore = create<WardrobeState>()(
      }
    },
   
-   removeItem: async (id: string) => {
-     const { user } = useAuthStore.getState();
-     if (!user) return;
- 
-     try {
-       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-       const response = await fetch(`${backendUrl}/api/v1/wardrobe/${id}`, {
-         method: 'DELETE',
-         headers: {
-           'Authorization': 'Bearer ' + (useAuthStore.getState().session || ''),
-         },
-       });
+    removeItem: async (id: string) => {
+      const { user, session } = useAuthStore.getState();
+      if (!user && !__DEV__) return;
+  
+      try {
+        const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+        const headers: Record<string, string> = {};
+        if (session) headers['Authorization'] = `Bearer ${session}`;
+        
+        const response = await fetch(`${backendUrl}/api/v1/wardrobe/${id}`, {
+          method: 'DELETE',
+          headers,
+        });
 
        if (!response.ok) {
          const errorData = await response.json();
@@ -116,55 +117,57 @@ export const useWardrobeStore = create<WardrobeState>()(
   
   setError: (error) => set({ error }),
   
-   fetchItems: async () => {
-     const { user } = useAuthStore.getState();
-     if (!user) {
-       set({ isLoading: false, error: 'User not authenticated' });
-       return;
-     }
+    fetchItems: async () => {
+      const { user, session } = useAuthStore.getState();
+      // In dev mode, allow request even without user (backend has dev bypass)
+      if (!user && !__DEV__) {
+        set({ isLoading: false, error: 'User not authenticated' });
+        return;
+      }
 
-     set({ isLoading: true, error: null });
+      set({ isLoading: true, error: null });
 
-     try {
-       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-       const response = await fetch(`${backendUrl}/api/v1/wardrobe`, {
-         headers: {
-           'Authorization': 'Bearer ' + (useAuthStore.getState().session || ''),
-         },
-       });
-       
-       if (!response.ok) {
-         const errorData = await response.json();
-         throw new Error(errorData.error?.message || 'Failed to fetch items');
-       }
+      try {
+        const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+        const headers: Record<string, string> = {};
+        if (session) {
+          headers['Authorization'] = `Bearer ${session}`;
+        }
+        
+        const response = await fetch(`${backendUrl}/api/v1/wardrobe`, { headers });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'Failed to fetch items');
+        }
 
-       const json = await response.json();
-       set({ items: (json.data || []) as WardrobeItem[], isLoading: false });
-     } catch (error) {
-       set({ 
-         error: error instanceof Error ? error.message : 'Failed to fetch items',
-         isLoading: false 
-       });
-     }
-   },
+        const json = await response.json();
+        set({ items: (json.data || []) as WardrobeItem[], isLoading: false });
+      } catch (error) {
+        set({ 
+          error: error instanceof Error ? error.message : 'Failed to fetch items',
+          isLoading: false 
+        });
+      }
+    },
 
     uploadImage: async (uri: string) => {
-      const { user } = useAuthStore.getState();
-      if (!user) throw new Error('User not authenticated');
+      const { user, session } = useAuthStore.getState();
+      if (!user && !__DEV__) throw new Error('User not authenticated');
 
       try {
         const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
         const fileExt = uri.split('.').pop() || 'jpg';
         const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
+        const filePath = `${user?.id || 'dev-user'}/${fileName}`;
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (session) headers['Authorization'] = `Bearer ${session}`;
 
         // Get presigned URL
         const presignResponse = await fetch(`${backendUrl}/api/v1/presigned-url`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + (useAuthStore.getState().session || ''),
-          },
+          headers,
           body: JSON.stringify({
             bucket: 'wardrobe-images',
             path: filePath,

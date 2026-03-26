@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { OccasionBadge } from './OccasionBadge';
 import { Outfit } from '../../lib/store/outfit.store';
 import { useWardrobeStore } from '../../lib/store/wardrobe.store';
+import { getWardrobeImageUrl } from '../../lib/wardrobe-image';
 
 interface OutfitCardProps {
   outfit: Outfit;
@@ -49,18 +50,21 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
 
       {/* Item images grid */}
       <View className="flex-row flex-wrap px-5 py-3 gap-2 justify-center">
-        {outfitItems.map((item, index) => (
-          <View
-            key={item?.id ?? index}
-            style={styles.imageWrapper}
-          >
-            <Image
-              source={typeof item?.image_url === 'string' ? { uri: item.image_url } : item?.image_url as any}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-            />
-          </View>
-        ))}
+        {outfitItems.map((item, index) => {
+          const imageUrl = getWardrobeImageUrl(item?.image_url);
+          return (
+            <View
+              key={item?.id ?? index}
+              style={styles.imageWrapper}
+            >
+              <Image
+                source={imageUrl ? { uri: imageUrl } : undefined}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+              />
+            </View>
+          );
+        })}
         {outfitItems.length === 0 && (
           <Text className="text-textTertiary my-4 text-sm font-body">No item images available</Text>
         )}

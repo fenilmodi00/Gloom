@@ -16,6 +16,7 @@ import type { WardrobeItem } from '@/types/wardrobe';
 import type { ClothingItem, SlotKey } from '@/lib/store/outfit-board.store';
 import type { OutfitSelection } from '@/lib/store/outfit-builder.store';
 import { THEME } from '@/constants/Colors';
+import { getWardrobeImageUrl } from '@/lib/wardrobe-image';
 
 // Slot configuration with position multipliers (relative to board dimensions)
 interface SlotConfig {
@@ -91,11 +92,14 @@ interface OutfitBoardProps {
 function toItem(item: WardrobeItem | undefined): ClothingItem | null {
   if (!item) return null;
   
-  const uri = item.cutout_url || item.image_url;
-  if (!uri) {
+  const originalUri = item.cutout_url || item.image_url;
+  if (!originalUri) {
     console.warn('[OutfitBoard] Item has no valid image URI:', item.id);
     return null;
   }
+  
+  // Transform to backend proxy URL
+  const uri = getWardrobeImageUrl(originalUri);
   
   return {
     id: item.id,

@@ -17,6 +17,7 @@ import { Check, ChevronRight } from 'lucide-react-native';
 import type { Category, WardrobeItem } from '@/types/wardrobe';
 import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import { categoryToSlot, type OutfitSlot } from '@/lib/outfit-mapping';
+import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 
 // Category configuration (using OutfitSlot, not Category)
 const CATEGORY_CONFIG: { key: OutfitSlot; label: string }[] = [
@@ -53,27 +54,26 @@ interface ItemCardProps {
   onPress: () => void;
 }
 
-const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => (
-  <Pressable onPress={onPress} style={styles.cardContainer}>
-    <Image
-      source={
-        typeof item.image_url === 'string' && item.image_url.startsWith('http')
-          ? { uri: (item.cutout_url || item.image_url) as string }
-          : (item.image_url as any)
-      }
-      style={styles.cardImage}
-      contentFit="contain"
-      transition={200}
-    />
-    {isSelected && (
-      <View style={styles.selectedOverlay}>
-        <View style={styles.checkCircle}>
-          <Check size={14} color="#FFFFFF" />
+const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => {
+  const imageUrl = getWardrobeItemImageUrl(item);
+  return (
+    <Pressable onPress={onPress} style={styles.cardContainer}>
+      <Image
+        source={imageUrl ? { uri: imageUrl } : undefined}
+        style={styles.cardImage}
+        contentFit="contain"
+        transition={200}
+      />
+      {isSelected && (
+        <View style={styles.selectedOverlay}>
+          <View style={styles.checkCircle}>
+            <Check size={14} color="#FFFFFF" />
+          </View>
         </View>
-      </View>
-    )}
-  </Pressable>
-));
+      )}
+    </Pressable>
+  );
+});
 
 export const SelectItemsSheet = forwardRef<BottomSheet, SelectItemsSheetProps>(
   ({ items, onClose }, ref) => {
