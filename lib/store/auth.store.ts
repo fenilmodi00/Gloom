@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandAsyncStorage } from '../storage';
+import { isSupabaseConfigured } from '../supabase';
 import type { UserProfile } from '../../types';
 
 interface AuthState {
@@ -33,18 +34,42 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true,
       isOnboarded: false,
       
-      setUser: (user) => 
+      setUser: (user) => {
+        // Don't allow clearing user if we are in dev bypass mode
+        if (!user && __DEV__) {
+          return;
+        }
+
         set({ 
           user, 
           isAuthenticated: !!user,
           isOnboarded: checkIsOnboarded(user),
-        }),
+        });
+      },
       
-      setSession: (session) => 
+      setSession: (session) => {
         set({ 
           session,
-          isAuthenticated: !!session,
-        }),
+          isAuthenticated: !!session || (__DEV__ && !session),
+        });
+
+        // If we are bypassing and have no user set, set a dummy user
+        if (__DEV__ && !session) {
+          const currentState = get();
+          if (!currentState.user) {
+            set({
+              user: {
+                id: '00000000-0000-0000-0000-000000000000',
+                name: 'Gloom Dev',
+                email: 'dev@gloom.ai',
+                style_tags: ['minimalist', 'classic'],
+              } as any,
+              isAuthenticated: true,
+              isOnboarded: true,
+            });
+          }
+        }
+      },
       
       signOut: () => 
         set({ 
