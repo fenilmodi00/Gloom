@@ -1,4 +1,4 @@
-export type Category = 'upper' | 'lower' | 'dress' | 'shoes' | 'bag' | 'accessory';
+export type Category = 'tops' | 'bottoms' | 'shoes' | 'accessories' | 'bags' | 'fullbody' | 'outerwear';
 
 export interface WardrobeItem {
 id: string;

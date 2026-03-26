@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"backend/internal/response"
@@ -14,6 +15,12 @@ func AuthRequired(jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
+			// In development, allow bypass with a default user ID if header is missing
+			if os.Getenv("GO_ENV") == "development" {
+				userID, _ := uuid.Parse("00000000-0000-0000-0000-000000000000")
+				c.Locals("userID", userID)
+				return c.Next()
+			}
 			return response.Unauthorized(c, "missing authorization header")
 		}
 

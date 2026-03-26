@@ -1,6 +1,10 @@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
-import { WardrobeSkeleton, SkeletonCard } from '@/components/shared/WardrobeSkeleton';
+import {
+  WardrobeSkeleton,
+  SkeletonCard,
+  SkeletonVariant,       // ← CHANGED: import the type
+} from '@/components/shared/WardrobeSkeleton';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 
@@ -29,50 +33,81 @@ const CATEGORY_CONFIG: { key: Category; label: string }[] = [
   { key: 'accessories', label: 'Accessories' },
 ];
 
-// Vertical gradient colors for each category (top to bottom)
 import Colors from '@/constants/Colors';
 
-// ... existing code ...
-
-// Category section colors
 const GRADIENT_START = Colors.light.bgCanvas;
 const GRADIENT_END = Colors.light.bgSurfaceRaised;
 
-// Card dimensions - increased size by 25%
 const CARD_WIDTH = 120;
 const CARD_HEIGHT = 150;
 
-// Category section with its own vertical gradient
+
+// ─────────────────────────────────────────────
+// ← CHANGED: maps a category key → skeleton variant
+// ─────────────────────────────────────────────
+const getCategoryVariant = (key: Category): SkeletonVariant => {
+  const map: Partial<Record<Category, SkeletonVariant>> = {
+    tops: 'tops',
+    bottoms: 'bottoms',
+    shoes: 'shoes',
+    bags: 'bags',
+  };
+  return map[key] ?? 'default';
+};
+
+
 interface CategorySectionProps {
   label: string;
   items: WardrobeItem[];
   index: number;
+  categoryKey: Category;   // ← CHANGED: added
   onSeeAll?: () => void;
 }
 
-// Memoized card renderer with skeleton support
-const CategoryCard = memo(({ item }: { item: WardrobeItem }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const uri = item.cutout_url || item.image_url;
-  const source = typeof uri === 'string' ? { uri } : uri;
-  
-  return (
-    <View style={styles.cardContainer}>
-      {!isLoaded && <SkeletonCard />}
-      <Image
-        source={source as any}
-        style={[styles.cardImage, { opacity: isLoaded ? 1 : 0 }]}
-        contentFit="contain"
-        onLoad={() => setIsLoaded(true)}
-      />
-    </View>
-  );
-});
 
-function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
+// ← CHANGED: CategoryCard now accepts a variant prop
+const CategoryCard = memo(
+  ({
+    item,
+    variant = 'default',
+  }: {
+    item: WardrobeItem;
+    variant?: SkeletonVariant;
+  }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const uri = item.cutout_url || item.image_url;
+    const source = typeof uri === 'string' ? { uri } : uri;
+
+    return (
+      <View style={styles.cardContainer}>
+        {/* ← CHANGED: pass variant so skeleton matches the category */}
+        {!isLoaded && <SkeletonCard variant={variant} />}
+        <Image
+          source={source as any}
+          style={[styles.cardImage, { opacity: isLoaded ? 1 : 0 }]}
+          contentFit="contain"
+          onLoad={() => setIsLoaded(true)}
+        />
+      </View>
+    );
+  }
+);
+
+
+// ← CHANGED: CategorySection derives variant from categoryKey and passes it down
+function CategorySection({
+  label,
+  items,
+  categoryKey,
+  onSeeAll,
+}: CategorySectionProps) {
+  const variant = getCategoryVariant(categoryKey); // ← CHANGED
+
   const renderItem = useCallback(
-    ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
-    []
+    ({ item }: { item: WardrobeItem }) => (
+      <CategoryCard item={item} variant={variant} /> // ← CHANGED
+    ),
+    [variant]
   );
 
   if (items.length === 0) return null;
@@ -84,7 +119,6 @@ function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
       end={{ x: 0, y: 1 }}
       style={styles.gradientSection}
     >
-      {/* Section header with chevron */}
       <View style={styles.sectionHeaderRow}>
         <Pressable onPress={onSeeAll} style={styles.sectionHeader}>
           <Text style={styles.sectionLabel}>{label}</Text>
@@ -92,7 +126,6 @@ function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
         </Pressable>
       </View>
 
-      {/* Horizontal scrolling items */}
       <FlashList
         data={items}
         keyExtractor={(item) => item.id}
@@ -109,100 +142,105 @@ function CategorySection({ label, items, onSeeAll }: CategorySectionProps) {
 export default function WardrobeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { items: storeItems, isLoading, isHydrated, fetchItems } = useWardrobeStore();
+  const { items: storeItems, isLoading, isHydrated, fetchItems } =
+    useWardrobeStore();
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const { animatedStyle } = useTabAnimation('wardrobe/index');
 
-  // Use store items directly
   const items = storeItems;
 
-  // Background fetch - doesn't block UI
   useEffect(() => {
-    // Only fetch if hydrated (AsyncStorage loaded) to avoid race conditions
     if (isHydrated) {
       fetchItems();
     }
   }, [fetchItems, isHydrated]);
 
-   // Group items by category
-   const groupedItems = useMemo(() => {
-     const groups: Record<string, WardrobeItem[]> = {};
-     CATEGORY_CONFIG.forEach(({ key }) => {
-       groups[key] = items.filter((item) => item.category === key);
-     });
-     return groups;
-   }, [items]);
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, WardrobeItem[]> = {};
+    CATEGORY_CONFIG.forEach(({ key }) => {
+      groups[key] = items.filter((item) => item.category === key);
+    });
+    return groups;
+  }, [items]);
 
-   // Navigate to outfit builder screen
-   const navigateToOutfitBuilder = useCallback(() => {
-     router.push('/outfit-builder');
-   }, [router]);
+  const navigateToOutfitBuilder = useCallback(() => {
+    router.push('/outfit-builder');
+  }, [router]);
 
-   // Handler for SelectItemsSheet - now just opens the screen
-   const handleOpenSelectSheet = useCallback(() => {
-     console.log('[Wardrobe] Opening outfit builder screen');
-     navigateToOutfitBuilder();
-   }, [navigateToOutfitBuilder]);
+  const handleOpenSelectSheet = useCallback(() => {
+    console.log('[Wardrobe] Opening outfit builder screen');
+    navigateToOutfitBuilder();
+  }, [navigateToOutfitBuilder]);
 
-   // Handle close - not needed for full screen
-   const handleCloseSelectSheet = useCallback(() => {
-     // Full screen handles its own close
-   }, []);
+  const handleCloseSelectSheet = useCallback(() => {}, []);
 
-   const handleEmptyAdd = () => {
-     navigateToAddItem('camera');
-   };
+  const handleEmptyAdd = () => {
+    navigateToAddItem('camera');
+  };
 
-   const navigateToAddItem = (method: 'camera' | 'gallery') => {
-     setIsAddSheetOpen(false);
-     router.push({
-       pathname: '/(tabs)/wardrobe/add-item',
-       params: { method, origin: 'wardrobe' },
-     });
-   };
+  const navigateToAddItem = (method: 'camera' | 'gallery') => {
+    setIsAddSheetOpen(false);
+    router.push({
+      pathname: '/(tabs)/wardrobe/add-item',
+      params: { method, origin: 'wardrobe' },
+    });
+  };
 
-   // Sections to render
-   const sections = useMemo(() => {
-     return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
-   }, [groupedItems]);
+  const sections = useMemo(() => {
+    return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
+  }, [groupedItems]);
 
-  // First category card renderer
   const firstCategoryRenderItem = useCallback(
     ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
     []
   );
 
-  // Render item for FlashList - header + first category together as ONE continuous gradient
   const renderItem = useCallback(
-    ({ item, index }: { item: typeof CATEGORY_CONFIG[0] | 'header'; index: number }) => {
-      // Header is rendered with first category - continuous gradient
+    ({
+      item,
+      index,
+    }: {
+      item: (typeof CATEGORY_CONFIG)[0] | 'header';
+      index: number;
+    }) => {
       if (item === 'header') {
+        // ← CHANGED: derive variant for first category in header
+        const firstVariant =
+          sections.length > 0
+            ? getCategoryVariant(sections[0].key)
+            : 'default';
+
         return (
           <LinearGradient
             colors={[GRADIENT_START, GRADIENT_END]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            style={[styles.headerWithFirstCategory, { paddingTop: insets.top - 59 }]}
+            style={[
+              styles.headerWithFirstCategory,
+              { paddingTop: insets.top - 59 },
+            ]}
           >
-            {/* Header row */}
             <View style={styles.headerRow}>
-               <Text style={styles.headerTitle}>Closet</Text>
-               <Pressable
-                 style={styles.uploadButton}
-                 onPress={() => navigateToAddItem('camera')}
-               >
-                 <Text style={styles.uploadText}>Add item</Text>
-               </Pressable>
+              <Text style={styles.headerTitle}>Closet</Text>
+              <Pressable
+                style={styles.uploadButton}
+                onPress={() => navigateToAddItem('camera')}
+              >
+                <Text style={styles.uploadText}>Add item</Text>
+              </Pressable>
             </View>
 
-
-            {/* First category section - part of same gradient */}
             {sections.length > 0 && (
               <>
                 <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
                   <Pressable style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>{sections[0].label}</Text>
-                    <ChevronRight size={16} color={Colors.light.textSecondary} />
+                    <Text style={styles.sectionLabel}>
+                      {sections[0].label}
+                    </Text>
+                    <ChevronRight
+                      size={16}
+                      color={Colors.light.textSecondary}
+                    />
                   </Pressable>
                 </View>
                 <ScrollView
@@ -210,8 +248,13 @@ export default function WardrobeScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.sectionContent}
                 >
+                  {/* ← CHANGED: pass firstVariant down to each card */}
                   {(groupedItems[sections[0].key] || []).map((item) => (
-                    <CategoryCard key={item.id} item={item} />
+                    <CategoryCard
+                      key={item.id}
+                      item={item}
+                      variant={firstVariant}
+                    />
                   ))}
                 </ScrollView>
               </>
@@ -220,8 +263,7 @@ export default function WardrobeScreen() {
         );
       }
 
-      // Skip first category (already rendered with header)
-      const sectionIndex = sections.findIndex(s => s.key === item.key);
+      const sectionIndex = sections.findIndex((s) => s.key === item.key);
       if (sectionIndex === 0) return null;
 
       return (
@@ -229,35 +271,45 @@ export default function WardrobeScreen() {
           label={item.label}
           items={groupedItems[item.key] || []}
           index={index}
+          categoryKey={item.key}   // ← CHANGED: pass key for variant lookup
         />
       );
     },
     [groupedItems, sections, insets.top]
   );
 
-  // Data for FlashList: header + sections
   const listData = useMemo(() => {
-    return ['header', ...sections] as (typeof sections[0] | 'header')[];
+    return ['header', ...sections] as ((typeof sections)[0] | 'header')[];
   }, [sections]);
 
-  // First launch - no cached data and not hydrated yet
   if (!isHydrated && items.length === 0) {
     return <LoadingOverlay message="Loading wardrobe..." />;
   }
 
   if (items.length === 0) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas }]}>
+      <View
+        style={[
+          styles.container,
+          { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas },
+        ]}
+      >
         <EmptyState
           title="Your closet is empty"
           description="Start building your digital closet to get personalized outfit suggestions."
           buttonTitle="Add item"
           onPress={handleEmptyAdd}
           onSearchPress={() =>
-            Alert.alert('Coming Soon', 'Search web will be available in a future update.')
+            Alert.alert(
+              'Coming Soon',
+              'Search web will be available in a future update.'
+            )
           }
           onOutfitPress={() =>
-            Alert.alert('Coming Soon', 'Add items from outfit will be available soon.')
+            Alert.alert(
+              'Coming Soon',
+              'Add items from outfit will be available soon.'
+            )
           }
         />
         <AddItemSheet
@@ -270,19 +322,30 @@ export default function WardrobeScreen() {
   }
 
   return (
-    <Animated.View style={[styles.container, animatedStyle, { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas }]}>
-      {/* Main content - scrollable with header + categories */}
+    <Animated.View
+      style={[
+        styles.container,
+        animatedStyle,
+        { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas },
+      ]}
+    >
       <FlashList
         data={listData}
-        keyExtractor={(item, index) => (item === 'header' ? 'header' : item.key)}
+        keyExtractor={(item, index) =>
+          item === 'header' ? 'header' : item.key
+        }
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
         decelerationRate="fast"
       />
 
-      {/* "Make outfits" button - opens full-screen outfit builder */}
-      <View style={[styles.makeOutfitsContainer, { bottom: 88 + insets.bottom, right: 16 }]}>
+      <View
+        style={[
+          styles.makeOutfitsContainer,
+          { bottom: 88 + insets.bottom, right: 16 },
+        ]}
+      >
         <Pressable
           style={styles.makeOutfitsButton}
           onPress={handleOpenSelectSheet}
@@ -300,6 +363,7 @@ export default function WardrobeScreen() {
     </Animated.View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -374,7 +438,7 @@ const styles = StyleSheet.create({
   headerButtonContainer: {
     position: 'absolute',
     right: 16,
-    zIndex: 100, // Above the bottom sheet
+    zIndex: 100,
   },
   sheetContainer: {
     ...StyleSheet.absoluteFillObject,

@@ -36,37 +36,39 @@ export const useWardrobeStore = create<WardrobeState>()(
       setItems: (items) => set({ items }),
       
       setHydrated: (hydrated) => set({ isHydrated: hydrated }),
-  
-   addItem: async (itemInput: WardrobeItemInput) => {
+     addItem: async (itemInput: WardrobeItemInput) => {
      const { user } = useAuthStore.getState();
      if (!user) throw new Error('User not authenticated');
      
      set({ isLoading: true, error: null });
      
-     // Always use Supabase, even with placeholder user ID
      try {
-       const { data, error } = await supabase
-         .from('wardrobe_items')
-         .insert({
-           user_id: user.id,
-           image_url: itemInput.image_url as string,
-           cutout_url: (itemInput.cutout_url as string) || null,
-           category: itemInput.category as any,
+       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+       const response = await fetch(`${backendUrl}/api/v1/wardrobe`, {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           // Authorization header omitted in dev, middleware handles it
+         },
+         body: JSON.stringify({
+           image_url: itemInput.image_url,
+           cutout_url: itemInput.cutout_url,
+           category: itemInput.category,
            sub_category: itemInput.sub_category,
-           colors: itemInput.colors || [],
-           style_tags: itemInput.style_tags || [],
-           occasion_tags: itemInput.occasion_tags || [],
-           functional_tags: itemInput.functional_tags || [],
-           silhouette_tags: itemInput.silhouette_tags || [],
-           vibe_tags: itemInput.vibe_tags || [],
+           colors: itemInput.colors,
+           style_tags: itemInput.style_tags,
+           occasion_tags: itemInput.occasion_tags,
            fabric_guess: itemInput.fabric_guess,
-         })
-         .select()
-         .single();
+         }),
+       });
+
+       if (!response.ok) {
+         const errorData = await response.json();
+         throw new Error(errorData.error?.message || 'Failed to add item');
+       }
+
+       const { data: newItem } = await response.json();
        
-       if (error) throw error;
-       
-       const newItem = data as WardrobeItem;
        set((state) => ({ 
          items: [newItem, ...state.items],
          isLoading: false 
@@ -86,15 +88,16 @@ export const useWardrobeStore = create<WardrobeState>()(
      const { user } = useAuthStore.getState();
      if (!user) return;
  
-     // Always use Supabase, even with placeholder user ID
      try {
-       const { error } = await supabase
-         .from('wardrobe_items')
-         .delete()
-         .eq('id', id)
-         .eq('user_id', user.id);
- 
-       if (error) throw error;
+       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+       const response = await fetch(`${backendUrl}/api/v1/wardrobe/${id}`, {
+         method: 'DELETE',
+       });
+
+       if (!response.ok) {
+         const errorData = await response.json();
+         throw new Error(errorData.error?.message || 'Failed to delete item');
+       }
  
        set((state) => ({ 
          items: state.items.filter((item) => item.id !== id) 
@@ -120,16 +123,16 @@ export const useWardrobeStore = create<WardrobeState>()(
 
      set({ isLoading: true, error: null });
 
-     // Always use Supabase, even with placeholder user ID
      try {
-       const { data, error } = await supabase
-         .from('wardrobe_items')
-         .select('*')
-         .eq('user_id', user.id)
-         .order('created_at', { ascending: false });
+       const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+       const response = await fetch(`${backendUrl}/api/v1/wardrobe`);
        
-       if (error) throw error;
+       if (!response.ok) {
+         const errorData = await response.json();
+         throw new Error(errorData.error?.message || 'Failed to fetch items');
+       }
 
+       const { data } = await response.json();
        set({ items: (data || []) as WardrobeItem[], isLoading: false });
      } catch (error) {
        set({ 

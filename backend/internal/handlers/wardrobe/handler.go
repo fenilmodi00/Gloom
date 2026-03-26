@@ -88,7 +88,7 @@ func (h *Handler) CreateItem(c *fiber.Ctx) error {
 		return response.ValidationError(c, errs)
 	}
 
-	validCategories := map[string]bool{"upper": true, "lower": true, "dress": true, "shoes": true, "bag": true, "accessory": true}
+	validCategories := map[string]bool{"tops": true, "bottoms": true, "fullbody": true, "outerwear": true, "shoes": true, "bags": true, "accessories": true}
 	if !validCategories[req.Category] {
 		return response.ValidationError(c, []string{"category: invalid"})
 	}
@@ -161,7 +161,7 @@ func (h *Handler) UpdateItem(c *fiber.Ctx) error {
 		argID++
 	}
 	if req.Category != nil {
-		validCategories := map[string]bool{"upper": true, "lower": true, "dress": true, "shoes": true, "bag": true, "accessory": true}
+		validCategories := map[string]bool{"tops": true, "bottoms": true, "fullbody": true, "outerwear": true, "shoes": true, "bags": true, "accessories": true}
 		if !validCategories[*req.Category] {
 			return response.ValidationError(c, []string{"category: invalid"})
 		}
