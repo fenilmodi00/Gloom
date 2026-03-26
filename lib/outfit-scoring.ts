@@ -36,7 +36,9 @@ export const DEFAULT_WEIGHTS: ScoringWeights = {
  * Matching style_tags = 100, else 0
  */
 function calculateStyleScore(item1: WardrobeItem, item2: WardrobeItem): number {
-  const styleOverlap = item1.style_tags.filter((tag) => item2.style_tags.includes(tag)).length;
+  const tags1 = item1.style_tags || [];
+  const tags2 = item2.style_tags || [];
+  const styleOverlap = tags1.filter((tag) => tags2.includes(tag)).length;
   return styleOverlap > 0 ? 100 : 0;
 }
 
@@ -45,7 +47,9 @@ function calculateStyleScore(item1: WardrobeItem, item2: WardrobeItem): number {
  * Matching vibe_tags = 100, else 0
  */
 function calculateVibeScore(item1: WardrobeItem, item2: WardrobeItem): number {
-  const vibeOverlap = item1.vibe_tags.filter((tag) => item2.vibe_tags.includes(tag)).length;
+  const tags1 = item1.vibe_tags || [];
+  const tags2 = item2.vibe_tags || [];
+  const vibeOverlap = tags1.filter((tag) => tags2.includes(tag)).length;
   return vibeOverlap > 0 ? 100 : 0;
 }
 
@@ -54,7 +58,9 @@ function calculateVibeScore(item1: WardrobeItem, item2: WardrobeItem): number {
  * Overlapping occasion_tags = 100, else 0
  */
 function calculateOccasionScore(item1: WardrobeItem, item2: WardrobeItem): number {
-  const occasionOverlap = item1.occasion_tags.filter((tag) => item2.occasion_tags.includes(tag)).length;
+  const tags1 = item1.occasion_tags || [];
+  const tags2 = item2.occasion_tags || [];
+  const occasionOverlap = tags1.filter((tag) => tags2.includes(tag)).length;
   return occasionOverlap > 0 ? 100 : 0;
 }
 
@@ -63,8 +69,8 @@ function calculateOccasionScore(item1: WardrobeItem, item2: WardrobeItem): numbe
  * base_layer + outer_layer = 100, two outer_layer = 0, else 50
  */
 function calculateFunctionalScore(item1: WardrobeItem, item2: WardrobeItem): number {
-  const func1 = item1.functional_tags[0];
-  const func2 = item2.functional_tags[0];
+  const func1 = (item1.functional_tags || [])[0];
+  const func2 = (item2.functional_tags || [])[0];
 
   if (!func1 && !func2) return 50; // neutral if neither has functional tags
   if (!func1 || !func2) return 50; // neutral if one is missing
@@ -88,8 +94,8 @@ function calculateFunctionalScore(item1: WardrobeItem, item2: WardrobeItem): num
  * slim_fit + relaxed_fit = 100, same silhouette = 30, else 50
  */
 function calculateSilhouetteScore(item1: WardrobeItem, item2: WardrobeItem): number {
-  const sil1 = item1.silhouette_tags[0];
-  const sil2 = item2.silhouette_tags[0];
+  const sil1 = (item1.silhouette_tags || [])[0];
+  const sil2 = (item2.silhouette_tags || [])[0];
 
   if (!sil1 || !sil2) return 50; // neutral if either is missing
 
@@ -236,7 +242,7 @@ export function filterByStyle(items: WardrobeItem[], style: OutfitStyle | null):
   if (targetTags.length === 0) return items;
 
   return items.filter((item) =>
-    item.style_tags.some((tag) => targetTags.includes(tag))
+    (item.style_tags || []).some((tag) => targetTags.includes(tag))
   );
 }
 

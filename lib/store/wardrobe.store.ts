@@ -49,16 +49,19 @@ export const useWardrobeStore = create<WardrobeState>()(
          const response = await fetch(`${backendUrl}/api/v1/wardrobe`, {
            method: 'POST',
            headers,
-          body: JSON.stringify({
-           image_url: itemInput.image_url,
-           cutout_url: itemInput.cutout_url,
-           category: itemInput.category,
-           sub_category: itemInput.sub_category,
-           colors: itemInput.colors,
-           style_tags: itemInput.style_tags,
-           occasion_tags: itemInput.occasion_tags,
-           fabric_guess: itemInput.fabric_guess,
-         }),
+           body: JSON.stringify({
+            image_url: itemInput.image_url,
+            cutout_url: itemInput.cutout_url,
+            category: itemInput.category,
+            sub_category: itemInput.sub_category,
+            colors: itemInput.colors,
+            style_tags: itemInput.style_tags,
+            occasion_tags: itemInput.occasion_tags,
+            vibe_tags: itemInput.vibe_tags,
+            functional_tags: itemInput.functional_tags,
+            silhouette_tags: itemInput.silhouette_tags,
+            fabric_guess: itemInput.fabric_guess,
+          }),
        });
 
        if (!response.ok) {
