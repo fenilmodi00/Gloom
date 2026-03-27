@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Pressable, Dimensions } from 'react-native';
-import { Image } from 'expo-image';
-import type { WardrobeItem } from '@/types/wardrobe';
 import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
+import type { WardrobeItem } from '@/types/wardrobe';
+import { Image } from 'expo-image';
+import { Dimensions, Pressable } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ITEM_MARGIN = 8;

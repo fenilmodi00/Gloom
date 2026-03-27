@@ -1,7 +1,10 @@
 package modelimage
 
 import (
+	"fmt"
 	"log"
+	"net/http"
+	"strings"
 
 	"backend/internal/db"
 	"backend/internal/response"
@@ -11,33 +14,41 @@ import (
 )
 
 type Handler struct {
-	db *db.DB
-	v  *validator.Validate
+	db             *db.DB
+	supabaseURL    string
+	serviceRoleKey string
+	v              *validator.Validate
 }
 
-func New(database *db.DB) *Handler {
+func New(database *db.DB, supabaseURL, serviceRoleKey string) *Handler {
 	return &Handler{
-		db: database,
-		v:  validator.New(),
+		db:             database,
+		supabaseURL:    supabaseURL,
+		serviceRoleKey: serviceRoleKey,
+		v:              validator.New(),
 	}
 }
 
 type CreateModelImageRequest struct {
-	ImageURL string  `json:"image_url" validate:"required,url"`
-	OutfitID *string `json:"outfit_id" validate:"omitempty,uuid"`
+	ImageURL     string  `json:"image_url" validate:"required,url"`
+	OutfitID     *string `json:"outfit_id" validate:"omitempty,uuid"`
+	ModelID      *string `json:"model_id" validate:"omitempty"`
+	ThumbnailURL *string `json:"thumbnail_url" validate:"omitempty,url"`
 }
 
 type ModelImageResponse struct {
-	ID        string  `json:"id"`
-	UserID    string  `json:"user_id"`
-	ImageURL  string  `json:"image_url"`
-	OutfitID  *string `json:"outfit_id"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
+	ID           string  `json:"id"`
+	UserID       string  `json:"user_id"`
+	ImageURL     string  `json:"image_url"`
+	ThumbnailURL *string `json:"thumbnail_url,omitempty"`
+	OutfitID     *string `json:"outfit_id,omitempty"`
+	ModelID      *string `json:"model_id,omitempty"`
+	CreatedAt    string  `json:"created_at"`
+	UpdatedAt    string  `json:"updated_at"`
 }
 
 func (h *Handler) RegisterRoutes(router fiber.Router) {
-	group := router.Group("/model-images")
+	group := router.Group("/api/v1/model-images")
 	group.Post("/upload", h.CreateModelImage)
 	group.Get("/user/:userId", h.ListUserImages)
 	group.Delete("/:id", h.DeleteModelImage)
@@ -56,10 +67,10 @@ func (h *Handler) CreateModelImage(c *fiber.Ctx) error {
 	}
 
 	query := `
-		INSERT INTO user_model_images (user_id, image_url, outfit_id)
-		VALUES ($1, $2, $3)
-		RETURNING id, user_id, image_url, outfit_id, created_at, updated_at
-	`
+    INSERT INTO user_model_images (user_id, image_url, outfit_id, model_id, thumbnail_url)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id, user_id, image_url, outfit_id, model_id, thumbnail_url, created_at, updated_at
+  `
 
 	var resp ModelImageResponse
 	var outfitID *string
@@ -67,11 +78,23 @@ func (h *Handler) CreateModelImage(c *fiber.Ctx) error {
 		outfitID = req.OutfitID
 	}
 
-	err := h.db.QueryRow(c.Context(), query, userID, req.ImageURL, outfitID).Scan(
+	var modelID *string
+	if req.ModelID != nil && *req.ModelID != "" {
+		modelID = req.ModelID
+	}
+
+	var thumbnailURL *string
+	if req.ThumbnailURL != nil && *req.ThumbnailURL != "" {
+		thumbnailURL = req.ThumbnailURL
+	}
+
+	err := h.db.QueryRow(c.Context(), query, userID, req.ImageURL, outfitID, modelID, thumbnailURL).Scan(
 		&resp.ID,
 		&resp.UserID,
 		&resp.ImageURL,
 		&resp.OutfitID,
+		&resp.ModelID,
+		&resp.ThumbnailURL,
 		&resp.CreatedAt,
 		&resp.UpdatedAt,
 	)
@@ -93,7 +116,7 @@ func (h *Handler) ListUserImages(c *fiber.Ctx) error {
 	}
 
 	query := `
-		SELECT id, user_id, image_url, outfit_id, created_at, updated_at
+		SELECT id, user_id, image_url, outfit_id, model_id, thumbnail_url, created_at, updated_at
 		FROM user_model_images
 		WHERE user_id = $1
 		ORDER BY created_at DESC
@@ -114,6 +137,8 @@ func (h *Handler) ListUserImages(c *fiber.Ctx) error {
 			&img.UserID,
 			&img.ImageURL,
 			&img.OutfitID,
+			&img.ModelID,
+			&img.ThumbnailURL,
 			&img.CreatedAt,
 			&img.UpdatedAt,
 		); err != nil {
@@ -138,12 +163,52 @@ func (h *Handler) DeleteModelImage(c *fiber.Ctx) error {
 		return response.BadRequest(c, "invalid image ID format")
 	}
 
-	query := `
-		DELETE FROM user_model_images
-		WHERE id = $1 AND user_id = $2
-	`
+	// First get the image to find storage path
+	var imageURL string
+	query := `SELECT image_url FROM user_model_images WHERE id = $1 AND user_id = $2`
+	err := h.db.QueryRow(c.Context(), query, imageID, userID).Scan(&imageURL)
+	if err != nil {
+		log.Printf("ERROR: delete_model_image fetch err=%v", err)
+		return response.InternalError(c, "failed to fetch model image")
+	}
 
-	cmd, err := h.db.Exec(c.Context(), query, imageID, userID)
+	// Delete from storage
+	if imageURL != "" {
+		// Extract path from URL: https://[project].supabase.co/storage/v1/object/public/model-corrosion-images/[path]
+		parts := strings.Split(imageURL, "/model-corrosion-images/")
+		if len(parts) == 2 {
+			path := parts[1]
+			// Delete from Supabase storage
+			deleteURL := fmt.Sprintf("%s/storage/v1/object/%s", h.supabaseURL, path)
+			httpReq, err := http.NewRequest("DELETE", deleteURL, nil)
+			if err != nil {
+				log.Printf("ERROR: delete_model_image create request err=%v", err)
+				return response.InternalError(c, "failed to create delete request")
+			}
+			httpReq.Header.Set("Authorization", "Bearer "+h.serviceRoleKey)
+
+			client := &http.Client{}
+			resp, err := client.Do(httpReq)
+			if err != nil {
+				log.Printf("ERROR: delete_model_image storage call err=%v", err)
+				return response.InternalError(c, "failed to call storage service")
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
+				log.Printf("ERROR: delete_model_image storage response status=%d", resp.StatusCode)
+				return response.InternalError(c, "storage service returned non-200 status")
+			}
+		}
+	}
+
+	// Delete from database
+	deleteQuery := `
+    DELETE FROM user_model_images
+    WHERE id = $1 AND user_id = $2
+  `
+
+	cmd, err := h.db.Exec(c.Context(), deleteQuery, imageID, userID)
 	if err != nil {
 		log.Printf("ERROR: delete_model_image err=%v", err)
 		return response.InternalError(c, "failed to delete model image")

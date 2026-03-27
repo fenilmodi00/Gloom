@@ -5,13 +5,13 @@
  * Uses built-in parallax mode with centered container + offset tuning
  * Takes 64% of screen height from top position 100
  */
-import React, { useCallback, useMemo } from 'react';
-import { View, Dimensions, Pressable, type ImageSourcePropType } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
-import { Image } from 'expo-image';
-import Animated from 'react-native-reanimated';
-import { Typography } from '@/constants/Typography';
 import Colors from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
+import { Image } from 'expo-image';
+import { useCallback, useMemo } from 'react';
+import { Dimensions, Pressable, View, type ImageSourcePropType } from 'react-native';
+import Animated from 'react-native-reanimated';
+import Carousel from 'react-native-reanimated-carousel';
 
 import type { ModelCard as ModelCardType } from '@/types/inspo';
 

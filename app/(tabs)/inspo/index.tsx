@@ -6,18 +6,18 @@
  * Layer 3 (Overlay): Bottom sheet with trending ideas
  * Layer 4 (Top): Bottom navigation (handled by parent layout)
  */
+import Colors from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
+import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '@/constants/Colors';
-import { Typography } from '@/constants/Typography';
-import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
@@ -93,6 +93,9 @@ export default function InspoScreen() {
 
   // Inline popup state — keeps inspo screen alive behind the blur backdrop
   const [activeModel, setActiveModel] = useState<ModelCard | null>(null);
+  
+  // State for generated images (temporary carousel display)
+  const [generatedImages, setGeneratedImages] = useState<ModelCard[]>([]);
 
   // ── Two-stage bottom sheet state ──
   // Track current sheet index to know position on tap
@@ -132,9 +135,20 @@ export default function InspoScreen() {
     });
   }, [router]);
 
-  const handleTryOnPress = useCallback((item: TrendingItem) => {
-    console.log('Try on pressed for:', item.id);
-  }, []);
+   const handleTryOnPress = useCallback((item: TrendingItem) => {
+     console.log('Try on pressed for:', item.id);
+     
+     // In production, this would call AI to generate the model image
+     // For now, simulate with mock data
+     const mockGeneratedImage: ModelCard = {
+       id: `generated-${Date.now()}`,
+       imageUrl: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600',
+       name: `Try-On ${item.id}`,
+       outfit: item.id, // Using item.id as outfit reference
+     };
+     
+     setGeneratedImages((prev) => [mockGeneratedImage, ...prev]);
+   }, []);
 
   // Upload button spring scale animation
   const uploadScale = useSharedValue(1);
@@ -147,10 +161,10 @@ export default function InspoScreen() {
       {/* ======================================== */}
       {/* Layer 1: Top-aligned model carousel */}
       {/* ======================================== */}
-      <ModelCarousel
-        models={MODEL_CARDS}
-        onCardPress={handleModelPress}
-      />
+       <ModelCarousel
+         models={[...generatedImages, ...MODEL_CARDS]}
+         onCardPress={handleModelPress}
+       />
 
       {/* ======================================== */}
       {/* Layer 2: Floating Header                 */}
