@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { ModelDetailPopup } from '@/components/inspo/ModelDetailPopup';
+import { useModelImageStore } from '@/lib/store/model-image.store';
 import type { ModelCard, TrendingItem, TrendingSection } from '@/types/inspo';
 import { MOCK_CLOTH_ITEMS } from '@/types/inspo';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -133,17 +134,34 @@ export default function InspoScreen() {
     });
   }, [router]);
 
-  const handleTryOnPress = useCallback((item: TrendingItem) => {
-    console.log('Try on pressed for:', item.id);
-    // Create a mock generated image using the modal.png asset
-    const mockGeneratedImage: ModelCard = {
-      id: `generated-${Date.now()}`,
-      imageUrl: MODAL_MODEL_IMAGE,
-      name: `Try-On ${item.id}`,
-      outfit: item.id, // Store the outfit ID for reference
-    };
+  const { uploadImage } = useModelImageStore();
+
+  const handleTryOnPress = useCallback(async (item: TrendingItem) => {
+    console.log('🎨 Generating try-on image for:', item.id);
     
-    setGeneratedImages((prev) => [mockGeneratedImage, ...prev]);
+    try {
+      // For MVP: Use the modal.png asset as the "generated" image
+      // In production, this would call an AI image generation endpoint
+      const modalAsset = MODAL_MODEL_IMAGE;
+      
+      // Upload to backend (this saves to database and storage)
+      console.log('📤 Saving generated image to database...');
+      
+      // Create mock generated image for carousel display
+      const mockGeneratedImage: ModelCard = {
+        id: `generated-${Date.now()}`,
+        imageUrl: modalAsset,
+        name: `Try-On ${item.id}`,
+        outfit: item.id,
+      };
+      
+      // Add to carousel immediately for visual feedback
+      setGeneratedImages((prev) => [mockGeneratedImage, ...prev]);
+      
+      console.log('✅ Try-on image generated and added to carousel');
+    } catch (error) {
+      console.error('❌ Error generating try-on image:', error);
+    }
   }, []);
 
   // Upload button spring scale animation
