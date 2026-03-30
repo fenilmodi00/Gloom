@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement background removal functionality for clothing images in the StyleAI app, allowing users to upload photos of clothing items and automatically remove backgrounds to isolate the clothing.
+**Goal:** Implement background removal functionality for clothing images in the Gloom app, allowing users to upload photos of clothing items and automatically remove backgrounds to isolate the clothing.
 
 **Architecture:** Hybrid approach with fallback - mobile app attempts direct API calls to background removal service (e.g., Remove.bg), falling back to Go backend proxy if direct calls fail or for billing control. Processed images replace originals in storage.
 

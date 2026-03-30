@@ -17,17 +17,21 @@ type Profile struct {
 }
 
 type WardrobeItem struct {
-	ID           uuid.UUID `json:"id"`
-	UserID       uuid.UUID `json:"user_id"`
-	ImageURL     string    `json:"image_url"`
-	CutoutURL    *string   `json:"cutout_url"`
-	Category     string    `json:"category"`
-	SubCategory  *string   `json:"sub_category"`
-	Colors       []string  `json:"colors"`
-	StyleTags    []string  `json:"style_tags"`
-	OccasionTags []string  `json:"occasion_tags"`
-	FabricGuess  *string   `json:"fabric_guess"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID               uuid.UUID `json:"id"`
+	UserID           uuid.UUID `json:"user_id"`
+	ImageURL         string    `json:"image_url"`
+	CutoutURL        *string   `json:"cutout_url"`
+	Category         string    `json:"category"`
+	SubCategory      *string   `json:"sub_category"`
+	Colors           []string  `json:"colors"`
+	StyleTags        []string  `json:"style_tags"`
+	OccasionTags     []string  `json:"occasion_tags"`
+	FunctionalTags   []string  `json:"functional_tags"`
+	SilhouetteTags   []string  `json:"silhouette_tags"`
+	VibeTags         []string  `json:"vibe_tags"`
+	FabricGuess      *string   `json:"fabric_guess"`
+	ProcessingStatus string    `json:"processing_status"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
 type Outfit struct {
@@ -51,23 +55,31 @@ type UpdateProfileRequest struct {
 }
 
 type CreateWardrobeItemRequest struct {
-	ImageURL     string   `json:"image_url" validate:"required,url"`
-	Category     string   `json:"category" validate:"required"`
-	SubCategory  *string  `json:"sub_category" validate:"omitempty"`
-	Colors       []string `json:"colors" validate:"omitempty"`
-	StyleTags    []string `json:"style_tags" validate:"omitempty"`
-	OccasionTags []string `json:"occasion_tags" validate:"omitempty"`
+	ImageURL         string   `json:"image_url" validate:"required,url"`
+	Category         string   `json:"category" validate:"required"`
+	SubCategory      *string  `json:"sub_category" validate:"omitempty"`
+	Colors           []string `json:"colors" validate:"omitempty"`
+	StyleTags        []string `json:"style_tags" validate:"omitempty"`
+	OccasionTags     []string `json:"occasion_tags" validate:"omitempty"`
+	FunctionalTags   []string `json:"functional_tags" validate:"omitempty"`
+	SilhouetteTags   []string `json:"silhouette_tags" validate:"omitempty"`
+	VibeTags         []string `json:"vibe_tags" validate:"omitempty"`
+	ProcessingStatus string   `json:"processing_status" validate:"omitempty"`
 }
 
 type UpdateWardrobeItemRequest struct {
-	ImageURL     *string  `json:"image_url" validate:"omitempty,url"`
-	CutoutURL    *string  `json:"cutout_url" validate:"omitempty,url"`
-	Category     *string  `json:"category" validate:"omitempty"`
-	SubCategory  *string  `json:"sub_category" validate:"omitempty"`
-	Colors       []string `json:"colors" validate:"omitempty"`
-	StyleTags    []string `json:"style_tags" validate:"omitempty"`
-	OccasionTags []string `json:"occasion_tags" validate:"omitempty"`
-	FabricGuess  *string  `json:"fabric_guess" validate:"omitempty"`
+	ImageURL         *string  `json:"image_url" validate:"omitempty,url"`
+	CutoutURL        *string  `json:"cutout_url" validate:"omitempty,url"`
+	Category         *string  `json:"category" validate:"omitempty"`
+	SubCategory      *string  `json:"sub_category" validate:"omitempty"`
+	Colors           []string `json:"colors" validate:"omitempty"`
+	StyleTags        []string `json:"style_tags" validate:"omitempty"`
+	OccasionTags     []string `json:"occasion_tags" validate:"omitempty"`
+	FunctionalTags   []string `json:"functional_tags" validate:"omitempty"`
+	SilhouetteTags   []string `json:"silhouette_tags" validate:"omitempty"`
+	VibeTags         []string `json:"vibe_tags" validate:"omitempty"`
+	FabricGuess      *string  `json:"fabric_guess" validate:"omitempty"`
+	ProcessingStatus *string  `json:"processing_status" validate:"omitempty"`
 }
 
 type CreateOutfitRequest struct {

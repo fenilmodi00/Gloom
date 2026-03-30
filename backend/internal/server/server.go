@@ -12,6 +12,7 @@ import (
 	"backend/internal/handlers/wardrobe"
 	"backend/internal/middleware"
 	"backend/internal/response"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -23,7 +24,7 @@ type Server struct {
 
 func New(cfg *config.Config, database *db.DB) *Server {
 	app := fiber.New(fiber.Config{
-		AppName:      "StyleAI Backend",
+		AppName:      "Gloom Backend",
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		BodyLimit:    10 * 1024 * 1024, // 10MB
@@ -64,7 +65,7 @@ func New(cfg *config.Config, database *db.DB) *Server {
 	outfitHandler := outfit.New(database)
 	outfitHandler.RegisterRoutes(api)
 
-	modelImageHandler := modelimage.New(database)
+	modelImageHandler := modelimage.New(database, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	modelImageHandler.RegisterRoutes(api)
 
 	presignedHandler := presigned.New(database, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)

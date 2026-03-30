@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "StyleAI",
-    "slug": "StyleAI",
+    "name": "Gloom",
+    "slug": "Gloom",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "styleai",
+    "icon": "./assets/images/Logo.png",
+    "scheme": "Gloom",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/Logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -27,7 +27,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/Logo.png"
     },
     "plugins": [
       "expo-router"

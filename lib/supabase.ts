@@ -22,6 +22,7 @@ export const supabase = createClient(
 // Storage bucket names
 export const STORAGE_BUCKETS = {
   WARDROBE_IMAGES: 'wardrobe-images',
+  WARDROBE_TEMP: 'wardrobe-temp',
   MODEL_CORROSION_IMAGES: 'model-corrosion-images',
 } as const;
 
@@ -63,39 +64,67 @@ export type Database = {
           user_id: string;
           image_url: string;
           cutout_url: string | null;
-          category: 'upper' | 'lower' | 'dress' | 'shoes' | 'bag' | 'accessory';
+          category: string;
           sub_category: string | null;
           colors: string[];
           style_tags: string[];
           occasion_tags: string[];
+          vibe_tags: string[];
           fabric_guess: string | null;
+          processing_status: 'pending' | 'processing' | 'completed' | 'failed';
           created_at: string;
+          updated_at: string | null;
+          // Additional columns that exist in database
+          color: string | null;
+          style: string | null;
+          brand: string | null;
+          match_count: number;
+          functional_tags: string[];
+          silhouette_tags: string[];
         };
         Insert: {
           id?: string;
           user_id: string;
           image_url: string;
           cutout_url?: string | null;
-          category: 'upper' | 'lower' | 'dress' | 'shoes' | 'bag' | 'accessory';
+          category: string;
           sub_category?: string | null;
           colors?: string[];
           style_tags?: string[];
           occasion_tags?: string[];
+          vibe_tags?: string[];
           fabric_guess?: string | null;
+          processing_status?: 'pending' | 'processing' | 'completed' | 'failed';
           created_at?: string;
+          updated_at?: string;
+          color?: string | null;
+          style?: string | null;
+          brand?: string | null;
+          match_count?: number;
+          functional_tags?: string[];
+          silhouette_tags?: string[];
         };
         Update: {
           id?: string;
           user_id?: string;
           image_url?: string;
           cutout_url?: string | null;
-          category?: 'upper' | 'lower' | 'dress' | 'shoes' | 'bag' | 'accessory';
+          category?: string;
           sub_category?: string | null;
           colors?: string[];
           style_tags?: string[];
           occasion_tags?: string[];
+          vibe_tags?: string[];
           fabric_guess?: string | null;
+          processing_status?: 'pending' | 'processing' | 'completed' | 'failed';
           created_at?: string;
+          updated_at?: string;
+          color?: string | null;
+          style?: string | null;
+          brand?: string | null;
+          match_count?: number;
+          functional_tags?: string[];
+          silhouette_tags?: string[];
         };
       };
       outfits: {

@@ -18,6 +18,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import 'react-native-reanimated';
+import { SplashScreenAnimation } from '@/components/shared/SplashScreenAnimation';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -130,14 +131,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading || !isReady) return;
 
-    if (!user) {
-      router.replace('/(auth)/login' as any);
-    } else if (user && !user.name) {
-      router.replace('/(auth)/onboarding' as any);
-    } else if (user && user.name && segments[0] === '(auth)') {
-      // If user is logged in and fully onboarded, but still on an auth screen, redirect to home
-      router.replace('/(tabs)/inspo' as any);
-    }
+    // Use a small timeout to ensure navigation state is fully settled
+    const timeout = setTimeout(() => {
+      if (!user) {
+        router.replace('/(auth)/login' as any);
+      } else if (user && !user.name) {
+        router.replace('/(auth)/onboarding' as any);
+      } else if (user && user.name && segments[0] === '(auth)') {
+        // If user is logged in and fully onboarded, but still on an auth screen, redirect to home
+        router.replace('/(tabs)/inspo' as any);
+      }
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, [router, user, isLoading, isReady, segments]);
 
   return <>{children}</>;
@@ -167,7 +173,7 @@ export default function RootLayout() {
   }, [loaded]);
 
   if (!loaded) {
-    return null;
+    return <SplashScreenAnimation />;
   }
 
   return (
@@ -184,12 +190,8 @@ function RootLayoutNav() {
   const { isLoading } = useAuthStore();
 
   if (isLoading) {
-    // Show a loading indicator instead of null — prevents white screen
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F2EE' }}>
-        <ActivityIndicator size="large" color="#8B7355" />
-      </View>
-    );
+    // Show animated splash screen instead of simple ActivityIndicator
+    return <SplashScreenAnimation />;
   }
 
   return (
@@ -199,7 +201,6 @@ function RootLayoutNav() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
           <Stack.Screen name="(auth)/onboarding" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
           {/* Outfit builder modal - slide up from bottom with platform-specific animation */}
           {/* iOS: slide_from_bottom opens and closes (reverse animation) */}
           {/* Android: fade_from_bottom opens and closes (reverse animation) */}

@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
+import { useAuthStore } from '@/lib/store/auth.store';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/lib/store/auth.store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mail, Phone, ArrowLeft, Loader2 } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { setUser, setSession } = useAuthStore();
-  
+
   const [phone, setPhone] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
@@ -36,15 +36,15 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'styleai://login/callback',
+          redirectTo: 'Gloom://login/callback',
         },
       });
-      
+
       if (error) {
         setError(error.message);
       }
@@ -68,7 +68,7 @@ export default function LoginScreen() {
     try {
       // Format phone with +91 country code
       const formattedPhone = `+91${phone.replace(/\D/g, '')}`;
-      
+
       const { error } = await supabase.auth.signInWithOtp({
         phone: formattedPhone,
       });
@@ -97,7 +97,7 @@ export default function LoginScreen() {
 
     try {
       const formattedPhone = `+91${phone.replace(/\D/g, '')}`;
-      
+
       const { data, error } = await supabase.auth.verifyOtp({
         phone: formattedPhone,
         token: otp,
@@ -108,14 +108,14 @@ export default function LoginScreen() {
         setError(error.message);
       } else if (data.session) {
         setSession(data.session.access_token);
-        
+
         // Check if profile exists
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user?.id)
           .single();
-        
+
         if (profile?.name) {
           setUser(profile);
           router.replace('/(tabs)/inspo' as any);
@@ -135,7 +135,7 @@ export default function LoginScreen() {
       className="flex-1 bg-bgCanvas"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View 
+      <View
         className="flex-1 px-8 justify-center"
         style={{ paddingTop: insets.top }}
       >
@@ -144,7 +144,7 @@ export default function LoginScreen() {
           <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-4">
             <Text className="text-4xl text-primary font-body">✦</Text>
           </View>
-          <Text className="text-4xl font-hero italic tracking-tight text-textPrimary">StyleAI</Text>
+          <Text className="text-4xl font-hero italic tracking-tight text-textPrimary">Gloom</Text>
           <Text className="text-base text-textSecondary mt-2 font-body">Your Personal AI Stylist</Text>
         </View>
 
@@ -163,7 +163,7 @@ export default function LoginScreen() {
             {/* Phone Input Section */}
             <View className="mb-6">
               <Text className="text-lg font-ui uppercase text-textPrimary mb-4">Continue with Phone</Text>
-              
+
               <View className="flex-row items-center bg-bgSurface rounded-xl px-4 border border-bgMuted mb-4">
                 <Text className="text-base text-textPrimary font-product mr-2">+91</Text>
                 <TextInput
@@ -226,7 +226,7 @@ export default function LoginScreen() {
               <Text className="text-sm text-textSecondary mb-4 font-body">
                 We sent a 6-digit code to +91{phone}
               </Text>
-              
+
               <TextInput
                 className="bg-bgSurface rounded-xl py-4 px-6 text-2xl text-center tracking-[8px] text-textPrimary border border-bgMuted mb-6 font-body"
                 placeholder="------"

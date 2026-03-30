@@ -91,4 +91,31 @@ describe('Wardrobe Store', () => {
     const { selectedCategory } = useWardrobeStore.getState();
     expect(selectedCategory).toBe('bottoms');
   });
+
+  it('should have processing_status property on WardrobeItem', () => {
+    const mockItem = {
+      id: 'item-1',
+      user_id: 'user-1',
+      image_url: 'https://example.com/image.jpg',
+      cutout_url: null,
+      category: 'tops',
+      sub_category: 'tshirt',
+      colors: ['blue', 'white'],
+      style_tags: ['casual'],
+      occasion_tags: ['daily'],
+      functional_tags: [],
+      silhouette_tags: [],
+      vibe_tags: [],
+      fabric_guess: 'cotton',
+      created_at: new Date().toISOString(),
+      processing_status: 'pending',
+    };
+    
+    useWardrobeStore.setState({ items: [mockItem as any] });
+    
+    const { items } = useWardrobeStore.getState();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveProperty('processing_status');
+    expect(items[0].processing_status).toBe('pending');
+  });
 });

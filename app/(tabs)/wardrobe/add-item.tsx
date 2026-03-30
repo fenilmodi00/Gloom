@@ -17,7 +17,87 @@ import { Typography } from '@/constants/Typography';
 import { Colors } from '@/constants/Colors';
 import { useAuthStore } from '@/lib/store/auth.store';
 import { tagWardrobeItem } from '@/lib/gemini';
+import { supabase } from '@/lib/supabase';
 import type { Category } from '@/types/wardrobe';
+
+// Polling configuration
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 30;
+
+/**
+ * Poll for background removal completion
+ * Returns the item ID when processing is complete or failed
+ */
+async function pollForProcessingCompletion(
+  itemId: string,
+  onStatusUpdate?: (status: string) => void
+): Promise<{ success: boolean; error?: string }> {
+  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+    // Query the database for current processing status
+    const { data, error } = await supabase
+      .from('wardrobe_items')
+      .select('processing_status, cutout_url')
+      .eq('id', itemId)
+      .single();
+
+    if (error) {
+      console.error(`Poll attempt ${attempt + 1} error:`, error);
+      // Continue polling despite errors (might be transient)
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+      continue;
+    }
+
+    const status = data?.processing_status;
+    onStatusUpdate?.(status);
+
+    if (status === 'completed') {
+      console.log(`Background removal completed for item ${itemId}`);
+      return { success: true };
+    }
+
+    if (status === 'failed') {
+      console.error(`Background removal failed for item ${itemId}`);
+      return { success: false, error: 'Background removal processing failed' };
+    }
+
+    // Status is 'pending' or 'processing' - wait and retry
+    console.log(`Waiting for processing... attempt ${attempt + 1}/${MAX_POLL_ATTEMPTS}`);
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+
+  return { success: false, error: 'Processing timeout - took too long' };
+}
+
+/**
+ * Trigger background removal via Edge Function
+ */
+async function triggerBackgroundRemoval(
+  itemId: string,
+  filePath: string,
+  authToken: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/remove-background`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ itemId, filePath }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Edge Function error:', errorData);
+      return { success: false, error: errorData.error || 'Failed to trigger background removal' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to call Edge Function:', error);
+    return { success: false, error: 'Network error calling background removal service' };
+  }
+}
 
 export default function AddItemScreen() {
   const router = useRouter();
@@ -31,7 +111,7 @@ export default function AddItemScreen() {
   const [loadingMessage, setLoadingMessage] = useState('Processing...');
   const [showUploadScreen, setShowUploadScreen] = useState(true);
 
-  const { addItem, uploadImage } = useWardrobeStore();
+  const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
   const { user } = useAuthStore();
 
   // Reset state on entry
@@ -114,37 +194,75 @@ export default function AddItemScreen() {
     }
   };
 
-  const handleSave = async () => {
-    if (!photoUri || (!user && !__DEV__)) return;
+   const handleSave = async () => {
+     if (!photoUri || (!user && !__DEV__)) return;
 
-    setIsProcessing(true);
-    setLoadingMessage('Uploading image...');
+     setIsProcessing(true);
+     setLoadingMessage('Uploading image...');
 
-    try {
-      const publicUrl = await uploadImage(photoUri);
-      
-      setLoadingMessage('Analyzing with AI...');
-      const tags = await tagWardrobeItem(photoUri);
-      
-      setLoadingMessage('Saving to wardrobe...');
-      await addItem({
-        image_url: publicUrl,
-        category: tags.category,
-        sub_category: tags.sub_category,
-        colors: tags.colors,
-        style_tags: tags.style_tags,
-        occasion_tags: tags.occasion_tags,
-        vibe_tags: tags.vibe_tags,
-        fabric_guess: tags.fabric_guess,
-      });
+     try {
+       // Get auth session for Edge Function calls
+       const { data: sessionData } = await supabase.auth.getSession();
+       const authToken = sessionData?.session?.access_token;
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      closeScreen();
-    } catch (error) {
-      console.error('Save error:', error);
-      setIsProcessing(false);
-    }
-  };
+       if (!authToken) {
+         console.error('No auth token available');
+         setIsProcessing(false);
+         return;
+       }
+
+       // Upload to temporary storage and create wardrobe item with processing status
+       setLoadingMessage('Saving to wardrobe...');
+       const newItem = await addItem({
+         image_url: photoUri,
+         category: 'tops', // Default category, will be updated after AI tagging
+         sub_category: null,
+         colors: [],
+         style_tags: [],
+         occasion_tags: [],
+         vibe_tags: [],
+         fabric_guess: null,
+         processing_status: 'processing',
+       });
+
+       // Generate file path for background removal
+       const filePath = `${newItem.id}/${Date.now()}.jpg`;
+
+       setLoadingMessage('Removing background...');
+
+       // Trigger background removal via Edge Function
+       const triggerResult = await triggerBackgroundRemoval(newItem.id, filePath, authToken);
+       
+       if (!triggerResult.success) {
+         console.error('Failed to trigger background removal:', triggerResult.error);
+         // Continue anyway - AI tagging can still happen
+       } else {
+         // Poll for background removal completion
+         const pollResult = await pollForProcessingCompletion(newItem.id, (status) => {
+           if (status === 'processing') {
+             setLoadingMessage('Processing image...');
+           }
+         });
+
+         if (!pollResult.success) {
+           console.error('Background removal polling failed:', pollResult.error);
+           // Continue anyway - item is still saved
+         }
+       }
+
+       setLoadingMessage('Analyzing with AI...');
+       const tags = await tagWardrobeItem(photoUri);
+       
+       // Update the item with AI tags
+       await updateItemTags(newItem.id, tags);
+
+       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+       closeScreen();
+     } catch (error) {
+       console.error('Save error:', error);
+       setIsProcessing(false);
+     }
+   };
 
   // 1. Initial Choice Screen
   if (showUploadScreen && !photoUri) {

@@ -1,4 +1,4 @@
-# Go Backend Scaffold for StyleAI
+# Go Backend Scaffold for Gloom
 
 ## TL;DR
 
@@ -1137,7 +1137,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews):
     - `Server` struct with `*fiber.App`, `*config.Config`, `*db.DB`
     - `New(cfg *config.Config, database *db.DB) *Server`:
       1. Create Fiber app with:
-         - `fiber.Config{AppName: "StyleAI Backend", ReadTimeout: 10s, WriteTimeout: 10s}`
+         - `fiber.Config{AppName: "Gloom Backend", ReadTimeout: 10s, WriteTimeout: 10s}`
          - JSON encoder: `jsoniter` for performance (or stdlib)
          - Error handler: custom handler returning standardized error format
          - Body limit: 10MB

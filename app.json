@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "StyleAI",
-    "slug": "styleai",
+    "name": "Gloom",
+    "slug": "Gloom",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "styleai",
+    "icon": "./assets/images/Logo.png",
+    "scheme": "Gloom",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/Logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -30,22 +30,24 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.fenilmodi00.styleai"
+      "package": "com.fenilmodi00.Gloom"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/Logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-media-library",
         {
-          "photosPermission": "Allow StyleAI to access your photos.",
-          "savePhotosPermission": "Allow StyleAI to save photos to your gallery.",
+          "photosPermission": "Allow Gloom to access your photos.",
+          "savePhotosPermission": "Allow Gloom to save photos to your gallery.",
           "isAccessMediaLocationEnabled": false,
-          "granularPermissions": ["photo"]
+          "granularPermissions": [
+            "photo"
+          ]
         }
       ]
     ],

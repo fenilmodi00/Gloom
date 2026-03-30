@@ -21,6 +21,7 @@ interface WardrobeState {
   setError: (error: string | null) => void;
   fetchItems: () => Promise<void>;
   uploadImage: (uri: string) => Promise<string>;
+  updateItemTags: (id: string, tags: any) => Promise<void>;
 }
 
 export const useWardrobeStore = create<WardrobeState>()(
@@ -35,56 +36,101 @@ export const useWardrobeStore = create<WardrobeState>()(
       setItems: (items) => set({ items }),
 
       setHydrated: (hydrated) => set({ isHydrated: hydrated }),
-      addItem: async (itemInput: WardrobeItemInput) => {
-        const { user, session } = useAuthStore.getState();
-        if (!user && !__DEV__) throw new Error('User not authenticated');
+  addItem: async (itemInput: WardrobeItemInput) => {
+    const { user, session } = useAuthStore.getState();
+    if (!user && !__DEV__) throw new Error('User not authenticated');
 
-        set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null });
 
-        try {
-          const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-          if (session) headers['Authorization'] = `Bearer ${session}`;
+    try {
+      const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session) headers['Authorization'] = `Bearer ${session}`;
 
-          const response = await fetch(`${backendUrl}/api/v1/wardrobe`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              image_url: itemInput.image_url,
-              cutout_url: itemInput.cutout_url,
-              category: itemInput.category,
-              sub_category: itemInput.sub_category,
-              colors: itemInput.colors,
-              style_tags: itemInput.style_tags,
-              occasion_tags: itemInput.occasion_tags,
-              vibe_tags: itemInput.vibe_tags,
-              functional_tags: itemInput.functional_tags,
-              silhouette_tags: itemInput.silhouette_tags,
-              fabric_guess: itemInput.fabric_guess,
-            }),
-          });
+      // Upload to temporary bucket first
+      const fileExt = itemInput.image_url?.toString().split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}.${fileExt}`;
+      const userId = user?.id || 'dev-user';
+      const tempFilePath = `${userId}/temp/${fileName}`;
+      
+      // Get presigned URL for temporary storage
+      const presignResponse = await fetch(`${backendUrl}/api/v1/presigned-url`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          bucket: 'wardrobe-temp',
+          path: tempFilePath,
+        }),
+      });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || 'Failed to add item');
-          }
+      if (!presignResponse.ok) {
+        const errorData = await presignResponse.json();
+        throw new Error(errorData.error?.message || 'Failed to get presigned URL for temp storage');
+      }
 
-          const { data: newItem } = await response.json();
+      const { url, path } = await presignResponse.json();
 
-          set((state) => ({
-            items: [newItem, ...state.items],
-            isLoading: false
-          }));
+      // Get image blob
+      const response = await fetch(itemInput.image_url as string);
+      const blob = await response.blob();
 
-          return newItem;
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'Failed to add item',
-            isLoading: false
-          });
-          throw error;
-        }
-      },
+      // Upload to temporary storage
+      const uploadResponse = await fetch(url, {
+        method: 'PUT',
+        body: blob,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to temporary storage');
+      }
+
+      // Construct temp URL
+      const tempUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/wardrobe-temp/${path}`;
+
+      // Add item with processing status set to 'processing'
+      const addItemResponse = await fetch(`${backendUrl}/api/v1/wardrobe`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          image_url: tempUrl,
+          cutout_url: null, // Will be set after background removal
+          category: itemInput.category,
+          sub_category: itemInput.sub_category,
+          colors: itemInput.colors,
+          style_tags: itemInput.style_tags,
+          occasion_tags: itemInput.occasion_tags,
+          vibe_tags: itemInput.vibe_tags,
+          functional_tags: itemInput.functional_tags,
+          silhouette_tags: itemInput.silhouette_tags,
+          fabric_guess: itemInput.fabric_guess,
+          processing_status: itemInput.processing_status || 'processing', // Set status
+        }),
+      });
+
+      if (!addItemResponse.ok) {
+        const errorData = await addItemResponse.json();
+        throw new Error(errorData.error?.message || 'Failed to add item');
+      }
+
+      const { data: newItem } = await addItemResponse.json();
+
+      set((state) => ({
+        items: [newItem, ...state.items],
+        isLoading: false
+      }));
+
+      // Start polling for processing completion
+      // In a real app, this would be handled by a background service or websocket
+      // For now, we'll return the item and let the UI handle polling
+      return newItem;
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to add item',
+        isLoading: false
+      });
+      throw error;
+    }
+  },
 
       removeItem: async (id: string) => {
         const { user, session } = useAuthStore.getState();
@@ -120,13 +166,70 @@ export const useWardrobeStore = create<WardrobeState>()(
 
       setError: (error) => set({ error }),
 
-      fetchItems: async () => {
-        const { user, session } = useAuthStore.getState();
-        // In dev mode, allow request even without user (backend has dev bypass)
-        if (!user && !__DEV__) {
-          set({ isLoading: false, error: 'User not authenticated' });
-          return;
-        }
+       updateItemTags: async (id: string, tags: any) => {
+         const { user, session } = useAuthStore.getState();
+         if (!user && !__DEV__) return;
+
+         try {
+           const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+           const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+           if (session) headers['Authorization'] = `Bearer ${session}`;
+
+           const response = await fetch(`${backendUrl}/api/v1/wardrobe/${id}`, {
+             method: 'PATCH',
+             headers,
+             body: JSON.stringify({
+               category: tags.category,
+               sub_category: tags.sub_category,
+               colors: tags.colors,
+               style_tags: tags.style_tags,
+               occasion_tags: tags.occasion_tags,
+               vibe_tags: tags.vibe_tags,
+               functional_tags: tags.functional_tags,
+               silhouette_tags: tags.silhouette_tags,
+               fabric_guess: tags.fabric_guess,
+               processing_status: 'ready',
+             }),
+           });
+
+           if (!response.ok) {
+             const errorData = await response.json();
+             throw new Error(errorData.error?.message || 'Failed to update item tags');
+           }
+
+           // Update local state
+           set((state) => ({
+             items: state.items.map(item =>
+               item.id === id
+                 ? {
+                     ...item,
+                     category: tags.category,
+                     sub_category: tags.sub_category,
+                     colors: tags.colors,
+                     style_tags: tags.style_tags,
+                     occasion_tags: tags.occasion_tags,
+                     vibe_tags: tags.vibe_tags,
+                     functional_tags: tags.functional_tags,
+                     silhouette_tags: tags.silhouette_tags,
+                     fabric_guess: tags.fabric_guess,
+                     processing_status: 'ready',
+                   }
+                 : item
+             ),
+           }));
+         } catch (error) {
+           console.error('Error updating item tags:', error);
+           throw error;
+         }
+       },
+
+       fetchItems: async () => {
+         const { user, session } = useAuthStore.getState();
+         // In dev mode, allow request even without user (backend has dev bypass)
+         if (!user && !__DEV__) {
+           set({ isLoading: false, error: 'User not authenticated' });
+           return;
+         }
 
         set({ isLoading: true, error: null });
 

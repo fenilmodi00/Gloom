@@ -15,20 +15,22 @@ silhouette_tags: string[];
 vibe_tags: string[];
 fabric_guess: string | null;
 created_at: string;
+processing_status: string;
 }
 
 export interface WardrobeItemInput {
-image_url?: string | number;
-cutout_url?: (string | number) | null;
-category: Category;
-sub_category?: string | null;
-colors?: string[];
-style_tags?: string[];
-occasion_tags?: string[];
-functional_tags?: string[];
-silhouette_tags?: string[];
-vibe_tags?: string[];
-fabric_guess?: string | null;
+  image_url?: string | number;
+  cutout_url?: (string | number) | null;
+  category: Category;
+  sub_category?: string | null;
+  colors?: string[];
+  style_tags?: string[];
+  occasion_tags?: string[];
+  functional_tags?: string[];
+  silhouette_tags?: string[];
+  vibe_tags?: string[];
+  fabric_guess?: string | null;
+  processing_status?: string;
 }
 
 export type SubCategory = 

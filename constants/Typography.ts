@@ -1,5 +1,5 @@
 /**
- * StyleAI Typography System
+ * Gloom Typography System
  * Luxury + Soft Modern typography for an elegant fashion app experience.
  */
 

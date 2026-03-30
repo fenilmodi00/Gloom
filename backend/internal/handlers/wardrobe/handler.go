@@ -50,7 +50,7 @@ func (h *Handler) ListItems(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 	categoryFilter := c.Query("category")
 
-	query := `SELECT id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, fabric_guess, created_at FROM wardrobe_items WHERE user_id = $1`
+	query := `SELECT id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, functional_tags, silhouette_tags, vibe_tags, fabric_guess, processing_status, created_at FROM wardrobe_items WHERE user_id = $1`
 	args := []interface{}{userID}
 
 	if categoryFilter != "" {
@@ -70,7 +70,7 @@ func (h *Handler) ListItems(c *fiber.Ctx) error {
 	items := []db.WardrobeItem{}
 	for rows.Next() {
 		var item db.WardrobeItem
-		if err := rows.Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FabricGuess, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FunctionalTags, &item.SilhouetteTags, &item.VibeTags, &item.FabricGuess, &item.ProcessingStatus, &item.CreatedAt); err != nil {
 			log.Printf("ERROR: list_wardrobe userID=%s err=%v", userID, err)
 			return response.InternalError(c, "error mapping wardrobe items")
 		}
@@ -100,9 +100,13 @@ func (h *Handler) CreateItem(c *fiber.Ctx) error {
 		return response.ValidationError(c, []string{"category: invalid"})
 	}
 
-	query := `INSERT INTO wardrobe_items (user_id, image_url, category, sub_category, colors, style_tags, occasion_tags) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, fabric_guess, created_at`
+	if req.ProcessingStatus == "" {
+		req.ProcessingStatus = "ready"
+	}
+
+	query := `INSERT INTO wardrobe_items (user_id, image_url, category, sub_category, colors, style_tags, occasion_tags, functional_tags, silhouette_tags, vibe_tags, processing_status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, functional_tags, silhouette_tags, vibe_tags, fabric_guess, processing_status, created_at`
 	var item db.WardrobeItem
-	err := h.db.QueryRow(context.Background(), query, userID, req.ImageURL, req.Category, req.SubCategory, req.Colors, req.StyleTags, req.OccasionTags).Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FabricGuess, &item.CreatedAt)
+	err := h.db.QueryRow(context.Background(), query, userID, req.ImageURL, req.Category, req.SubCategory, req.Colors, req.StyleTags, req.OccasionTags, req.FunctionalTags, req.SilhouetteTags, req.VibeTags, req.ProcessingStatus).Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FunctionalTags, &item.SilhouetteTags, &item.VibeTags, &item.FabricGuess, &item.ProcessingStatus, &item.CreatedAt)
 	if err != nil {
 		log.Printf("ERROR: create_wardrobe userID=%s err=%v", userID, err)
 		return response.InternalError(c, "error creating wardrobe item")
@@ -120,7 +124,7 @@ func (h *Handler) GetItem(c *fiber.Ctx) error {
 	}
 
 	var item db.WardrobeItem
-	err = h.db.QueryRow(context.Background(), `SELECT id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, fabric_guess, created_at FROM wardrobe_items WHERE id = $1 AND user_id = $2`, id, userID).Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FabricGuess, &item.CreatedAt)
+	err = h.db.QueryRow(context.Background(), `SELECT id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, functional_tags, silhouette_tags, vibe_tags, fabric_guess, processing_status, created_at FROM wardrobe_items WHERE id = $1 AND user_id = $2`, id, userID).Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FunctionalTags, &item.SilhouetteTags, &item.VibeTags, &item.FabricGuess, &item.ProcessingStatus, &item.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return response.NotFound(c, "wardrobe item not found")
@@ -201,15 +205,35 @@ func (h *Handler) UpdateItem(c *fiber.Ctx) error {
 		args = append(args, *req.FabricGuess)
 		argID++
 	}
+	if req.FunctionalTags != nil {
+		setParts = append(setParts, fmt.Sprintf("functional_tags = $%d", argID))
+		args = append(args, req.FunctionalTags)
+		argID++
+	}
+	if req.SilhouetteTags != nil {
+		setParts = append(setParts, fmt.Sprintf("silhouette_tags = $%d", argID))
+		args = append(args, req.SilhouetteTags)
+		argID++
+	}
+	if req.VibeTags != nil {
+		setParts = append(setParts, fmt.Sprintf("vibe_tags = $%d", argID))
+		args = append(args, req.VibeTags)
+		argID++
+	}
+	if req.ProcessingStatus != nil {
+		setParts = append(setParts, fmt.Sprintf("processing_status = $%d", argID))
+		args = append(args, *req.ProcessingStatus)
+		argID++
+	}
 
 	if len(setParts) == 0 {
 		return response.Success(c, fiber.Map{"message": "nothing to update"})
 	}
 
-	query := fmt.Sprintf(`UPDATE wardrobe_items SET %s WHERE id = $1 AND user_id = $2 RETURNING id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, fabric_guess, created_at`, strings.Join(setParts, ", "))
+	query := fmt.Sprintf(`UPDATE wardrobe_items SET %s WHERE id = $1 AND user_id = $2 RETURNING id, user_id, image_url, cutout_url, category, sub_category, colors, style_tags, occasion_tags, functional_tags, silhouette_tags, vibe_tags, fabric_guess, processing_status, created_at`, strings.Join(setParts, ", "))
 
 	var item db.WardrobeItem
-	err = h.db.QueryRow(context.Background(), query, args...).Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FabricGuess, &item.CreatedAt)
+	err = h.db.QueryRow(context.Background(), query, args...).Scan(&item.ID, &item.UserID, &item.ImageURL, &item.CutoutURL, &item.Category, &item.SubCategory, &item.Colors, &item.StyleTags, &item.OccasionTags, &item.FunctionalTags, &item.SilhouetteTags, &item.VibeTags, &item.FabricGuess, &item.ProcessingStatus, &item.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return response.NotFound(c, "wardrobe item not found")

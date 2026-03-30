@@ -1,5 +1,5 @@
 /**
- * StyleAI Design System Tokens
+ * Gloom Design System Tokens
  * 
  * Palette: "Earth & Gold" (Custom tailored HSL colors)
  * - primary: #8B7355 (Muted brown/olive)

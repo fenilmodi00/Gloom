@@ -1,7 +1,7 @@
 # Background Removal Feature Design
 
 ## Overview
-This document describes the implementation of a background removal feature for the StyleAI app. When users upload images of their clothing items, the app will automatically remove the background to isolate the clothing item, improving the quality of wardrobe images and AI tagging accuracy.
+This document describes the implementation of a background removal feature for the Gloom app. When users upload images of their clothing items, the app will automatically remove the background to isolate the clothing item, improving the quality of wardrobe images and AI tagging accuracy.
 
 ## Architecture Approach
 We'll implement a hybrid approach with fallback:

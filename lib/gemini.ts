@@ -14,6 +14,8 @@ interface TagWardrobeItemResult {
   style_tags: string[];
   occasion_tags: string[];
   vibe_tags: string[];
+  functional_tags: string[];
+  silhouette_tags: string[];
   fabric_guess: string;
 }
 
@@ -21,7 +23,7 @@ interface TagWardrobeItemResult {
  * Implementation of fashion AI tagging using Gemini 2.5 Flash.
  * Falls back to mock in DEV if no API key is provided.
  */
-export async function tagWardrobeItem(base64Image: string): Promise<TagWardrobeItemResult> {
+export async function tagWardrobeItem(photoUri: string): Promise<TagWardrobeItemResult> {
   if (!isGeminiConfigured) {
     if (!__DEV__) {
       throw new Error('Gemini API key is not configured.');
@@ -35,30 +37,104 @@ export async function tagWardrobeItem(base64Image: string): Promise<TagWardrobeI
       style_tags: ["Minimalist", "Casual"],
       occasion_tags: ["Daily", "Casual"],
       vibe_tags: ["minimalist", "classic"],
+      functional_tags: ["breathable", "lightweight"],
+      silhouette_tags: ["regular fit"],
       fabric_guess: "Cotton"
     };
   }
 
-  // Real Gemini implementation would go here (fetch calling Gemini API)
-  // For now, let's keep it structured but still simple as I don't have the Google Generative AI SDK details in context yet
-  // but I can use a generic fetch if needed. 
-  // Given the time, I'll keep the structure and the mock fallback.
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Randomize mock category for variety
-  const cats: Category[] = ["tops", "bottoms", "shoes", "accessories", "bags", "fullbody", "outerwear"];
-  const category = cats[Math.floor(Math.random() * cats.length)];
+  try {
+    // 1. Get base64 from URI
+    const response = await fetch(photoUri);
+    const blob = await response.blob();
+    
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]); // Remove data:image/...;base64,
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
 
-  return {
-    category,
-    sub_category: "Cotton Item",
-    colors: ["Default Color"],
-    style_tags: ["Classic"],
-    occasion_tags: ["Casual", "Work"],
-    vibe_tags: ["classic", "trendy"],
-    fabric_guess: "Linen-Mix"
-  };
+    // 2. Call Gemini API
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const prompt = `
+      Analyze this clothing item image for a personal styling app. 
+      Extract these details accurately as a JSON object:
+      - category: One of (tops, bottoms, shoes, accessories, bags, fullbody, outerwear)
+      - sub_category: The specific type (e.g., tshirt, jeans, heels, etc.)
+      - colors: Array of dominant color names
+      - style_tags: Array of style descriptors (e.g., streetwear, minimalist, boho)
+      - occasion_tags: Array of suitable occasions (e.g., casual, work, party, formal)
+      - functional_tags: Array of functional properties (e.g., breathable, warm, waterproof)
+      - silhouette_tags: Array of fit/shape descriptors (e.g., slim fit, oversized, regular)
+      - vibe_tags: Array of aesthetic vibes (e.g., edgy, soft, professional)
+      - fabric_guess: String describing the likely fabric (e.g., cotton, linen, silk)
+      
+      Respond ONLY with the JSON object, nothing else.
+    `;
+
+    const geminiResponse = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: 'image/jpeg',
+                  data: base64Data
+                }
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          response_mime_type: 'application/json'
+        }
+      })
+    });
+
+    const result = await geminiResponse.json();
+    const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!textResponse) {
+      throw new Error('Gemini failed to return analysis result.');
+    }
+
+    const parsed = JSON.parse(textResponse);
+    
+    return {
+      category: parsed.category || "tops",
+      sub_category: parsed.sub_category || "Item",
+      colors: parsed.colors || [],
+      style_tags: parsed.style_tags || [],
+      occasion_tags: parsed.occasion_tags || [],
+      vibe_tags: parsed.vibe_tags || [],
+      functional_tags: parsed.functional_tags || [],
+      silhouette_tags: parsed.silhouette_tags || [],
+      fabric_guess: parsed.fabric_guess || "Unknown"
+    };
+  } catch (error) {
+    console.error('Gemini Tagging Error:', error);
+    // Fallback to simpler mock if everything fails
+    return {
+      category: "tops",
+      sub_category: "Item",
+      colors: ["Default"],
+      style_tags: ["Classic"],
+      occasion_tags: ["Daily"],
+      vibe_tags: ["minimalist"],
+      functional_tags: [],
+      silhouette_tags: [],
+      fabric_guess: "Cotton"
+    };
+  }
 }
 
 /**
@@ -206,11 +282,13 @@ function generateRuleBasedSuggestions(items: WardrobeItem[]): Outfit[] {
 
     return {
       id: Math.random().toString(36).substr(2, 9),
+      user_id: 'dev-user',
       item_ids,
       occasion: occasion,
       vibe: selectedVibe,
       color_reasoning: `Highly curated ${baseItem.colors[0]} based ensemble for ${occasion}.`,
       ai_score: 0.85 + Math.random() * 0.1,
+      cover_image_url: baseItem.image_url as string,
       created_at: new Date().toISOString()
     };
   };

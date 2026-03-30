@@ -1,9 +1,9 @@
-// Jest setup file for StyleAI
+// Jest setup file for Gloom
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
+  Reanimated.default.call = () => { };
   return Reanimated;
 });
 
