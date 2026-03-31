@@ -69,7 +69,7 @@ async function pollForProcessingCompletion(
 }
 
 /**
- * Trigger background removal via Edge Function
+ * Trigger background removal via Edge Function (through backend proxy)
  */
 async function triggerBackgroundRemoval(
   itemId: string,
@@ -77,11 +77,13 @@ async function triggerBackgroundRemoval(
   authToken: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/remove-background`, {
+    const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+    const response = await fetch(`${backendUrl}/api/v1/edge-function/process_rembg`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authToken}`,
+        'X-User-JWT': authToken,
       },
       body: JSON.stringify({ itemId, filePath }),
     });
@@ -114,11 +116,11 @@ export default function AddItemScreen() {
   const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
   const { user } = useAuthStore();
 
-  // Reset state on entry
-  useEffect(() => {
-    setPhotoUri(null);
-    setShowUploadScreen(true);
-  }, [ts]);
+   // Reset state on entry
+   useEffect(() => {
+     setPhotoUri(null);
+     setShowUploadScreen(true);
+   }, []);
 
   // Handle hardware back button
   useEffect(() => {
@@ -203,7 +205,12 @@ export default function AddItemScreen() {
      try {
        // Get auth session for Edge Function calls
        const { data: sessionData } = await supabase.auth.getSession();
-       const authToken = sessionData?.session?.access_token;
+       let authToken = sessionData?.session?.access_token;
+
+       if (!authToken && __DEV__) {
+         // In DEV mode, use the anon key as fallback token for Edge Functions
+         authToken = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+       }
 
        if (!authToken) {
          console.error('No auth token available');
@@ -212,49 +219,66 @@ export default function AddItemScreen() {
        }
 
        // Upload to temporary storage and create wardrobe item with processing status
-       setLoadingMessage('Saving to wardrobe...');
-       const newItem = await addItem({
-         image_url: photoUri,
-         category: 'tops', // Default category, will be updated after AI tagging
-         sub_category: null,
-         colors: [],
-         style_tags: [],
-         occasion_tags: [],
-         vibe_tags: [],
-         fabric_guess: null,
-         processing_status: 'processing',
-       });
+        setLoadingMessage('Saving to wardrobe...');
+        const newItem = await addItem({
+          image_url: photoUri,
+          category: 'tops', // Default category, will be updated after AI tagging
+          sub_category: null,
+          colors: [],
+          style_tags: [],
+          occasion_tags: [],
+          vibe_tags: [],
+          fabric_guess: null,
+          processing_status: 'processing',
+        });
 
-       // Generate file path for background removal
-       const filePath = `${newItem.id}/${Date.now()}.jpg`;
+        // Generate file path for background removal - must match what was uploaded to storage
+        const { user } = useAuthStore.getState();
+        const userId = user?.id || 'dev-user';
+        const fileExt = photoUri.toString().split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${userId}/temp/${fileName}`;
 
-       setLoadingMessage('Removing background...');
-
-       // Trigger background removal via Edge Function
-       const triggerResult = await triggerBackgroundRemoval(newItem.id, filePath, authToken);
+       // Skip background removal in dev mode without real session (anon key lacks 'sub' claim)
+       // Background removal requires a valid user JWT with 'sub' claim for Supabase Edge Functions
+       const hasRealSession = sessionData?.session?.access_token && sessionData.session.user;
        
-       if (!triggerResult.success) {
-         console.error('Failed to trigger background removal:', triggerResult.error);
-         // Continue anyway - AI tagging can still happen
-       } else {
-         // Poll for background removal completion
-         const pollResult = await pollForProcessingCompletion(newItem.id, (status) => {
-           if (status === 'processing') {
-             setLoadingMessage('Processing image...');
-           }
-         });
+       if (hasRealSession) {
+         setLoadingMessage('Removing background...');
 
-         if (!pollResult.success) {
-           console.error('Background removal polling failed:', pollResult.error);
-           // Continue anyway - item is still saved
+         // Trigger background removal via Edge Function
+         console.log('[EDGE-FUNCTION] Calling backend proxy:', `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/edge-function/process_rembg`);
+         const triggerResult = await triggerBackgroundRemoval(newItem.id, filePath, authToken);
+         console.log('[EDGE-FUNCTION] Result:', JSON.stringify(triggerResult));
+         
+         if (!triggerResult.success) {
+           console.error('Failed to trigger background removal:', triggerResult.error);
+           // Continue anyway - AI tagging can still happen
+         } else {
+           // Poll for background removal completion
+           const pollResult = await pollForProcessingCompletion(newItem.id, (status) => {
+             if (status === 'processing') {
+               setLoadingMessage('Processing image...');
+             }
+           });
+
+           if (!pollResult.success) {
+             console.error('Background removal polling failed:', pollResult.error);
+             // Continue anyway - item is still saved
+           }
          }
+       } else {
+         console.log('[DEV-MODE] Skipping background removal - no real user session');
        }
 
-       setLoadingMessage('Analyzing with AI...');
-       const tags = await tagWardrobeItem(photoUri);
-       
-       // Update the item with AI tags
-       await updateItemTags(newItem.id, tags);
+        setLoadingMessage('Analyzing with AI...');
+        // Use the remote Supabase URL (already uploaded) instead of local file URI
+        // The image_url in newItem is the Supabase storage URL
+        const imageUrl = typeof newItem.image_url === 'string' ? newItem.image_url : photoUri;
+        const tags = await tagWardrobeItem(imageUrl);
+        
+        // Update the item with AI tags
+        await updateItemTags(newItem.id, tags);
 
        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
        closeScreen();

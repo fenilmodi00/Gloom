@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"backend/internal/db"
@@ -57,7 +58,7 @@ func (h *Handler) GenerateUploadURL(c *fiber.Ctx) error {
 		return response.ValidationError(c, errs)
 	}
 
-	if req.Bucket != "wardrobe-images" && req.Bucket != "model-corrosion-images" {
+	if req.Bucket != "wardrobe-images" && req.Bucket != "wardrobe-temp" && req.Bucket != "model-corrosion-images" {
 		return response.ValidationError(c, []string{"bucket: invalid bucket"})
 	}
 
@@ -73,7 +74,7 @@ func (h *Handler) GenerateUploadURL(c *fiber.Ctx) error {
 		return response.ValidationError(c, []string{"path: invalid file extension"})
 	}
 
-	url := fmt.Sprintf("%s/storage/v1/object/upload/sign/%s/%s", h.supabaseURL, req.Bucket, req.Path)
+	url := fmt.Sprintf("%s/storage/v1/object/upload/sign/%s/%s", h.supabaseURL, req.Bucket, url.PathEscape(req.Path))
 	reqBody, _ := json.Marshal(map[string]interface{}{"expiresIn": 3600})
 
 	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))

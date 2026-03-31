@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { Category, WardrobeItem, WardrobeItemInput } from '../../types';
 import { zustandAsyncStorage } from '../storage';
 import { useAuthStore } from './auth.store';
+import { supabase } from '../supabase';
 
 interface WardrobeState {
   items: WardrobeItem[];
@@ -47,47 +48,46 @@ export const useWardrobeStore = create<WardrobeState>()(
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (session) headers['Authorization'] = `Bearer ${session}`;
 
-      // Upload to temporary bucket first
+      // Upload to temporary bucket via backend proxy (bypasses Supabase DNS block)
+      // Get image info
       const fileExt = itemInput.image_url?.toString().split('.').pop() || 'jpg';
       const fileName = `${Date.now()}.${fileExt}`;
       const userId = user?.id || 'dev-user';
       const tempFilePath = `${userId}/temp/${fileName}`;
+
+      // Upload via backend relay (no direct Supabase contact from phone)
+      console.log('[WARDROBE] Step 2: Uploading to backend:', `${backendUrl}/api/v1/wardrobe/upload`);
+      const formData = new FormData();
       
-      // Get presigned URL for temporary storage
-      const presignResponse = await fetch(`${backendUrl}/api/v1/presigned-url`, {
+      // Use standard React Native file object format instead of fetching a blob
+      formData.append('file', {
+        uri: itemInput.image_url as string,
+        name: fileName,
+        type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+      } as any);
+      
+      formData.append('bucket', 'wardrobe-temp');
+      formData.append('path', tempFilePath);
+
+      const uploadResponse = await fetch(`${backendUrl}/api/v1/wardrobe/upload`, {
         method: 'POST',
-        headers,
-        body: JSON.stringify({
-          bucket: 'wardrobe-temp',
-          path: tempFilePath,
-        }),
-      });
-
-      if (!presignResponse.ok) {
-        const errorData = await presignResponse.json();
-        throw new Error(errorData.error?.message || 'Failed to get presigned URL for temp storage');
-      }
-
-      const { url, path } = await presignResponse.json();
-
-      // Get image blob
-      const response = await fetch(itemInput.image_url as string);
-      const blob = await response.blob();
-
-      // Upload to temporary storage
-      const uploadResponse = await fetch(url, {
-        method: 'PUT',
-        body: blob,
+        headers: {
+          ...(session ? { 'Authorization': `Bearer ${session}` } : {}),
+          // Note: FormData handles its own Content-Type with boundary
+        },
+        body: formData,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image to temporary storage');
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error?.message || 'Failed to upload image to temporary storage');
       }
 
-      // Construct temp URL
-      const tempUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/wardrobe-temp/${path}`;
+      const { data: uploadData } = await uploadResponse.json();
+      const tempUrl = uploadData.url;
 
       // Add item with processing status set to 'processing'
+      console.log('[WARDROBE] Step 3: Adding item to wardrobe via backend:', `${backendUrl}/api/v1/wardrobe`);
       const addItemResponse = await fetch(`${backendUrl}/api/v1/wardrobe`, {
         method: 'POST',
         headers,
@@ -212,7 +212,7 @@ export const useWardrobeStore = create<WardrobeState>()(
                      functional_tags: tags.functional_tags,
                      silhouette_tags: tags.silhouette_tags,
                      fabric_guess: tags.fabric_guess,
-                     processing_status: 'ready',
+                     processing_status: 'completed',
                    }
                  : item
              ),
@@ -263,6 +263,7 @@ export const useWardrobeStore = create<WardrobeState>()(
 
         try {
           const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+          // Get image info
           const fileExt = uri.split('.').pop() || 'jpg';
           const fileName = `${Date.now()}.${fileExt}`;
           const filePath = `${user?.id || 'dev-user'}/${fileName}`;
@@ -285,20 +286,46 @@ export const useWardrobeStore = create<WardrobeState>()(
             throw new Error(errorData.error?.message || 'Failed to get presigned URL');
           }
 
-          const { url, path } = await presignResponse.json();
+          const { data: presignData } = await presignResponse.json();
+          const { url, path } = presignData;
 
-          // Get image blob
-          const response = await fetch(uri);
-          const blob = await response.blob();
+          // Upload to signed URL using FormData to handle local URI properly
+          const formData = new FormData();
+          formData.append('file', {
+            uri: uri,
+            name: fileName,
+            type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+          } as any);
 
-          // Upload to signed URL
           const uploadResponse = await fetch(url, {
             method: 'PUT',
-            body: blob,
+            body: formData, // Some storage providers prefer raw body, but RN prefers FormData for local URIs
           });
 
+          // Fallback: If PUT with FormData fails, try the raw fetch which might work if it's a specific storage API
+          // Note: Most signed URLs for S3/Supabase expect the raw binary, 
+          // but fetching binary from local URI in RN is exactly what's failing.
+          // Let's try the XHR way for base64/blob if needed, but andoid fetch(file://) is the main culprit.
+          
           if (!uploadResponse.ok) {
-            throw new Error('Failed to upload image to storage');
+            // If it failed, let's try the more robust XHR method to get a blob for the PUT request
+            const blob = await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhr.onload = () => resolve(xhr.response);
+              xhr.onerror = () => reject(new TypeError('Network request failed to get local blob'));
+              xhr.responseType = 'blob';
+              xhr.open('GET', uri, true);
+              xhr.send(null);
+            });
+
+            const retryResponse = await fetch(url, {
+              method: 'PUT',
+              body: blob as any,
+            });
+
+            if (!retryResponse.ok) {
+              throw new Error('Failed to upload image to storage');
+            }
           }
 
           // Construct public URL

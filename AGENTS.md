@@ -1,34 +1,68 @@
 # AGENTS.md — Gloom (AI Fashion App)
 
-**Generated:** 2026-03-30
-**Commit:** Current
-**Branch:** main
+**Generated:** 2026-03-30 | **Branch:** main
 
 ## OVERVIEW
-India-first AI personal stylist app. Users photograph clothes, build digital wardrobe, get AI outfit suggestions. Competitor to Aesty (aesty.ai). Phase 1: Inspo + Wardrobe + Outfits tabs.
+India-first AI personal stylist app. Users photograph clothes, build digital wardrobe, get AI outfit suggestions. Phase 1: Inspo + Wardrobe + Outfits tabs.
+
+## COMMANDS
+
+```bash
+# Development
+bun start              # Start Expo dev server
+bun run android        # Run on Android
+bun run ios            # Run on iOS
+
+# TypeScript
+npx tsc --noEmit       # Type check (no emit)
+
+# Testing (Jest)
+bun test               # Run all tests
+bun test --watch       # Watch mode
+bun test <pattern>     # Run tests matching pattern (e.g. "auth-store")
+bun test __tests__/auth-store.test.ts  # Run specific test file
+bun test --coverage    # Run with coverage report
+
+# Build
+npx expo prebuild      # Generate native directories (android/ios)
+```
+
+**Package manager:** `bun` exclusively. Never `npm`/`yarn`/`pnpm`.
+
+## TECH STACK (NON-NEGOTIABLE)
+
+| Category | Technology |
+|----------|------------|
+| Framework | Expo SDK 55 |
+| Runtime | React Native 0.83.2, React 19.2 |
+| Language | TypeScript 5.9 strict mode |
+| Routing | Expo Router v7 (~55.0.5) |
+| Styling | NativeWind v4.1 + TailwindCSS v3.4 |
+| State | Zustand v5 + React Query v5 |
+| Backend | Supabase (Auth, Storage, PostgreSQL) |
+| AI | Gemini 2.5 Flash |
+| Animations | React Native Reanimated v4 |
 
 ## STRUCTURE
+
 ```
-app/
-├── (auth)/        # Login + Onboarding screens
-├── (tabs)/        # Main tabs: inspo, wardrobe, outfits (+ extras: favorites, profile)
-└── _layout.tsx    # Root layout, auth gate, providers
+app/                    # Expo Router screens
+├── (auth)/             # Login + Onboarding
+├── (tabs)/             # Main tabs: inspo, wardrobe, outfits
+└── _layout.tsx         # Root layout, auth gate, providers
 
-components/
-├── ui/            # Base components (button, fab, heading)
-├── wardrobe/      # ItemCard, CategoryFilter, AddItemSheet
-├── outfits/       # OutfitCard, OccasionBadge
-├── shared/        # LoadingOverlay, EmptyState, Toast, BottomTabBar
-└── inspo/         # InspoCard
-
-lib/
-├── store/         # Zustand stores: auth, wardrobe, outfit
-├── supabase.ts    # Supabase client singleton
-├── gemini.ts      # Gemini 2.5 Flash wrapper
-├── storage.ts     # AsyncStorage wrapper for Zustand persist
-└── schemas/       # Zod validation schemas
-
-types/             # TypeScript interfaces: wardrobe, outfit, user, inspo
+components/             # UI components (feature-scoped subdirs)
+lib/                    # Core logic (NO UI components)
+├── store/              # Zustand stores (*.store.ts)
+├── schemas/            # Zod validation schemas
+├── supabase.ts         # Supabase client singleton
+├── gemini.ts           # Gemini 2.5 Flash wrapper
+├── storage.ts          # AsyncStorage wrapper
+└── i18n.ts             # i18next config (en/hi)
+types/                  # TypeScript interfaces (PascalCase, domain files)
+__tests__/              # Jest tests (*.test.ts, *.test.tsx)
+__mocks__/              # Jest mocks
+backend/                # Go backend (separate project)
 ```
 
 ## WHERE TO LOOK
@@ -41,53 +75,69 @@ types/             # TypeScript interfaces: wardrobe, outfit, user, inspo
 | Wardrobe state | `lib/store/wardrobe.store.ts` | Zustand store |
 | Outfit suggestions | `lib/gemini.ts` | Gemini 2.5 Flash prompts |
 | Add item flow | `app/(tabs)/wardrobe/add-item.tsx` | Camera + Gemini tagging |
-| Run tests | See COMMANDS section | Jest testing framework |
-| Type checking | See COMMANDS section | TypeScript compiler |
+| Add validation | `lib/schemas/*.ts` | Zod schemas |
+| Supabase queries | `lib/supabase.ts` | Client singleton |
 | MCP operations | Use Supabase MCP for DB operations | See lib/supabase.ts |
 
-## CONVENTIONS
+## CODE STYLE
 
 ### TypeScript
-- Strict mode enabled (`"strict": true` in tsconfig.json)
-- No `any` types — use interfaces from `types/`
-- Absolute imports: `@/lib/...` not `../lib/...`
-- Named imports: `{ useState }` not default
-- Enable `noImplicitReturns`, `noFallthroughCasesInSwitch`
+- Strict mode enabled. No `any`, `@ts-ignore`, or `@ts-expect-error`.
+- Absolute imports: `@/lib/...` (configured in tsconfig.json paths).
+- Named imports preferred: `{ useState }` not default.
+- Use `interface` for objects, `type` for unions.
+- Import types with `import type { ... }` when only used as types.
 
 ### Naming
-- Components: PascalCase (`ItemCard.tsx`)
+- Components/files: PascalCase (`ItemCard.tsx`)
 - Hooks: camelCase with `use` prefix (`useAuth`)
 - Stores: `*.store.ts` suffix
-- Types: PascalCase, export from `types/`
-- Constants: UPPER_SNAKE_CASE (`MAX_ITEMS_PER_ROW`)
+- Types: PascalCase, export from `types/` domain files
+- Constants: UPPER_SNAKE_CASE
 - Test files: `*.test.ts` or `*.test.tsx`
 
 ### Styling (NativeWind)
-- Use `className` prop, NOT StyleSheet.create
-- Colors from design tokens below
-- No inline styles except dynamic values
-- Responsive prefixes: `sm:`, `md:`, `lg:` (Tailwind breakpoints)
-- Dark mode: `dark:` prefix
-- Avoid arbitrary values when possible (`[#123456]`)
+- Use `className` prop. NEVER `StyleSheet.create`.
+- No inline styles except dynamic values.
+- Use design tokens (below), not arbitrary values (`[#123456]`).
+- Dark mode: `dark:` prefix. Responsive: `sm:`, `md:`, `lg:`.
+- Corner radius: `rounded-2xl` (cards), `rounded-full` (pills).
 
 ### Images
-- Always use `expo-image`, NEVER `Image` from react-native
-- Lazy loading is default
-- Use `placeholder` prop for blur effect
-- Set appropriate `contentFit` (contain, cover, stretch, etc.)
+- Always use `expo-image`. NEVER `Image` from react-native.
+- Set appropriate `contentFit` (contain, cover, stretch).
 
-### State
-- Zustand for global state (`lib/store/*.ts`)
-- React Query for server state (`lib/query/` if exists)
-- AsyncStorage for persistence (via `storage.ts`)
-- Avoid local state for cross-component data
+### State Management
+- Zustand for global state (`lib/store/*.store.ts`).
+- React Query for server state.
+- AsyncStorage for persistence via `storage.ts` (NOT MMKV).
+- Use `persist` middleware with `partialize` for selective persistence.
+- NEVER mutate state directly — use store setters.
+- Use `subscribeWithSelector` for side effects on state changes.
 
 ### Error Handling
-- Never use empty catch blocks `catch(e) {}`
-- Handle errors gracefully with user feedback
-- Use toast notifications for user-facing errors (`components/shared/Toast`)
-- Log unexpected errors to console for debugging
-- Validate API responses with Zod schemas (`lib/schemas/`)
+- Never use empty catch blocks.
+- Use toast notifications for user-facing errors (`components/shared/Toast`).
+- Validate API responses with Zod schemas (`lib/schemas/`).
+- Log unexpected errors to console for debugging.
+
+## ANTI-PATTERNS (THIS PROJECT)
+
+- **NEVER** use `as any`, `// @ts-ignore`, `// @ts-expect-error`
+- **NEVER** use `StyleSheet.create` — use NativeWind className
+- **NEVER** use `Image` from react-native — use expo-image
+- **NEVER** suppress errors with empty catch blocks
+- **NEVER** use heavy shadows — only `shadow-sm`
+- **NEVER** install packages outside tech stack
+- **NEVER** use `npm` — use `bun` for ALL package management
+- **NO** inline styles unless absolutely necessary
+- **NEVER** use `console.log` in production code — remove before commit
+- **NEVER** hardcode API endpoints — use environment variables
+- **NEVER** mutate state directly — use store setters
+- **NEVER** create new Supabase clients — use singleton from `lib/supabase.ts`
+- **NEVER** use MMKV for storage (native module issues) — use AsyncStorage
+- **NEVER** put UI components in `lib/`
+- **NEVER** bypass Zod schemas for API data validation
 
 ## DESIGN TOKENS
 
@@ -112,20 +162,6 @@ Feedback:
 - Corner radius: `rounded-2xl` (cards), `rounded-full` (pills/buttons)
 - Typography: `font-bold tracking-tight` (headings), `font-normal` (body)
 - Spacing: Use Tailwind spacing scale (1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 56, 64)
-
-## ANTI-PATTERNS (THIS PROJECT)
-
-- **NEVER** use `as any`, `// @ts-ignore`, `// @ts-expect-error`
-- **NEVER** use `StyleSheet.create` — use NativeWind className
-- **NEVER** use `Image` from react-native — use expo-image
-- **NEVER** suppress errors with empty catch blocks
-- **NEVER** use heavy shadows — only `shadow-sm`
-- **NEVER** install packages outside tech stack
-- **NEVER** use `npm` — use `bun` for ALL package management
-- **NO** inline styles unless absolutely necessary
-- **NEVER** use `console.log` in production code — remove before commit
-- **NEVER** hardcode API endpoints — use environment variables
-- **NEVER** mutate state directly — use store setters
 
 ## PACKAGE PRIORITY RULES
 
@@ -152,71 +188,28 @@ Feedback:
    - Run scripts: `bun run <script>`
    - **NEVER** use `npm`, `yarn`, or `pnpm`
 
-## TECH STACK (NON-NEGOTIABLE)
-
-| Category | Technology |
-|----------|------------|
-| Framework | Expo SDK 55 |
-| Runtime | React Native 0.83.2, React 19.2 |
-| Language | TypeScript 5.9 strict mode |
-| Routing | Expo Router v7 (~55.0.5) |
-| Styling | NativeWind v4.1 + TailwindCSS v3.4 |
-| State | Zustand v5 + React Query v5 |
-| Backend | Supabase (Auth, Storage, PostgreSQL) |
-| AI | Gemini 2.5 Flash |
-| Animations | React Native Reanimated v4 |
-
-## COMMANDS
-
-```bash
-# Development
-bun start           # Start Expo dev server
-bun run android     # Run on Android
-bun run ios         # Run on iOS
-
-# TypeScript
-npx tsc --noEmit     # Type check (no emission)
-
-# Testing
-bun test             # Run all tests
-bun test --watch     # Run tests in watch mode
-bun test -- testName # Run specific test (jest pattern matching)
-bun test src/path/to.test.ts # Run specific test file
-bun test --coverage  # Run tests with coverage report
-
-# Build
-npx expo prebuild    # Generate native directories
-```
-
 ## TESTING GUIDELINES
 
-- Test files located in `__tests__/` directory
-- Unit tests for stores, utilities, helpers
-- Integration tests for components with complex logic
-- Mock external dependencies (Supabase, Gemini, fetch)
-- Use `describe()` and `it()` blocks from Jest
-- Reset mocks and state between tests with `beforeEach()`
-- Test both positive and negative cases
-- Aim for meaningful assertions, not just coverage
-- Follow existing test patterns in `__tests__/`
+- Tests in `__tests__/` directory.
+- Mock external dependencies: Supabase, Gemini, fetch, reanimated.
+- Reset store state between tests: `useXxxStore.getState().clearAll()` in `beforeEach()`.
+- Test both positive and negative cases.
+- Use `describe()` / `it()` blocks with meaningful assertions.
+- See `jest.config.js` and `jest.setup.js` for mock configuration.
 
 ## GIT WORKFLOW
 
-- Use descriptive commit messages: `feat: add user profile screen`
-- Prefix commits: `feat:` (feature), `fix:` (bug fix), `docs:` (documentation), `refactor:` (code refactor), `test:` (tests), `chore:` (maintenance)
-- Keep commits atomic and focused
+- Commit prefixes: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
 - Branch naming: `feature/`, `bugfix/`, `release/`
-- Pull requests require description and relevant screenshots
-- Never commit to main directly — always use PRs
+- Never commit to main directly — always use PRs.
+- Atomic commits, focused scope.
 
 ## NOTES
 
-- Auth bypassed in dev (see `app/_layout.tsx` RootLayoutNav)
-- Storage: AsyncStorage (NOT MMKV — native module issues)
-- Extra tabs (favorites, profile) not in Phase 1 scope
-- Template files to remove: `modal.tsx`, `EditScreenInfo.tsx`, `ExternalLink.tsx`
-- Environment variables: See `.env.local.example`
-- Supabase URL/anon key: Configure in `.env.local`
-- Gemini API key: Configure in `.env.local`
-- **MCP Usage**: Use Supabase MCP for database operations when direct SQL is needed
-- **MCP Reference**: See `supabase/` directory for MCP server configurations
+- Auth bypassed in dev mode (see `app/_layout.tsx` RootLayoutNav).
+- Storage: AsyncStorage only (NOT MMKV — native module issues).
+- Extra tabs (favorites, profile) not in Phase 1 scope.
+- Environment variables: See `.env.local.example` (Supabase, Gemini, Backend URL).
+- **MCP Usage**: Use Supabase MCP for database operations.
+- i18n configured for English and Hindi locales.
+- Gemini uses REST API (not SDK).

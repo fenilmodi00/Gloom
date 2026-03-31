@@ -38,8 +38,10 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 	// TODO(Phase2): Implement Gemini AI background job for wardrobe item categorization / tagging
 	// TODO(Phase2): Implement background job to create cutout image
 	wardrobeGroup := router.Group("/wardrobe")
-	wardrobeGroup.Get("/", h.ListItems)
-	wardrobeGroup.Post("/", h.CreateItem)
+	wardrobeGroup.Get("", h.ListItems)      // Hits /api/v1/wardrobe
+	wardrobeGroup.Get("/", h.ListItems)     // Hits /api/v1/wardrobe/
+	wardrobeGroup.Post("", h.CreateItem)    // Hits /api/v1/wardrobe
+	wardrobeGroup.Post("/", h.CreateItem)   // Hits /api/v1/wardrobe/
 	wardrobeGroup.Get("/:id", h.GetItem)
 	wardrobeGroup.Patch("/:id", h.UpdateItem)
 	wardrobeGroup.Delete("/:id", h.DeleteItem)

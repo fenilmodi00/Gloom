@@ -5,6 +5,7 @@ import (
 
 	"backend/internal/config"
 	"backend/internal/db"
+	"backend/internal/handlers/edgefunction"
 	"backend/internal/handlers/modelimage"
 	"backend/internal/handlers/outfit"
 	"backend/internal/handlers/presigned"
@@ -62,6 +63,9 @@ func New(cfg *config.Config, database *db.DB) *Server {
 	wardrobeHandler := wardrobe.New(database, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	wardrobeHandler.RegisterRoutes(api)
 
+	wardrobeUploadHandler := wardrobe.NewUploadHandler(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
+	wardrobeUploadHandler.RegisterRoutes(api)
+
 	outfitHandler := outfit.New(database)
 	outfitHandler.RegisterRoutes(api)
 
@@ -70,6 +74,9 @@ func New(cfg *config.Config, database *db.DB) *Server {
 
 	presignedHandler := presigned.New(database, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	presignedHandler.RegisterRoutes(api)
+
+	edgeFunctionHandler := edgefunction.New(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
+	edgeFunctionHandler.RegisterRoutes(api)
 
 	app.Use(func(c *fiber.Ctx) error {
 		return response.NotFound(c, "route not found")

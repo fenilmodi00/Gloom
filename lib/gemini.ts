@@ -45,16 +45,47 @@ export async function tagWardrobeItem(photoUri: string): Promise<TagWardrobeItem
 
   try {
     // 1. Get base64 from URI
-    const response = await fetch(photoUri);
-    const blob = await response.blob();
+    // 1. Get blob from URI using XHR (more robust than fetch for local files on RN)
+    // On Android, ensure we have the file:// prefix if it's a local path
+    const normalizedUri = photoUri.startsWith('/') ? `file://${photoUri}` : photoUri;
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        if (xhr.status === 200 || xhr.status === 0) {
+          resolve(xhr.response);
+        } else {
+          reject(new Error(`Failed to load local file: status ${xhr.status}`));
+        }
+      };
+      xhr.onerror = (e) => {
+        console.error('[GEMINI] XHR Error details:', e);
+        reject(new TypeError(`Network request failed to get local blob for Gemini (URI: ${normalizedUri})`));
+      };
+      xhr.responseType = 'blob';
+      xhr.open('GET', normalizedUri, true);
+      xhr.send(null);
+    });
     
     const base64Data = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        resolve(result.split(',')[1]); // Remove data:image/...;base64,
+        if (!result) {
+          reject(new Error('FileReader result is empty'));
+          return;
+        }
+        const base64 = result.split(',')[1];
+        if (!base64) {
+          reject(new Error('Failed to extract base64 from data URL'));
+          return;
+        }
+        resolve(base64);
       };
-      reader.onerror = reject;
+      reader.onerror = (e) => {
+        console.error('[GEMINI] FileReader error:', e);
+        reject(e);
+      };
       reader.readAsDataURL(blob);
     });
 

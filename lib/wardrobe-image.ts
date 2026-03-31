@@ -27,6 +27,9 @@ export function getWardrobeImageUrl(supabaseUrl: string | null | undefined): str
 /**
  * Get image URL for wardrobe item (uses cutout_url if available, otherwise image_url)
  */
-export function getWardrobeItemImageUrl(item: { image_url?: string | null; cutout_url?: string | null }): string | null {
-  return getWardrobeImageUrl(item.cutout_url || item.image_url);
+export function getWardrobeItemImageUrl(item: { image_url?: string | number | null; cutout_url?: string | number | null }): string | null {
+  const url = item.cutout_url || item.image_url;
+  if (!url) return null;
+  if (typeof url === 'number') return null; // Can't proxy local assets
+  return getWardrobeImageUrl(url);
 }
