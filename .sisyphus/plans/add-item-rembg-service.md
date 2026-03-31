@@ -174,6 +174,11 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
 - [ ] 1. Fix TypeScript Types + Mock Data Errors
 
   **What to do**:
+  - Add `ProcessingStatus` union type to `types/wardrobe.ts`:
+    ```typescript
+    export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'fallback';
+    ```
+  - Update `WardrobeItem.processing_status` to use `ProcessingStatus` type instead of raw string
   - Add `processing_status` field to all mock wardrobe items in `lib/mock-wardrobe.ts`
   - Verify `types/wardrobe.ts` WardrobeItem interface has all required fields
   - Run `npx tsc --noEmit` to confirm zero errors
@@ -366,8 +371,8 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
   **What to do**:
   - Create `types/rembg.ts` with RembgService interface
   - Define: RembgRequest, RembgResponse, RembgError types
-  - Define ProcessingStatus type: 'pending' | 'processing' | 'completed' | 'failed' | 'fallback'
   - Document the rembg service API contract (endpoint, request format, response format)
+  - Note: `ProcessingStatus` union type is defined in Task 1 (`types/wardrobe.ts`)
   - Write failing test for type validation
 
   **Must NOT do**:
@@ -421,7 +426,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
   - Create `backend/internal/services/rembg/client.go`
   - HTTP client that calls: `POST https://rembg-service-fenilgemini2735-u98og5k0.leapcell.dev/remove-background`
   - Multipart form upload with `file` field
-  - Retry logic: 3 attempts with exponential backoff (1s, 2s, 4s)
+  - Retry logic: 3 attempts with exponential backoff + jitter (1s±500ms, 2s±1s, 4s±2s) to prevent thundering herd
   - Timeout: 3 minutes per attempt
   - Returns cutout image bytes on success, error on failure
   - TDD: Write failing test first, then implement
@@ -787,6 +792,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
   - Screen should only: capture/select image, show preview, call store action, display loading overlay
   - After save: trigger processing via store, show "Processing in background" toast, navigate back
   - Keep all UI/UX intact (camera, gallery, preview, animations)
+  - Take snapshot test BEFORE refactoring to detect unintended UI changes
   - TDD: Write test for screen behavior first
 
   **Must NOT do**:
