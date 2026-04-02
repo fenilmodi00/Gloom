@@ -21,3 +21,10 @@ jest.mock('expo-image', () => ({
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+
+// Mock Toast component
+jest.mock('./components/shared/Toast', () => ({
+  showToast: jest.fn(),
+  useToast: jest.fn(() => ({ showToast: jest.fn() })),
+  ToastProvider: ({ children }) => children,
+}));

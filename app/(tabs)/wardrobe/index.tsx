@@ -10,8 +10,9 @@ import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 import { Typography } from '@/constants/Typography';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
+import { useWardrobeProcessingStore } from '@/lib/store/wardrobe-processing.store';
 import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
-import type { Category, WardrobeItem } from '@/types/wardrobe';
+import type { Category, WardrobeItem, ProcessingStatus } from '@/types/wardrobe';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -78,16 +79,29 @@ const CategoryCard = memo(
     const imageUrl = getWardrobeItemImageUrl(item);
     const source = imageUrl ? { uri: imageUrl } : undefined;
 
+    // Show processing indicator for items being processed
+    const { getProcessingStatus } = useWardrobeProcessingStore();
+    const isProcessing = getProcessingStatus(item.id) === 'processing';
+
     return (
       <View style={styles.cardContainer}>
-        {/* ← CHANGED: pass variant so skeleton matches the category */}
-        {!isLoaded && <SkeletonCard variant={variant} />}
+        {/* Show skeleton/shimmer for processing items */}
+        {isProcessing && <SkeletonCard variant={variant} />}
+        {/* Show regular skeleton for loading images */}
+        {!isProcessing && !isLoaded && <SkeletonCard variant={variant} />}
+        {/* Display image (cutout when available, fallback to original) */}
         <Image
           source={source}
           style={[styles.cardImage, { opacity: isLoaded ? 1 : 0 }]}
           contentFit="contain"
           onLoad={() => setIsLoaded(true)}
         />
+        {/* Optional: Add visual indicator for processing state */}
+        {isProcessing && (
+          <View style={styles.processingOverlay}>
+            {/* Could add a spinner or other visual indicator here */}
+          </View>
+        )}
       </View>
     );
   }
@@ -190,93 +204,93 @@ export default function WardrobeScreen() {
     return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
   }, [groupedItems]);
 
-  const firstCategoryRenderItem = useCallback(
-    ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
-    []
-  );
+const firstCategoryRenderItem = useCallback(
+  ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
+  []
+);
 
-  const renderItem = useCallback(
-    ({
-      item,
-      index,
-    }: {
-      item: (typeof CATEGORY_CONFIG)[0] | 'header';
-      index: number;
-    }) => {
-      if (item === 'header') {
-        // ← CHANGED: derive variant for first category in header
-        const firstVariant =
-          sections.length > 0
-            ? getCategoryVariant(sections[0].key)
-            : 'default';
-
-        return (
-          <LinearGradient
-            colors={[GRADIENT_START, GRADIENT_END]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={[
-              styles.headerWithFirstCategory,
-              { paddingTop: insets.top - 59 },
-            ]}
-          >
-            <View style={styles.headerRow}>
-              <Text style={styles.headerTitle}>Closet</Text>
-              <Pressable
-                style={styles.uploadButton}
-                onPress={() => navigateToAddItem('camera')}
-              >
-                <Text style={styles.uploadText}>Add item</Text>
-              </Pressable>
-            </View>
-
-            {sections.length > 0 && (
-              <>
-                <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
-                  <Pressable style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>
-                      {sections[0].label}
-                    </Text>
-                    <ChevronRight
-                      size={16}
-                      color={Colors.light.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.sectionContent}
-                >
-                  {/* ← CHANGED: pass firstVariant down to each card */}
-                  {(groupedItems[sections[0].key] || []).map((item) => (
-                    <CategoryCard
-                      key={item.id}
-                      item={item}
-                      variant={firstVariant}
-                    />
-                  ))}
-                </ScrollView>
-              </>
-            )}
-          </LinearGradient>
-        );
-      }
-
-      const sectionIndex = sections.findIndex((s) => s.key === item.key);
-      if (sectionIndex === 0) return null;
+const renderItem = useCallback(
+  ({
+    item,
+    index,
+  }: {
+    item: (typeof CATEGORY_CONFIG)[0] | 'header';
+    index: number;
+  }) => {
+    if (item === 'header') {
+      // ← CHANGED: derive variant for first category in header
+      const firstVariant =
+        sections.length > 0
+          ? getCategoryVariant(sections[0].key)
+          : 'default';
 
       return (
-        <CategorySection
-          label={item.label}
-          items={groupedItems[item.key] || []}
-          index={index}
-          categoryKey={item.key}   // ← CHANGED: pass key for variant lookup
-        />
+        <LinearGradient
+          colors={[GRADIENT_START, GRADIENT_END]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[
+            styles.headerWithFirstCategory,
+            { paddingTop: insets.top - 59 },
+          ]}
+        >
+          <View style={styles.headerRow}>
+            <Text style={styles.headerTitle}>Closet</Text>
+            <Pressable
+              style={styles.uploadButton}
+              onPress={() => navigateToAddItem('camera')}
+            >
+              <Text style={styles.uploadText}>Add item</Text>
+            </Pressable>
+          </View>
+
+          {sections.length > 0 && (
+            <>
+              <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
+                <Pressable style={styles.sectionHeader}>
+                  <Text style={styles.sectionLabel}>
+                    {sections[0].label}
+                  </Text>
+                  <ChevronRight
+                    size={16}
+                    color={Colors.light.textSecondary}
+                  />
+                </Pressable>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sectionContent}
+              >
+                {/* ← CHANGED: pass firstVariant down to each card */}
+                {(groupedItems[sections[0].key] || []).map((item) => (
+                  <CategoryCard
+                    key={item.id}
+                    item={item}
+                    variant={firstVariant}
+                  />
+                ))}
+              </ScrollView>
+            </>
+          )}
+        </LinearGradient>
       );
-    },
-    [groupedItems, sections, insets.top]
-  );
+    }
+
+    const sectionIndex = sections.findIndex((s) => s.key === item.key);
+    if (sectionIndex === 0) return null;
+
+    return (
+      <CategorySection
+        label={item.label}
+        items={groupedItems[item.key] || []}
+        index={index}
+        categoryKey={item.key}   // ← CHANGED: pass key for variant lookup
+      />
+    );
+  },
+  [groupedItems, sections, insets.top]
+);
 
   const listData = useMemo(() => {
     return ['header', ...sections] as ((typeof sections)[0] | 'header')[];
@@ -466,5 +480,16 @@ const styles = StyleSheet.create({
   uploadText: {
     ...Typography.uiLabelMedium,
     color: Colors.light.textOnDark,
+  },
+  processingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

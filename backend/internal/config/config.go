@@ -15,6 +15,7 @@ type Config struct {
 	Port                   string
 	GoEnv                  string
 	FrontendURL            string
+	RembgServiceURL        string
 }
 
 func Load() (*Config, error) {
@@ -30,6 +31,7 @@ func Load() (*Config, error) {
 		Port:                   os.Getenv("PORT"),
 		GoEnv:                  os.Getenv("GO_ENV"),
 		FrontendURL:            os.Getenv("FRONTEND_URL"),
+		RembgServiceURL:        os.Getenv("EXPO_PUBLIC_REMBG_SERVICE_URL"),
 	}
 
 	if cfg.Port == "" {

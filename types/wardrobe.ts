@@ -1,5 +1,7 @@
 export type Category = 'tops' | 'bottoms' | 'shoes' | 'accessories' | 'bags' | 'fullbody' | 'outerwear';
 
+export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'fallback';
+
 export interface WardrobeItem {
 id: string;
 user_id: string;
@@ -15,7 +17,7 @@ silhouette_tags: string[];
 vibe_tags: string[];
 fabric_guess: string | null;
 created_at: string;
-processing_status: string;
+processing_status: ProcessingStatus;
 }
 
 export interface WardrobeItemInput {
@@ -30,7 +32,7 @@ export interface WardrobeItemInput {
   silhouette_tags?: string[];
   vibe_tags?: string[];
   fabric_guess?: string | null;
-  processing_status?: string;
+  processing_status?: ProcessingStatus;
 }
 
 export type SubCategory = 

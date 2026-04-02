@@ -10,7 +10,7 @@ import Colors from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -23,6 +23,7 @@ import { InspoBottomSheet } from '@/components/inspo/InspoBottomSheet';
 import { ModelCarousel } from '@/components/inspo/ModelCarousel';
 import { ModelDetailPopup } from '@/components/inspo/ModelDetailPopup';
 import { useModelImageStore } from '@/lib/store/model-image.store';
+import { useTrendingSections, useTrendingLoading, useTrendingError, useTrendingStore } from '@/lib/store/trending.store';
 import type { ModelCard, TrendingItem, TrendingSection } from '@/types/inspo';
 import { MOCK_CLOTH_ITEMS } from '@/types/inspo';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -47,39 +48,6 @@ const MODEL_CARDS: ModelCard[] = [
   { id: 'model-4', imageUrl: MODAL_MODEL_IMAGE, name: 'Style 4' },
 ];
 
-const TRENDING_SECTIONS: TrendingSection[] = [
-  {
-    id: 'leather-trench',
-    title: 'Leather Trench',
-    items: [
-      { id: 'lt-1', imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600' },
-      { id: 'lt-2', imageUrl: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600' },
-      { id: 'lt-3', imageUrl: 'https://images.unsplash.com/photo-1551028719-001579e1403f?w=600' },
-      { id: 'lt-4', imageUrl: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600' },
-    ],
-  },
-  {
-    id: 'lace-renaissance',
-    title: 'Lace Renaissance',
-    items: [
-      { id: 'lr-1', imageUrl: 'https://images.unsplash.com/photo-1515347619252-60a6bf4fffce?w=600' },
-      { id: 'lr-2', imageUrl: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600' },
-      { id: 'lr-3', imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600' },
-      { id: 'lr-4', imageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600' },
-    ],
-  },
-  {
-    id: 'minimalist-whites',
-    title: 'Minimalist Whites',
-    items: [
-      { id: 'mw-1', imageUrl: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600' },
-      { id: 'mw-2', imageUrl: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600' },
-      { id: 'mw-3', imageUrl: 'https://images.unsplash.com/photo-1485968579169-a6d4e6e6e9d3?w=600' },
-      { id: 'mw-4', imageUrl: 'https://images.unsplash.com/photo-1505022610485-0249ba5b3675?w=600' },
-    ],
-  },
-];
-
 // ============================================================================
 // Component
 // ============================================================================
@@ -99,6 +67,16 @@ export default function InspoScreen() {
   // ── Two-stage bottom sheet state ──
   // Track current sheet index to know position on tap
   const currentSheetIndex = useRef<number>(SNAP_INDEX_60);
+  
+  // Trending store hooks
+  const sections = useTrendingSections();
+  const isLoading = useTrendingLoading();
+  const error = useTrendingError();
+
+  // Fetch trending sections on mount
+  useEffect(() => {
+    useTrendingStore.getState().fetchSections();
+  }, []);
 
   // Handle model tap — TWO-stage flow:
   //   @ 60% (index 1) → shrink to 34% (carousel stays interactive)
@@ -197,17 +175,32 @@ export default function InspoScreen() {
         </Animated.View>
       </View>
 
-      {/* ======================================== */}
-      {/* Layer 3: Overlay Bottom Sheet            */}
-      {/* ======================================== */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none" className="z-30">
-        <InspoBottomSheet
-          ref={bottomSheetRef}
-          sections={TRENDING_SECTIONS}
-          onTryOnPress={handleTryOnPress}
-          onIndexChange={handleSheetChange}
-        />
-      </View>
+       {/* ======================================== */}
+       {/* Layer 3: Overlay Bottom Sheet            */}
+       {/* ======================================== */}
+       <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none" className="z-30">
+         {isLoading ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.bgCanvas }}>
+             <Text className="text-muted-foreground">Loading trending ideas...</Text>
+           </View>
+         ) : error ? (
+           <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.bgCanvas }}>
+             <Text className="text-destructive" style={{ textAlign: 'center', marginBottom: 16 }}>
+               Failed to load trending ideas
+             </Text>
+             <Pressable onPress={() => useTrendingStore.getState().fetchSections()}>
+               <Text className="text-primary font-medium">Retry</Text>
+             </Pressable>
+           </View>
+         ) : (
+           <InspoBottomSheet
+             ref={bottomSheetRef}
+             sections={sections}
+             onTryOnPress={handleTryOnPress}
+             onIndexChange={handleSheetChange}
+           />
+         )}
+       </View>
 
       {/* ======================================== */}
       {/* Layer 4: Inline popup overlay             */}

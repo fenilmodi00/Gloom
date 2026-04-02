@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Pressable, StyleSheet, BackHandler } from 'react-native';
+import { View, Pressable, BackHandler } from 'react-native';
 import { useRouter, useLocalSearchParams, Href } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,329 +7,115 @@ import { X, Camera as CameraIcon, Check, Image as ImageIcon } from 'lucide-react
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { ZoomIn, FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
-
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
-import { Typography } from '@/constants/Typography';
-import { Colors } from '@/constants/Colors';
-import { useAuthStore } from '@/lib/store/auth.store';
-import { tagWardrobeItem } from '@/lib/gemini';
-import { supabase } from '@/lib/supabase';
-import type { Category } from '@/types/wardrobe';
+import { useWardrobeProcessingStore } from '@/lib/store/wardrobe-processing.store';
 
-// Polling configuration
-const POLL_INTERVAL_MS = 2000;
-const MAX_POLL_ATTEMPTS = 30;
-
-/**
- * Poll for background removal completion
- * Returns the item ID when processing is complete or failed
- */
-async function pollForProcessingCompletion(
-  itemId: string,
-  onStatusUpdate?: (status: string) => void
-): Promise<{ success: boolean; error?: string }> {
-  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
-    // Query the database for current processing status
-    const { data, error } = await supabase
-      .from('wardrobe_items')
-      .select('processing_status, cutout_url')
-      .eq('id', itemId)
-      .single();
-
-    if (error) {
-      console.error(`Poll attempt ${attempt + 1} error:`, error);
-      // Continue polling despite errors (might be transient)
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
-      continue;
-    }
-
-    const status = data?.processing_status;
-    onStatusUpdate?.(status);
-
-    if (status === 'completed') {
-      console.log(`Background removal completed for item ${itemId}`);
-      return { success: true };
-    }
-
-    if (status === 'failed') {
-      console.error(`Background removal failed for item ${itemId}`);
-      return { success: false, error: 'Background removal processing failed' };
-    }
-
-    // Status is 'pending' or 'processing' - wait and retry
-    console.log(`Waiting for processing... attempt ${attempt + 1}/${MAX_POLL_ATTEMPTS}`);
-    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
-  }
-
-  return { success: false, error: 'Processing timeout - took too long' };
-}
-
-/**
- * Trigger background removal via Edge Function (through backend proxy)
- */
-async function triggerBackgroundRemoval(
-  itemId: string,
-  filePath: string,
-  authToken: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-    const response = await fetch(`${backendUrl}/api/v1/edge-function/process_rembg`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
-        'X-User-JWT': authToken,
-      },
-      body: JSON.stringify({ itemId, filePath }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Edge Function error:', errorData);
-      return { success: false, error: errorData.error || 'Failed to trigger background removal' };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to call Edge Function:', error);
-    return { success: false, error: 'Network error calling background removal service' };
-  }
-}
+const ORIGIN_PATHS: Record<string, string> = {
+  wardrobe: '/(tabs)/wardrobe',
+  inspo: '/(tabs)/inspo',
+  outfits: '/(tabs)/outfits',
+};
 
 export default function AddItemScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { origin, ts } = useLocalSearchParams<{ origin?: string; ts?: string }>();
+  const { origin } = useLocalSearchParams<{ origin?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Processing...');
   const [showUploadScreen, setShowUploadScreen] = useState(true);
+  const { addItem } = useWardrobeStore();
+  const { startProcessing } = useWardrobeProcessingStore();
 
-  const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
-  const { user } = useAuthStore();
+  useEffect(() => {
+    setPhotoUri(null);
+    setShowUploadScreen(true);
+    setIsProcessing(false);
+  }, []);
 
-   // Reset state on entry
-   useEffect(() => {
-     setPhotoUri(null);
-     setShowUploadScreen(true);
-   }, []);
-
-  // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      if (photoUri) {
-        setPhotoUri(null);
-        return true;
-      }
-      if (!showUploadScreen) {
-        setShowUploadScreen(true);
-        return true;
-      }
+      if (photoUri) { setPhotoUri(null); return true; }
+      if (!showUploadScreen) { setShowUploadScreen(true); return true; }
       return false;
     };
-
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
   }, [photoUri, showUploadScreen]);
-
-  const ORIGIN_PATHS: Record<string, string> = {
-    wardrobe: '/(tabs)/wardrobe',
-    inspo: '/(tabs)/inspo',
-    outfits: '/(tabs)/outfits',
-  };
 
   const closeScreen = () => {
     const dest = origin ? ORIGIN_PATHS[origin as keyof typeof ORIGIN_PATHS] : ORIGIN_PATHS.wardrobe;
     router.replace(dest as Href);
   };
 
-  const goBack = () => {
-    if (photoUri) {
-      setPhotoUri(null);
-    } else if (!showUploadScreen) {
-      setShowUploadScreen(true);
-    } else {
-      closeScreen();
-    }
-  };
-
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-        base64: true,
+        mediaTypes: ['images'], allowsEditing: true, aspect: [3, 4], quality: 0.8, base64: true,
       });
-
-      if (!result.canceled && result.assets[0]) {
-        setPhotoUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Gallery error:', error);
-    }
+      if (!result.canceled && result.assets[0]) setPhotoUri(result.assets[0].uri);
+    } catch (error) { console.error('Gallery error:', error); }
   };
 
   const takePhoto = async () => {
-    if (cameraRef.current) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: true,
-        });
-        if (photo) {
-          setPhotoUri(photo.uri);
-        }
-      } catch (error) {
-         console.error('Camera error:', error);
-      }
+    if (!cameraRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: true });
+      if (photo) setPhotoUri(photo.uri);
+    } catch (error) { console.error('Camera error:', error); }
+  };
+
+  const handleSave = async () => {
+    if (!photoUri) return;
+    setIsProcessing(true);
+    setLoadingMessage('Uploading image...');
+    try {
+      setLoadingMessage('Saving to wardrobe...');
+      const newItem = await addItem({
+        image_url: photoUri, category: 'tops', sub_category: null, colors: [],
+        style_tags: [], occasion_tags: [], vibe_tags: [], fabric_guess: null, processing_status: 'processing',
+      });
+      startProcessing(newItem.id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      closeScreen();
+    } catch (error) {
+      console.error('Save error:', error);
+      setIsProcessing(false);
     }
   };
 
-   const handleSave = async () => {
-     if (!photoUri || (!user && !__DEV__)) return;
-
-     setIsProcessing(true);
-     setLoadingMessage('Uploading image...');
-
-     try {
-       // Get auth session for Edge Function calls
-       const { data: sessionData } = await supabase.auth.getSession();
-       let authToken = sessionData?.session?.access_token;
-
-       if (!authToken && __DEV__) {
-         // In DEV mode, use the anon key as fallback token for Edge Functions
-         authToken = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-       }
-
-       if (!authToken) {
-         console.error('No auth token available');
-         setIsProcessing(false);
-         return;
-       }
-
-       // Upload to temporary storage and create wardrobe item with processing status
-        setLoadingMessage('Saving to wardrobe...');
-        const newItem = await addItem({
-          image_url: photoUri,
-          category: 'tops', // Default category, will be updated after AI tagging
-          sub_category: null,
-          colors: [],
-          style_tags: [],
-          occasion_tags: [],
-          vibe_tags: [],
-          fabric_guess: null,
-          processing_status: 'processing',
-        });
-
-        // Generate file path for background removal - must match what was uploaded to storage
-        const { user } = useAuthStore.getState();
-        const userId = user?.id || 'dev-user';
-        const fileExt = photoUri.toString().split('.').pop() || 'jpg';
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `${userId}/temp/${fileName}`;
-
-       // Skip background removal in dev mode without real session (anon key lacks 'sub' claim)
-       // Background removal requires a valid user JWT with 'sub' claim for Supabase Edge Functions
-       const hasRealSession = sessionData?.session?.access_token && sessionData.session.user;
-       
-       if (hasRealSession) {
-         setLoadingMessage('Removing background...');
-
-         // Trigger background removal via Edge Function
-         console.log('[EDGE-FUNCTION] Calling backend proxy:', `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/edge-function/process_rembg`);
-         const triggerResult = await triggerBackgroundRemoval(newItem.id, filePath, authToken);
-         console.log('[EDGE-FUNCTION] Result:', JSON.stringify(triggerResult));
-         
-         if (!triggerResult.success) {
-           console.error('Failed to trigger background removal:', triggerResult.error);
-           // Continue anyway - AI tagging can still happen
-         } else {
-           // Poll for background removal completion
-           const pollResult = await pollForProcessingCompletion(newItem.id, (status) => {
-             if (status === 'processing') {
-               setLoadingMessage('Processing image...');
-             }
-           });
-
-           if (!pollResult.success) {
-             console.error('Background removal polling failed:', pollResult.error);
-             // Continue anyway - item is still saved
-           }
-         }
-       } else {
-         console.log('[DEV-MODE] Skipping background removal - no real user session');
-       }
-
-        setLoadingMessage('Analyzing with AI...');
-        // Use the remote Supabase URL (already uploaded) instead of local file URI
-        // The image_url in newItem is the Supabase storage URL
-        const imageUrl = typeof newItem.image_url === 'string' ? newItem.image_url : photoUri;
-        const tags = await tagWardrobeItem(imageUrl);
-        
-        // Update the item with AI tags
-        await updateItemTags(newItem.id, tags);
-
-       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-       closeScreen();
-     } catch (error) {
-       console.error('Save error:', error);
-       setIsProcessing(false);
-     }
-   };
-
-  // 1. Initial Choice Screen
+  // Initial Choice Screen
   if (showUploadScreen && !photoUri) {
     return (
-      <Animated.View 
-        entering={ZoomIn.duration(350)}
-        style={[styles.uploadContainer, { paddingTop: insets.top }]}
-      >
-        <View style={styles.uploadHeader}>
-          <Pressable onPress={closeScreen} style={styles.backButton}>
-            <X size={24} color={Colors.light.textPrimary} />
-          </Pressable>
+      <Animated.View entering={ZoomIn.duration(350)} className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+        <View className="px-6 py-4">
+          <Pressable onPress={closeScreen} className="p-2 -ml-2"><X size={24} className="text-text-primary" /></Pressable>
         </View>
-
-        <View style={styles.uploadContent}>
-          <View style={styles.illustrationCard}>
-            <View style={styles.illustrationImage}>
-              <CameraIcon size={48} color={Colors.light.primary} />
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-full max-w-[280px] bg-surface rounded-2xl p-4 mb-10 shadow-sm">
+            <View className="w-full aspect-[3/4] rounded-xl bg-surface-raised items-center justify-center">
+              <CameraIcon size={48} color="#8B7355" />
             </View>
           </View>
-
-          <View style={styles.textSection}>
-            <Text style={styles.uploadTitle}>Add to your Wardrobe</Text>
-            <Text style={styles.uploadSubtitle}>
-              Snap a photo or choose from your library to start styling your next look.
-            </Text>
+          <View className="items-center mb-10">
+            <Text className="text-2xl font-bold tracking-tight text-text-primary text-center mb-3">Add to your Wardrobe</Text>
+            <Text className="text-base text-text-secondary text-center">Snap a photo or choose from your library to start styling your next look.</Text>
           </View>
-
-          <View style={styles.actionButtons}>
-            <Pressable
-              style={styles.captureButton}
-              onPress={() => setShowUploadScreen(false)}
-            >
+          <View className="w-full max-w-[320px] gap-4">
+            <Pressable onPress={() => setShowUploadScreen(false)} className="flex-row items-center justify-center gap-3 bg-primary py-4 rounded-full">
               <CameraIcon size={20} color="#1c1917" />
-              <Text style={styles.captureButtonText}>Capture</Text>
+              <Text className="font-medium text-text-primary">Capture</Text>
             </Pressable>
-
-            <Pressable
-              style={styles.galleryButton}
-              onPress={pickImage}
-            >
-              <ImageIcon size={20} color={Colors.light.textPrimary} />
-              <Text style={styles.galleryButtonText}>Upload from Gallery</Text>
+            <Pressable onPress={pickImage} className="flex-row items-center justify-center gap-3 bg-surface border border-navbar-border py-4 rounded-full">
+              <ImageIcon size={20} className="text-text-primary" />
+              <Text className="font-medium text-text-primary">Upload from Gallery</Text>
             </Pressable>
           </View>
         </View>
@@ -337,72 +123,60 @@ export default function AddItemScreen() {
     );
   }
 
-  // 2. Camera View
+  // Camera View
   if (!showUploadScreen && !photoUri) {
     if (!permission?.granted) {
       return (
-        <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
-          <Text style={styles.permissionText}>We need camera permission to continue</Text>
-          <Pressable style={styles.permissionButton} onPress={requestPermission}>
-            <Text style={styles.permissionButtonText}>Grant Permission</Text>
+        <View className="flex-1 bg-background justify-center items-center p-8" style={{ paddingTop: insets.top }}>
+          <Text className="text-base text-center mb-6">We need camera permission to continue</Text>
+          <Pressable onPress={requestPermission} className="bg-primary py-3.5 px-7 rounded-full">
+            <Text className="font-medium text-surface">Grant Permission</Text>
           </Pressable>
-          <Pressable onPress={closeScreen} style={{ marginTop: 24 }}>
-            <Text style={{ color: Colors.light.textSecondary }}>Cancel</Text>
-          </Pressable>
+          <Pressable onPress={closeScreen} className="mt-6"><Text className="text-text-secondary">Cancel</Text></Pressable>
         </View>
       );
     }
-
     return (
-      <View style={styles.cameraContainer}>
-        <View style={[styles.cameraHeader, { paddingTop: insets.top }]}>
-          <Pressable onPress={() => setShowUploadScreen(true)} style={styles.headerButton}>
-            <X size={24} color="white" />
-          </Pressable>
-          <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
-          <View style={styles.headerButton} />
+      <View className="flex-1 bg-black">
+        <View className="flex-row justify-between items-center px-4" style={{ paddingTop: insets.top }}>
+          <Pressable onPress={() => setShowUploadScreen(true)} className="p-2 w-10"><X size={24} color="white" /></Pressable>
+          <Text className="font-medium text-white">Add to Wardrobe</Text>
+          <View className="w-10" />
         </View>
-
-        <View style={styles.cameraPreview}>
-          <CameraView ref={cameraRef} style={styles.cameraView} facing="back" />
-          <View style={styles.guideOverlay} />
-          <Text style={styles.guideText}>Position item clearly in frame</Text>
+        <View className="flex-1 m-4 rounded-3xl overflow-hidden">
+          <CameraView ref={cameraRef} className="flex-1" facing="back" />
+          <View className="absolute inset-10 border-2 border-white/30 border-dashed rounded-2xl" />
+          <Text className="absolute bottom-8 left-0 right-0 text-center text-white/80">Position item clearly in frame</Text>
         </View>
-
-        <View style={[styles.cameraControls, { paddingBottom: insets.bottom + 24 }]}>
-          <Pressable style={styles.captureButtonOuter} onPress={takePhoto}>
-            <View style={styles.captureButtonInner} />
+        <View className="items-center py-6" style={{ paddingBottom: insets.bottom + 24 }}>
+          <Pressable onPress={takePhoto} className="w-20 h-20 rounded-full border-4 border-white/50 items-center justify-center">
+            <View className="w-16 h-16 rounded-full bg-white" />
           </Pressable>
         </View>
       </View>
     );
   }
 
-  // 3. Preview Screen
+  // Preview Screen
   if (photoUri) {
     return (
-      <View style={[styles.previewContainer, { paddingTop: insets.top }]}>
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
         <LoadingOverlay visible={isProcessing} message={loadingMessage} />
-        
-        <View style={styles.previewHeader}>
-          <Pressable onPress={() => setPhotoUri(null)} style={styles.headerButton}>
-            <X size={24} color={Colors.light.textPrimary} />
-          </Pressable>
-          <Text style={styles.previewTitle}>Preview</Text>
-          <View style={styles.headerButton} />
+        <View className="flex-row justify-between items-center px-4">
+          <Pressable onPress={() => setPhotoUri(null)} className="p-2 w-10"><X size={24} className="text-text-primary" /></Pressable>
+          <Text className="font-medium">Preview</Text>
+          <View className="w-10" />
         </View>
-
-        <View style={styles.previewImageContainer}>
-          <Image source={{ uri: photoUri }} style={styles.previewImage} contentFit="cover" />
+        <View className="flex-1 m-4 rounded-3xl bg-white overflow-hidden">
+          <Image source={{ uri: photoUri }} className="flex-1" contentFit="cover" />
         </View>
-
-        <View style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>
-          <Pressable style={styles.retakeButton} onPress={() => setPhotoUri(null)}>
-            <Text style={styles.retakeButtonText}>Retake</Text>
+        <View className="flex-row px-4 gap-3" style={{ paddingBottom: insets.bottom + 16 }}>
+          <Pressable onPress={() => setPhotoUri(null)} className="flex-1 h-14 rounded-[27px] border border-navbar-border items-center justify-center">
+            <Text className="font-medium">Retake</Text>
           </Pressable>
-          <Pressable style={styles.saveButton} onPress={handleSave}>
+          <Pressable onPress={handleSave} className="flex-[1.5] h-14 rounded-[27px] bg-primary flex-row items-center justify-center gap-2">
             <Check size={18} color="white" />
-            <Text style={styles.saveButtonText}>Analyze & Save</Text>
+            <Text className="font-medium text-white">Analyze & Save</Text>
           </Pressable>
         </View>
       </View>
@@ -411,232 +185,3 @@ export default function AddItemScreen() {
 
   return null;
 }
-
-const styles = StyleSheet.create({
-  uploadContainer: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  uploadHeader: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  backButton: {
-    padding: 8,
-    marginLeft: -8,
-  },
-  uploadContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  illustrationCard: {
-    width: '100%',
-    maxWidth: 280,
-    backgroundColor: Colors.light.bgSurface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  illustrationImage: {
-    width: '100%',
-    aspectRatio: 3 / 4,
-    borderRadius: 12,
-    backgroundColor: Colors.light.bgSurfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  textSection: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  uploadTitle: {
-    ...Typography.heading2,
-    color: Colors.light.textPrimary,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  uploadSubtitle: {
-    ...Typography.body,
-    color: Colors.light.textSecondary,
-    textAlign: 'center',
-  },
-  actionButtons: {
-    width: '100%',
-    maxWidth: 320,
-    gap: 16,
-  },
-  captureButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 16,
-    borderRadius: 999,
-  },
-  captureButtonText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.textPrimary,
-  },
-  galleryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: Colors.light.bgSurface,
-    borderWidth: 1,
-    borderColor: Colors.light.navbarBorder,
-    paddingVertical: 16,
-    borderRadius: 999,
-  },
-  galleryButtonText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.textPrimary,
-  },
-  permissionContainer: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  permissionText: {
-    ...Typography.body,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  permissionButton: {
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 999,
-  },
-  permissionButtonText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.bgSurface,
-  },
-  cameraContainer: {
-    flex: 1,
-    backgroundColor: 'black',
-  },
-  cameraHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  headerButton: {
-    padding: 8,
-    width: 40,
-  },
-  cameraTitle: {
-    ...Typography.uiLabelMedium,
-    color: 'white',
-  },
-  cameraPreview: {
-    flex: 1,
-    margin: 16,
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  cameraView: {
-    flex: 1,
-  },
-  guideOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    margin: 40,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-    borderStyle: 'dashed',
-    borderRadius: 16,
-  },
-  guideText: {
-    position: 'absolute',
-    bottom: 32,
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-    color: 'white',
-    opacity: 0.8,
-  },
-  cameraControls: {
-    alignItems: 'center',
-    paddingVertical: 24,
-  },
-  captureButtonOuter: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  captureButtonInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'white',
-  },
-  previewContainer: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  previewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  previewTitle: {
-    ...Typography.uiLabelMedium,
-  },
-  previewImageContainer: {
-    flex: 1,
-    margin: 16,
-    borderRadius: 24,
-    backgroundColor: 'white',
-    overflow: 'hidden',
-  },
-  previewImage: {
-    flex: 1,
-  },
-  previewActions: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  retakeButton: {
-    flex: 1,
-    height: 54,
-    borderRadius: 27,
-    borderWidth: 1,
-    borderColor: Colors.light.navbarBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  retakeButtonText: {
-    ...Typography.uiLabelMedium,
-  },
-  saveButton: {
-    flex: 1.5,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: Colors.light.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  saveButtonText: {
-    ...Typography.uiLabelMedium,
-    color: 'white',
-  },
-});

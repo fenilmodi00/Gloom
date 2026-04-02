@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandAsyncStorage } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import type { TrendingSection } from '@/types/inspo';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const TRENDING_JSON_URL =
-  'https://raw.githubusercontent.com/OWNER/REPO/main/trending-ideas.json';
+const TRENDING_CONFIG_BUCKET = 'trending-config';
+const TRENDING_CONFIG_FILE = 'trending-ideas.json';
+const FETCH_TIMEOUT_MS = 10000; // 10 seconds
 
 // Fallback data (current hardcoded sections)
 const FALLBACK_SECTIONS: TrendingSection[] = [
@@ -51,47 +53,72 @@ interface TrendingState {
   lastFetched: number | null;
 
   fetchSections: () => Promise<void>;
+  reset: () => void;
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
 
 export const useTrendingStore = create<TrendingState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       sections: FALLBACK_SECTIONS,
       isLoading: false,
       error: null,
       lastFetched: null,
 
-      fetchSections: async () => {
-        set({ isLoading: true, error: null });
+fetchSections: async () => {
+    set({ isLoading: true, error: null });
 
-        try {
-          const response = await fetch(TRENDING_JSON_URL);
+    try {
+      // Get public URL and fetch directly (more reliable in React Native)
+      const urlResult = supabase.storage
+        .from(TRENDING_CONFIG_BUCKET)
+        .getPublicUrl(TRENDING_CONFIG_FILE);
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
+      const publicUrl = urlResult.data?.publicUrl;
+      if (!publicUrl) {
+        throw new Error('No public URL returned');
+      }
 
-          const data = await response.json();
+      // Fetch the JSON directly with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-          if (!data.sections || !Array.isArray(data.sections)) {
-            throw new Error('Invalid JSON structure: missing sections array');
-          }
+      const response = await fetch(publicUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
 
-          set({
-            sections: data.sections,
-            isLoading: false,
-            lastFetched: Date.now(),
-          });
-        } catch (err) {
-          console.error('[TrendingStore] Fetch failed:', err);
-          set({
-            error: err instanceof Error ? err.message : 'Unknown error',
-            isLoading: false,
-            // Keep existing sections on error
-          });
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+if (!data.sections || !Array.isArray(data.sections)) {
+throw new Error('Invalid JSON structure: missing sections array');
+}
+
+set({
+sections: data.sections,
+isLoading: false,
+lastFetched: Date.now(),
+});
+} catch (err) {
+console.error('[TrendingStore] Fetch failed:', err);
+set({
+error: err instanceof Error ? err.message : 'Unknown error',
+isLoading: false,
+// Keep existing sections on error
+});
+}
+      },
+
+      reset: () => {
+        set({
+          sections: FALLBACK_SECTIONS,
+          isLoading: false,
+          error: null,
+          lastFetched: null,
+        });
       },
     }),
     {
@@ -109,3 +136,4 @@ export const useTrendingStore = create<TrendingState>()(
 
 export const useTrendingSections = () => useTrendingStore((s) => s.sections);
 export const useTrendingLoading = () => useTrendingStore((s) => s.isLoading);
+export const useTrendingError = () => useTrendingStore((s) => s.error);

@@ -13,6 +13,7 @@ import (
 	"backend/internal/handlers/wardrobe"
 	"backend/internal/middleware"
 	"backend/internal/response"
+	"backend/internal/services/rembg"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -65,6 +66,10 @@ func New(cfg *config.Config, database *db.DB) *Server {
 
 	wardrobeUploadHandler := wardrobe.NewUploadHandler(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	wardrobeUploadHandler.RegisterRoutes(api)
+
+	rembgClient := rembg.NewClient(cfg.RembgServiceURL)
+	rembgHandler := wardrobe.NewRembgHandler(database, rembgClient, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
+	rembgHandler.RegisterRoutes(api)
 
 	outfitHandler := outfit.New(database)
 	outfitHandler.RegisterRoutes(api)

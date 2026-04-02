@@ -271,8 +271,9 @@ silhouette_tags: profile.silhouette.length > 0
 ? [profile.silhouette[index % profile.silhouette.length]]
 : [],
 vibe_tags: [vibeTags[index % vibeTags.length]],
-fabric_guess: null,
-created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+  fabric_guess: null,
+  created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+  processing_status: 'completed' as const,
 });
 });
 }
@@ -350,8 +351,9 @@ occasion_tags: ['daytime'],
 functional_tags: ['layering_staple'],
 silhouette_tags: [['slim_fit', 'regular_fit', 'oversized'][index % 3]],
 vibe_tags: [vibeTags[0]],
-fabric_guess: null,
-created_at: new Date().toISOString(),
+  fabric_guess: null,
+  created_at: new Date().toISOString(),
+  processing_status: 'completed' as const,
 });
 });
 
@@ -369,9 +371,10 @@ style_tags: [['casual', 'minimalist', 'streetwear'][index % 3]],
 occasion_tags: ['daytime'],
 functional_tags: ['base_layer'],
 silhouette_tags: [['slim_fit', 'regular_fit', 'cropped'][index % 3]],
-vibe_tags: ['timeless'],
-fabric_guess: null,
-created_at: new Date().toISOString(),
+  vibe_tags: ['timeless'],
+  fabric_guess: null,
+  created_at: new Date().toISOString(),
+  processing_status: 'completed' as const,
 });
 });
 
@@ -390,8 +393,9 @@ occasion_tags: ['daytime'],
 functional_tags: [], // Shoes don't have functional tags
 silhouette_tags: [], // Shoes don't use silhouette tags
 vibe_tags: [['timeless', 'modern_classic', 'trend_aware'][index % 3]],
-fabric_guess: null,
-created_at: new Date().toISOString(),
+  fabric_guess: null,
+  created_at: new Date().toISOString(),
+  processing_status: 'completed' as const,
 });
 });
 
@@ -410,8 +414,9 @@ occasion_tags: ['daytime'],
 functional_tags: ['statement_piece'],
 silhouette_tags: [], // Accessories don't have silhouette
 vibe_tags: [['timeless', 'modern_classic', 'vintage_inspired'][index % 3]],
-fabric_guess: null,
-created_at: new Date().toISOString(),
+  fabric_guess: null,
+  created_at: new Date().toISOString(),
+  processing_status: 'completed' as const,
 });
 });
 

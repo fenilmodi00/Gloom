@@ -5,6 +5,19 @@ import { zustandAsyncStorage } from '../storage';
 import { useAuthStore } from './auth.store';
 import { supabase } from '../supabase';
 
+interface RNFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
+// Extend FormData for React Native file uploads
+declare global {
+  interface FormData {
+    append(name: string, value: RNFile): void;
+  }
+}
+
 interface WardrobeState {
   items: WardrobeItem[];
   selectedCategory: Category | 'all';
@@ -59,12 +72,12 @@ export const useWardrobeStore = create<WardrobeState>()(
       console.log('[WARDROBE] Step 2: Uploading to backend:', `${backendUrl}/api/v1/wardrobe/upload`);
       const formData = new FormData();
       
-      // Use standard React Native file object format instead of fetching a blob
-      formData.append('file', {
-        uri: itemInput.image_url as string,
-        name: fileName,
-        type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
-      } as any);
+    // Use standard React Native file object format instead of fetching a blob
+    formData.append('file', {
+      uri: itemInput.image_url as string,
+      name: fileName,
+      type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+    } as RNFile);
       
       formData.append('bucket', 'wardrobe-temp');
       formData.append('path', tempFilePath);
@@ -289,13 +302,13 @@ export const useWardrobeStore = create<WardrobeState>()(
           const { data: presignData } = await presignResponse.json();
           const { url, path } = presignData;
 
-          // Upload to signed URL using FormData to handle local URI properly
-          const formData = new FormData();
-          formData.append('file', {
-            uri: uri,
-            name: fileName,
-            type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
-          } as any);
+    // Upload to signed URL using FormData to handle local URI properly
+    const formData = new FormData();
+    formData.append('file', {
+      uri: uri,
+      name: fileName,
+      type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+    } as RNFile);
 
           const uploadResponse = await fetch(url, {
             method: 'PUT',
@@ -307,21 +320,21 @@ export const useWardrobeStore = create<WardrobeState>()(
           // but fetching binary from local URI in RN is exactly what's failing.
           // Let's try the XHR way for base64/blob if needed, but andoid fetch(file://) is the main culprit.
           
-          if (!uploadResponse.ok) {
-            // If it failed, let's try the more robust XHR method to get a blob for the PUT request
-            const blob = await new Promise((resolve, reject) => {
-              const xhr = new XMLHttpRequest();
-              xhr.onload = () => resolve(xhr.response);
-              xhr.onerror = () => reject(new TypeError('Network request failed to get local blob'));
-              xhr.responseType = 'blob';
-              xhr.open('GET', uri, true);
-              xhr.send(null);
-            });
+    if (!uploadResponse.ok) {
+      // If it failed, let's try the more robust XHR method to get a blob for the PUT request
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = () => resolve(xhr.response);
+        xhr.onerror = () => reject(new TypeError('Network request failed to get local blob'));
+        xhr.responseType = 'blob';
+        xhr.open('GET', uri, true);
+        xhr.send(null);
+      });
 
-            const retryResponse = await fetch(url, {
-              method: 'PUT',
-              body: blob as any,
-            });
+      const retryResponse = await fetch(url, {
+        method: 'PUT',
+        body: blob,
+      });
 
             if (!retryResponse.ok) {
               throw new Error('Failed to upload image to storage');
