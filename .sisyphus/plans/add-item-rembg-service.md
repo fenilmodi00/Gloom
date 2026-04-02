@@ -171,7 +171,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
 
 ## TODOs
 
-- [ ] 1. Fix TypeScript Types + Mock Data Errors
+- [x] 1. Fix TypeScript Types + Mock Data Errors
 
   **What to do**:
   - Add `ProcessingStatus` union type to `types/wardrobe.ts`:
@@ -237,7 +237,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
 
 ---
 
-- [ ] 2. Add Zod Validation Schemas for Image Upload
+- [x] 2. Add Zod Validation Schemas for Image Upload
 
   **What to do**:
   - Create `lib/schemas/wardrobe.ts` validation for image upload (if not exists, extend existing)
@@ -311,7 +311,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
 
 ---
 
-- [ ] 3. Create TDD Test Scaffolds (Failing Tests)
+- [x] 3. Create TDD Test Scaffolds (Failing Tests)
 
   **What to do**:
   - Create `__tests__/wardrobe-processing.test.ts` with failing tests for processing store
@@ -366,7 +366,7 @@ Wave FINAL (After ALL tasks — 4 parallel reviews, then user okay):
 
 ---
 
-- [ ] 4. Define Rembg Service Interface + Types
+- [x] 4. Define Rembg Service Interface + Types
 
   **What to do**:
   - Create `types/rembg.ts` with RembgService interface
