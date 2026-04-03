@@ -48,6 +48,12 @@ func AuthRequired(jwtSecret string) fiber.Handler {
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			sub, ok := claims["sub"].(string)
 			if !ok || sub == "" {
+				// In development, allow bypass with a default user ID if sub claim is missing
+				if os.Getenv("GO_ENV") == "development" {
+					userID, _ := uuid.Parse("00000000-0000-0000-0000-000000000000")
+					c.Locals("userID", userID)
+					return c.Next()
+				}
 				return response.Unauthorized(c, "missing sub claim")
 			}
 

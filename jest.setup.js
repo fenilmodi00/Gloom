@@ -28,3 +28,15 @@ jest.mock('./components/shared/Toast', () => ({
   useToast: jest.fn(() => ({ showToast: jest.fn() })),
   ToastProvider: ({ children }) => children,
 }));
+
+// Add comprehensive mocks for window and __DEV__
+global.window = {
+    localStorage: {
+        setItem: jest.fn(),
+        getItem: jest.fn(() => {}),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
+        length: 0,
+    },
+};
+global.__DEV__ = true; // Simulate development mode

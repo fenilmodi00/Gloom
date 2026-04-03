@@ -1,9 +1,6 @@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
-import {
-  SkeletonCard,
-  SkeletonVariant
-} from '@/components/shared/WardrobeSkeleton';
+import { SkeletonCard } from '@/components/shared/SkeletonCard';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 
@@ -42,40 +39,10 @@ const GRADIENT_END = Colors.light.bgSurfaceRaised;
 const CARD_WIDTH = 120;
 const CARD_HEIGHT = 150;
 
-
-// ─────────────────────────────────────────────
-// ← CHANGED: maps a category key → skeleton variant
-// ─────────────────────────────────────────────
-const getCategoryVariant = (key: Category): SkeletonVariant => {
-  const map: Partial<Record<Category, SkeletonVariant>> = {
-    tops: 'tops',
-    bottoms: 'bottoms',
-    shoes: 'shoes',
-    bags: 'bags',
-  };
-  return map[key] ?? 'default';
-};
-
-
-interface CategorySectionProps {
-  label: string;
-  items: WardrobeItem[];
-  index: number;
-  categoryKey: Category;   // ← CHANGED: added
-  onSeeAll?: () => void;
-}
-
-
-// ← CHANGED: CategoryCard now accepts a variant prop
 const CategoryCard = memo(
-  ({
-    item,
-    variant = 'default',
-  }: {
+  ({ item }: {
     item: WardrobeItem;
-    variant?: SkeletonVariant;
   }) => {
-    const [isLoaded, setIsLoaded] = useState(false);
     const imageUrl = getWardrobeItemImageUrl(item);
     const source = imageUrl ? { uri: imageUrl } : undefined;
 
@@ -85,43 +52,33 @@ const CategoryCard = memo(
 
     return (
       <View style={styles.cardContainer}>
-        {/* Show skeleton/shimmer for processing items */}
-        {isProcessing && <SkeletonCard variant={variant} />}
-        {/* Show regular skeleton for loading images */}
-        {!isProcessing && !isLoaded && <SkeletonCard variant={variant} />}
+        {/* Show skeleton for processing items */}
+        {isProcessing && <SkeletonCard />}
         {/* Display image (cutout when available, fallback to original) */}
         <Image
           source={source}
-          style={[styles.cardImage, { opacity: isLoaded ? 1 : 0 }]}
+          style={[styles.cardImage, { opacity: isProcessing ? 0 : 1 }]}
           contentFit="contain"
-          onLoad={() => setIsLoaded(true)}
         />
-        {/* Optional: Add visual indicator for processing state */}
-        {isProcessing && (
-          <View style={styles.processingOverlay}>
-            {/* Could add a spinner or other visual indicator here */}
-          </View>
-        )}
       </View>
     );
   }
 );
 
-
-// ← CHANGED: CategorySection derives variant from categoryKey and passes it down
 function CategorySection({
   label,
   items,
-  categoryKey,
   onSeeAll,
-}: CategorySectionProps) {
-  const variant = getCategoryVariant(categoryKey); // ← CHANGED
-
+}: {
+  label: string;
+  items: WardrobeItem[];
+  onSeeAll?: () => void;
+}) {
   const renderItem = useCallback(
     ({ item }: { item: WardrobeItem }) => (
-      <CategoryCard item={item} variant={variant} /> // ← CHANGED
+      <CategoryCard item={item} />
     ),
-    [variant]
+    []
   );
 
   if (items.length === 0) return null;
@@ -148,7 +105,7 @@ function CategorySection({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16 }}
       />
-    </LinearGradient>
+   </LinearGradient>
   );
 }
 
@@ -192,24 +149,19 @@ export default function WardrobeScreen() {
     navigateToAddItem('camera');
   };
 
-  const navigateToAddItem = (method: 'camera' | 'gallery') => {
+  const navigateToAddItem = useCallback((method: 'camera' | 'gallery') => {
     setIsAddSheetOpen(false);
     router.push({
       pathname: '/(tabs)/wardrobe/add-item',
       params: { method, origin: 'wardrobe' },
     });
-  };
+  }, [router]);
 
-  const sections = useMemo(() => {
-    return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
-  }, [groupedItems]);
+   const sections = useMemo(() => {
+     return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
+   }, [groupedItems]);
 
-const firstCategoryRenderItem = useCallback(
-  ({ item }: { item: WardrobeItem }) => <CategoryCard item={item} />,
-  []
-);
-
-const renderItem = useCallback(
+   const renderItem = useCallback(
   ({
     item,
     index,
@@ -218,12 +170,6 @@ const renderItem = useCallback(
     index: number;
   }) => {
     if (item === 'header') {
-      // ← CHANGED: derive variant for first category in header
-      const firstVariant =
-        sections.length > 0
-          ? getCategoryVariant(sections[0].key)
-          : 'default';
-
       return (
         <LinearGradient
           colors={[GRADIENT_START, GRADIENT_END]}
@@ -262,12 +208,10 @@ const renderItem = useCallback(
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.sectionContent}
               >
-                {/* ← CHANGED: pass firstVariant down to each card */}
                 {(groupedItems[sections[0].key] || []).map((item) => (
                   <CategoryCard
                     key={item.id}
                     item={item}
-                    variant={firstVariant}
                   />
                 ))}
               </ScrollView>
@@ -284,12 +228,10 @@ const renderItem = useCallback(
       <CategorySection
         label={item.label}
         items={groupedItems[item.key] || []}
-        index={index}
-        categoryKey={item.key}   // ← CHANGED: pass key for variant lookup
       />
     );
   },
-  [groupedItems, sections, insets.top]
+  [groupedItems, sections, insets.top, navigateToAddItem]
 );
 
   const listData = useMemo(() => {

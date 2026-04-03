@@ -158,7 +158,7 @@ Wave FINAL (Verification):
 
 ---
 
-- [ ] 1. Update Go backend config with new GCP service URL
+- [x] 1. Update Go backend config with new GCP service URL
 
   **What to do**:
   - Add `EXPO_PUBLIC_REMBG_SERVICE_URL=https://outfit-extractor-787746538147.us-central1.run.app` to `backend/.env`
@@ -205,7 +205,7 @@ Wave FINAL (Verification):
 
 ---
 
-- [ ] 2. Update Go rembg client for sync (but slow) service
+- [x] 2. Update Go rembg client for sync (but slow) service
 
   **What to do**:
   - Modify `backend/internal/services/rembg/client.go` to:
@@ -257,7 +257,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 3. Update Go handler for new service response format
+- [x] 3. Update Go handler for new service response format
 
   **What to do**:
   - Modify `backend/internal/handlers/wardrobe/rembg_handler.go`:
@@ -311,7 +311,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 4. Extend backend timeout to handle slow service (20-120s)
+- [x] 4. Extend backend timeout to handle slow service (20-120s)
 
   **What to do**:
   - Update `lib/store/wardrobe-processing.store.ts`:
@@ -360,7 +360,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 5. Update wardrobe-processing store for extended polling
+- [x] 5. Update wardrobe-processing store for extended polling
 
   **What to do**:
   - Ensure `lib/store/wardrobe-processing.store.ts`:
@@ -409,7 +409,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 6. Add skeleton view component for processing state
+- [x] 6. Add skeleton view component for processing state
 
   **What to do**:
   - Create `components/shared/SkeletonCard.tsx`:
@@ -460,7 +460,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 7. Update add-item screen for skeleton view
+- [x] 7. Update add-item screen for skeleton view
 
   **What to do**:
   - Modify `app/(tabs)/wardrobe/add-item.tsx`:
@@ -511,7 +511,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 8. Add fallback handling for timeouts
+- [x] 8. Add fallback handling for timeouts
 
   **What to do**:
   - Update error handling in store and backend:
@@ -562,7 +562,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 9. Test full flow end-to-end
+- [x] 9. Test full flow end-to-end
 
   **What to do**:
   - Run complete integration test:
@@ -614,7 +614,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 10. Update environment documentation
+- [x] 10. Update environment documentation
 
   **What to do**:
   - Update `.env.local.example` with new variables:
@@ -648,7 +648,7 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ---
 
-- [ ] 11. Add unit tests
+- [x] 11. Add unit tests
 
   **What to do**:
   - Add tests for:
@@ -698,16 +698,16 @@ Evidence: .sisyphus/evidence/task-2-gcp-service-call.json
 
 ## Final Verification Wave
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
   Read the plan end-to-end. For each "Must Have": verify implementation exists. For each "Must NOT Have": search for forbidden patterns.
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high`
   Run `go build` + linter for Go, `npx tsc --noEmit` for TypeScript. Review for: error handling, logging, type safety.
 
-- [ ] F3. **Real Manual QA** — `unspecified-high`
+- [x] F3. **Real Manual QA** — `unspecified-high`
   Start from clean state. Execute EVERY QA scenario from EVERY task. Test with real GCP service if available.
 
-- [ ] F4. **Scope Fidelity Check** — `deep`
+- [x] F4. **Scope Fidelity Check** — `deep`
   For each task: verify everything in spec was built. Check "Must NOT do" compliance. Detect any unaccounted changes.
 
 ---

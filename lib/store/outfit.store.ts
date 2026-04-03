@@ -4,6 +4,8 @@ import { useAuthStore } from './auth.store';
 
 import { Outfit, OutfitInput } from '@/types/outfit';
 
+export type { Outfit };
+
 // Helper to get current user ID with dev mode fallback
 const getCurrentUserId = (): string => {
   const { user } = useAuthStore.getState();
@@ -25,6 +27,7 @@ interface OutfitState {
   error: string | null;
   fetchOutfits: () => Promise<void>;
   saveOutfit: (outfit: OutfitInput) => Promise<Outfit | null>;
+  addOutfit: (outfit: Outfit) => void;
   removeOutfit: (id: string) => Promise<void>;
 }
 
@@ -33,7 +36,13 @@ export const useOutfitStore = create<OutfitState>((set) => ({
   isLoading: false,
   error: null,
 
-   fetchOutfits: async () => {
+  addOutfit: (outfit) => {
+    set((state) => ({
+      outfits: [outfit, ...state.outfits],
+    }));
+  },
+
+  fetchOutfits: async () => {
      try {
        set({ isLoading: true, error: null });
 

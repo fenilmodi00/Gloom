@@ -27,8 +27,8 @@ interface WardrobeProcessingState {
   clearAll: () => void;
 }
 
-const MAX_POLL_ATTEMPTS = 60;
-const POLL_INTERVAL_MS = 5000;
+const MAX_POLL_ATTEMPTS = 120;
+const POLL_INTERVAL_MS = 2500;
 
 export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, get) => ({
   processingItems: {},
@@ -46,7 +46,7 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
         },
       },
     }));
-    showToast({ type: 'info', message: 'Processing image in background...' });
+    showToast({ type: 'info', message: 'Processing image in background (may take up to 2 minutes)...' });
     startPolling(itemId);
   },
 

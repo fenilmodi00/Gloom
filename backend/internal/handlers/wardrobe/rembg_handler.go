@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -90,19 +89,11 @@ func (h *RembgHandler) processInBackground(itemID uuid.UUID, userID uuid.UUID, i
 	h.semaphore <- struct{}{}
 	defer func() { <-h.semaphore }()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	// Fetch image from URL
-	imageBytes, err := h.fetchImage(imageURL)
-	if err != nil {
-		log.Printf("ERROR: rembg_fetch userID=%s item=%s err=%v", userID, itemID, err)
-		h.updateFallback(itemID)
-		return
-	}
-
-	// Call rembg service
-	cutoutBytes, err := h.rembgClient.RemoveBackground(ctx, imageBytes, fmt.Sprintf("%s.png", itemID))
+	// Call rembg service with the image URL directly
+	cutoutBytes, err := h.rembgClient.RemoveBackgroundFromURL(ctx, imageURL)
 	if err != nil {
 		log.Printf("ERROR: rembg_process userID=%s item=%s err=%v", userID, itemID, err)
 		h.updateFallback(itemID)
@@ -119,30 +110,15 @@ func (h *RembgHandler) processInBackground(itemID uuid.UUID, userID uuid.UUID, i
 
 	// Update DB with cutout URL and completed status
 	_, err = h.db.Exec(context.Background(), `
-		UPDATE wardrobe_items
-		SET cutout_url = $1, processing_status = 'completed'
-		WHERE id = $2
+	UPDATE wardrobe_items
+	SET cutout_url = $1, processing_status = 'completed'
+	WHERE id = $2
 	`, cutoutURL, itemID)
 	if err != nil {
 		log.Printf("ERROR: rembg_update userID=%s item=%s err=%v", userID, itemID, err)
 	} else {
 		log.Printf("INFO: rembg_complete userID=%s item=%s url=%s", userID, itemID, cutoutURL)
 	}
-}
-
-// fetchImage downloads an image from a URL.
-func (h *RembgHandler) fetchImage(imageURL string) ([]byte, error) {
-	resp, err := http.Get(imageURL)
-	if err != nil {
-		return nil, fmt.Errorf("fetch image: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetch image returned %d", resp.StatusCode)
-	}
-
-	return io.ReadAll(resp.Body)
 }
 
 // uploadCutout uploads the cutout image to Supabase storage.
