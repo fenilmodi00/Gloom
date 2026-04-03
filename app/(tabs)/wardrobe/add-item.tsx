@@ -217,11 +217,12 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
       const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `${userId}/temp/${fileName}`;
 
-      // Upload to temporary storage and create wardrobe item with processing status
+      // Note: Category and tags will be populated by Gemini AI after background removal
+      // We'll save with 'processing' status and let the backend update with AI results
       setLoadingMessage('Saving to wardrobe...');
       const newItem = await addItem({
         image_url: photoUri,
-        category: 'tops', // Default to tops during development
+        category: null, // Will be set by Gemini after RMBG
         sub_category: null,
         colors: [],
         style_tags: [],
