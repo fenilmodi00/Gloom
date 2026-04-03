@@ -38,10 +38,10 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 	// TODO(Phase2): Implement Gemini AI background job for wardrobe item categorization / tagging
 	// TODO(Phase2): Implement background job to create cutout image
 	wardrobeGroup := router.Group("/wardrobe")
-	wardrobeGroup.Get("", h.ListItems)      // Hits /api/v1/wardrobe
-	wardrobeGroup.Get("/", h.ListItems)     // Hits /api/v1/wardrobe/
-	wardrobeGroup.Post("", h.CreateItem)    // Hits /api/v1/wardrobe
-	wardrobeGroup.Post("/", h.CreateItem)   // Hits /api/v1/wardrobe/
+	wardrobeGroup.Get("", h.ListItems)    // Hits /api/v1/wardrobe
+	wardrobeGroup.Get("/", h.ListItems)   // Hits /api/v1/wardrobe/
+	wardrobeGroup.Post("", h.CreateItem)  // Hits /api/v1/wardrobe
+	wardrobeGroup.Post("/", h.CreateItem) // Hits /api/v1/wardrobe/
 	wardrobeGroup.Get("/:id", h.GetItem)
 	wardrobeGroup.Patch("/:id", h.UpdateItem)
 	wardrobeGroup.Delete("/:id", h.DeleteItem)
@@ -97,9 +97,16 @@ func (h *Handler) CreateItem(c *fiber.Ctx) error {
 		return response.ValidationError(c, errs)
 	}
 
-	validCategories := map[string]bool{"tops": true, "bottoms": true, "fullbody": true, "outerwear": true, "shoes": true, "bags": true, "accessories": true}
-	if !validCategories[req.Category] {
-		return response.ValidationError(c, []string{"category: invalid"})
+	// Validate category is required and valid
+	if req.Category == nil || *req.Category == "" {
+		return response.ValidationError(c, []string{"category: required field"})
+	}
+	validCategories := map[string]bool{
+		"tops": true, "bottoms": true, "fullbody": true,
+		"outerwear": true, "shoes": true, "bags": true, "accessories": true,
+	}
+	if !validCategories[*req.Category] {
+		return response.ValidationError(c, []string{"category: invalid value"})
 	}
 
 	if req.ProcessingStatus == "" {
@@ -175,7 +182,7 @@ func (h *Handler) UpdateItem(c *fiber.Ctx) error {
 	}
 	if req.Category != nil {
 		validCategories := map[string]bool{"tops": true, "bottoms": true, "fullbody": true, "outerwear": true, "shoes": true, "bags": true, "accessories": true}
-		if !validCategories[*req.Category] {
+		if *req.Category != "" && !validCategories[*req.Category] {
 			return response.ValidationError(c, []string{"category: invalid"})
 		}
 		setParts = append(setParts, fmt.Sprintf("category = $%d", argID))

@@ -11,6 +11,7 @@ interface ProcessingItem {
   cutoutUrl: string | null;
   pollAttempts: number;
   pollInterval: ReturnType<typeof setInterval> | null;
+  channel: any | null;
 }
 
 interface WardrobeProcessingState {
@@ -24,6 +25,7 @@ interface WardrobeProcessingState {
   getProcessingStatus: (itemId: string) => ProcessingStatus | undefined;
   getProcessingQueue: () => string[];
   isPolling: (itemId: string) => boolean;
+  stopProcessing: (itemId: string) => void;
   clearAll: () => void;
 }
 
@@ -43,11 +45,12 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
           cutoutUrl: null,
           pollAttempts: 0,
           pollInterval: null,
+          channel: null,
         },
       },
     }));
     showToast({ type: 'info', message: 'Processing image in background (may take up to 2 minutes)...' });
-    startPolling(itemId);
+    startRealtimeSubscription(itemId);
   },
 
   updateStatus: (itemId: string, status: ProcessingStatus) => {
@@ -68,15 +71,16 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
 
   onProcessingComplete: (itemId: string, cutoutUrl: string) => {
     stopPolling(itemId);
+    stopRealtimeSubscription(itemId);
 
-    // Update wardrobe store with cutout URL
-    const wardrobeState = useWardrobeStore.getState();
-    const updatedItems = wardrobeState.items.map((item) =>
-      item.id === itemId
-        ? { ...item, cutout_url: cutoutUrl, processing_status: 'completed' as const }
-        : item
-    );
-    wardrobeState.setItems(updatedItems as WardrobeItem[]);
+    // Update wardrobe store with cutout URL using functional setState
+    useWardrobeStore.setState((state) => ({
+      items: state.items.map((item) =>
+        item.id === itemId
+          ? { ...item, cutout_url: cutoutUrl, processing_status: 'completed' as const }
+          : item
+      ),
+    }));
 
     set((state) => {
       const item = state.processingItems[itemId];
@@ -97,19 +101,20 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
 
   onProcessingFailed: (itemId: string, error: Error) => {
     stopPolling(itemId);
+    stopRealtimeSubscription(itemId);
 
     // Determine if this is a fallback scenario (from polling timeout)
     const isFallback = error.message === 'Processing timeout' || error.message === 'Processing fell back to original';
     const status: ProcessingStatus = isFallback ? 'fallback' : 'failed';
 
-    // Update wardrobe store with fallback/failed status
-    const wardrobeState = useWardrobeStore.getState();
-    const updatedItems = wardrobeState.items.map((item) =>
-      item.id === itemId
-        ? { ...item, processing_status: status }
-        : item
-    );
-    wardrobeState.setItems(updatedItems as WardrobeItem[]);
+    // Update wardrobe store with fallback/failed status using functional setState
+    useWardrobeStore.setState((state) => ({
+      items: state.items.map((item) =>
+        item.id === itemId
+          ? { ...item, processing_status: status }
+          : item
+      ),
+    }));
 
     set((state) => {
       const item = state.processingItems[itemId];
@@ -136,29 +141,97 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
   },
 
   isPolling: (itemId: string) => {
-    return get().processingItems[itemId]?.pollInterval !== null;
+    const item = get().processingItems[itemId];
+    return !!(item?.pollInterval || item?.channel);
+  },
+
+  stopProcessing: (itemId: string) => {
+    stopPolling(itemId);
+    stopRealtimeSubscription(itemId);
   },
 
   clearAll: () => {
-    // Clear all polling intervals
+    // Clear all polling intervals and channels
     const { processingItems } = get();
-    Object.values(processingItems).forEach((item) => {
-      if (item.pollInterval) clearInterval(item.pollInterval);
+    Object.keys(processingItems).forEach((itemId) => {
+      stopProcessing(itemId);
     });
     set({ processingItems: {} });
   },
 }));
 
-// Start polling for processing status
+// Helper functions for Realtime and Polling
+
+function startRealtimeSubscription(itemId: string) {
+  const channel = supabase
+    .channel(`wardrobe-item-${itemId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'wardrobe_items',
+        filter: `id=eq.${itemId}`,
+      },
+      (payload) => {
+        const newItem = payload.new;
+        const status = newItem.processing_status;
+
+        if (status === 'completed' && newItem.cutout_url) {
+          useWardrobeProcessingStore.getState().onProcessingComplete(itemId, newItem.cutout_url);
+        } else if (status === 'failed') {
+          useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing failed'));
+        } else if (status === 'fallback') {
+          useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing fell back to original'));
+        } else {
+          useWardrobeProcessingStore.getState().updateStatus(itemId, status);
+        }
+      }
+    )
+    .subscribe((status) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn(`Realtime failed for ${itemId}, falling back to polling`);
+        startPolling(itemId);
+      }
+    });
+
+  // Store the channel reference
+  useWardrobeProcessingStore.setState((prevState) => ({
+    processingItems: {
+      ...prevState.processingItems,
+      [itemId]: {
+        ...prevState.processingItems[itemId],
+        channel,
+      },
+    },
+  }));
+
+  // Also start a safety timeout that falls back to polling if no update after 15s
+  setTimeout(() => {
+    const currentState = useWardrobeProcessingStore.getState();
+    const item = currentState.processingItems[itemId];
+    if (item && item.status === 'pending' && !item.pollInterval) {
+      console.log(`Safety trigger: falling back to polling for ${itemId}`);
+      startPolling(itemId);
+    }
+  }, 15000);
+}
+
 function startPolling(itemId: string) {
+  const state = useWardrobeProcessingStore.getState();
+  const existingItem = state.processingItems[itemId];
+  
+  // Don't start polling if already polling
+  if (existingItem?.pollInterval) return;
+
   const interval = setInterval(async () => {
-    const state = useWardrobeProcessingStore.getState();
-    const item = state.processingItems[itemId];
+    const currentState = useWardrobeProcessingStore.getState();
+    const item = currentState.processingItems[itemId];
 
     if (!item || item.pollAttempts >= MAX_POLL_ATTEMPTS) {
       stopPolling(itemId);
       if (item?.pollAttempts >= MAX_POLL_ATTEMPTS) {
-        state.onProcessingFailed(itemId, new Error('Processing timeout'));
+        currentState.onProcessingFailed(itemId, new Error('Processing timeout'));
       }
       return;
     }
@@ -181,23 +254,16 @@ function startPolling(itemId: string) {
         .eq('id', itemId)
         .single();
 
-      if (error) {
-        // Keep current status on error, continue polling
-        return;
-      }
+      if (error) return;
 
       if (data.processing_status === 'completed' && data.cutout_url) {
-        stopPolling(itemId);
-        state.onProcessingComplete(itemId, data.cutout_url);
+        useWardrobeProcessingStore.getState().onProcessingComplete(itemId, data.cutout_url);
       } else if (data.processing_status === 'failed') {
-        stopPolling(itemId);
-        state.onProcessingFailed(itemId, new Error('Processing failed'));
+        useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing failed'));
       } else if (data.processing_status === 'fallback') {
-        stopPolling(itemId);
-        state.onProcessingFailed(itemId, new Error('Processing fell back to original'));
+        useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing fell back to original'));
       } else {
-        // Update status to current processing state
-        state.updateStatus(itemId, data.processing_status as ProcessingStatus);
+        useWardrobeProcessingStore.getState().updateStatus(itemId, data.processing_status as ProcessingStatus);
       }
     } catch (err) {
       console.error('Polling error:', err);
@@ -230,6 +296,25 @@ function stopPolling(itemId: string) {
       [itemId]: {
         ...prevState.processingItems[itemId],
         pollInterval: null,
+      },
+    },
+  }));
+}
+
+function stopRealtimeSubscription(itemId: string) {
+  const state = useWardrobeProcessingStore.getState();
+  const item = state.processingItems[itemId];
+
+  if (item?.channel) {
+    supabase.removeChannel(item.channel);
+  }
+
+  useWardrobeProcessingStore.setState((prevState) => ({
+    processingItems: {
+      ...prevState.processingItems,
+      [itemId]: {
+        ...prevState.processingItems[itemId],
+        channel: null,
       },
     },
   }));

@@ -12,7 +12,8 @@ import type { OutfitSelection } from '@/lib/store/outfit-builder.store';
 export type OutfitSlot = keyof OutfitSelection;
 
 /** Map a WardrobeItem category to its OutfitSelection slot */
-export function categoryToSlot(category: Category): OutfitSlot {
+export function categoryToSlot(category: Category | null | undefined): OutfitSlot | undefined {
+  if (!category) return undefined;
   switch (category) {
     case 'tops':
     case 'outerwear':

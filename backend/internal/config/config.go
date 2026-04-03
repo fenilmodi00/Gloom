@@ -16,6 +16,7 @@ type Config struct {
 	GoEnv                  string
 	FrontendURL            string
 	RembgServiceURL        string
+	GeminiApiKey           string
 }
 
 func Load() (*Config, error) {
@@ -32,6 +33,7 @@ func Load() (*Config, error) {
 		GoEnv:                  os.Getenv("GO_ENV"),
 		FrontendURL:            os.Getenv("FRONTEND_URL"),
 		RembgServiceURL:        os.Getenv("EXPO_PUBLIC_REMBG_SERVICE_URL"),
+		GeminiApiKey:           os.Getenv("GEMINI_API_KEY"),
 	}
 
 	if cfg.Port == "" {

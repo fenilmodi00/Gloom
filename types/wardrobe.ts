@@ -7,7 +7,7 @@ id: string;
 user_id: string;
 image_url: string | number;
 cutout_url: (string | number) | null;
-category: Category;
+category: Category | null;
 sub_category: string | null;
 colors: string[];
 style_tags: string[];
@@ -23,7 +23,7 @@ processing_status: ProcessingStatus;
 export interface WardrobeItemInput {
   image_url?: string | number;
   cutout_url?: (string | number) | null;
-  category: Category;
+  category: Category | null;
   sub_category?: string | null;
   colors?: string[];
   style_tags?: string[];

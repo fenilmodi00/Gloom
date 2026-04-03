@@ -99,6 +99,8 @@ export const useOutfitBuilderStore = create<OutfitBuilderState>((set, get) => ({
   toggleItem: (item: WardrobeItem) => {
     set((state) => {
       const slot = categoryToSlot(item.category);
+      if (!slot) return state; // Skip if item has no slot
+
       const currentSelected = state.selectedItems[slot];
 
       // If same item is selected, deselect it
@@ -195,7 +197,10 @@ generateCombinations: (allItems: WardrobeItem[]) => {
   };
 
   itemsToUse.forEach((item) => {
+    // Skip items with invalid/null categories to prevent TypeError
+    if (!item.category) return;
     const slot = categoryToSlot(item.category);
+    if (!slot || !itemsBySlot[slot]) return;
     itemsBySlot[slot].push(item);
   });
 

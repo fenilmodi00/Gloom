@@ -4,6 +4,7 @@ import type { Category, WardrobeItem, WardrobeItemInput } from '../../types';
 import { zustandAsyncStorage } from '../storage';
 import { useAuthStore } from './auth.store';
 import { supabase } from '../supabase';
+import { uuidv4 } from '../utils/uuid';
 
 interface RNFile {
   uri: string;
@@ -63,13 +64,12 @@ export const useWardrobeStore = create<WardrobeState>()(
 
       // Upload to temporary bucket via backend proxy (bypasses Supabase DNS block)
       // Get image info
-      const fileExt = itemInput.image_url?.toString().split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileExt = itemInput.image_url?.toString().split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${uuidv4()}.${fileExt}`;
       const userId = user?.id || 'dev-user';
       const tempFilePath = `${userId}/temp/${fileName}`;
 
       // Upload via backend relay (no direct Supabase contact from phone)
-      console.log('[WARDROBE] Step 2: Uploading to backend:', `${backendUrl}/api/v1/wardrobe/upload`);
       const formData = new FormData();
       
     // Use standard React Native file object format instead of fetching a blob
@@ -100,14 +100,13 @@ export const useWardrobeStore = create<WardrobeState>()(
       const tempUrl = uploadData.url;
 
       // Add item with processing status set to 'processing'
-      console.log('[WARDROBE] Step 3: Adding item to wardrobe via backend:', `${backendUrl}/api/v1/wardrobe`);
       const addItemResponse = await fetch(`${backendUrl}/api/v1/wardrobe`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           image_url: tempUrl,
           cutout_url: null, // Will be set after background removal
-          category: itemInput.category,
+          category: itemInput.category || 'tops', // Defensive fallback
           sub_category: itemInput.sub_category,
           colors: itemInput.colors,
           style_tags: itemInput.style_tags,
@@ -277,8 +276,8 @@ export const useWardrobeStore = create<WardrobeState>()(
         try {
           const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
           // Get image info
-          const fileExt = uri.split('.').pop() || 'jpg';
-          const fileName = `${Date.now()}.${fileExt}`;
+          const fileExt = uri.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
+          const fileName = `${uuidv4()}.${fileExt}`;
           const filePath = `${user?.id || 'dev-user'}/${fileName}`;
 
           const headers: Record<string, string> = { 'Content-Type': 'application/json' };

@@ -21,7 +21,7 @@ type WardrobeItem struct {
 	UserID           uuid.UUID `json:"user_id"`
 	ImageURL         string    `json:"image_url"`
 	CutoutURL        *string   `json:"cutout_url"`
-	Category         string    `json:"category"`
+	Category         *string   `json:"category"`
 	SubCategory      *string   `json:"sub_category"`
 	Colors           []string  `json:"colors"`
 	StyleTags        []string  `json:"style_tags"`
@@ -56,7 +56,7 @@ type UpdateProfileRequest struct {
 
 type CreateWardrobeItemRequest struct {
 	ImageURL         string   `json:"image_url" validate:"required,url"`
-	Category         string   `json:"category" validate:"required"`
+	Category         *string  `json:"category" validate:"omitempty"`
 	SubCategory      *string  `json:"sub_category" validate:"omitempty"`
 	Colors           []string `json:"colors" validate:"omitempty"`
 	StyleTags        []string `json:"style_tags" validate:"omitempty"`

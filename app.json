@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Logo.png",
-    "scheme": "Gloom",
+    "scheme": "gloom",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/Logo.png",
@@ -15,10 +15,10 @@
     "updates": {
       "enabled": false
     },
-    "jsEngine": "hermes",
     "assetBundlePatterns": [
       "**/*"
     ],
+    "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true
     },
@@ -49,7 +49,24 @@
             "photo"
           ]
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Gloom to access your camera to add items to your wardrobe."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Gloom to access your photos to select wardrobe items."
+        }
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-localization",
+      "expo-sharing",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

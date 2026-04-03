@@ -46,20 +46,33 @@ const CategoryCard = memo(
     const imageUrl = getWardrobeItemImageUrl(item);
     const source = imageUrl ? { uri: imageUrl } : undefined;
 
-    // Show processing indicator for items being processed
-    const { getProcessingStatus } = useWardrobeProcessingStore();
-    const isProcessing = getProcessingStatus(item.id) === 'processing';
+    const { processingItems } = useWardrobeProcessingStore();
+    const processingItem = processingItems[item.id];
+    const isProcessing = processingItem?.status === 'pending' || processingItem?.status === 'processing';
+    const isFailed = processingItem?.status === 'failed' || processingItem?.status === 'fallback';
 
     return (
       <View style={styles.cardContainer}>
         {/* Show skeleton for processing items */}
-        {isProcessing && <SkeletonCard />}
+        {isProcessing && (
+          <SkeletonCard width={CARD_WIDTH} height={CARD_HEIGHT} />
+        )}
         {/* Display image (cutout when available, fallback to original) */}
         <Image
           source={source}
-          style={[styles.cardImage, { opacity: isProcessing ? 0 : 1 }]}
+          style={[
+            styles.cardImage,
+            { opacity: isProcessing ? 0 : 1 },
+            isFailed && { borderWidth: 1, borderColor: Colors.light.chipIdleBorder }
+          ]}
           contentFit="contain"
+          transition={500}
         />
+        {isFailed && !isProcessing && (
+          <View style={styles.processingOverlay}>
+             <Text style={[styles.statusBadgeText, { fontSize: 10 }]}>Original</Text>
+          </View>
+        )}
       </View>
     );
   }
@@ -104,6 +117,7 @@ function CategorySection({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16 }}
+        estimatedItemSize={CARD_WIDTH + 12}
       />
    </LinearGradient>
   );
@@ -157,11 +171,11 @@ export default function WardrobeScreen() {
     });
   }, [router]);
 
-   const sections = useMemo(() => {
-     return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
-   }, [groupedItems]);
+  const sections = useMemo(() => {
+    return CATEGORY_CONFIG.filter(({ key }) => groupedItems[key]?.length > 0);
+  }, [groupedItems]);
 
-   const renderItem = useCallback(
+  const renderItem = useCallback(
   ({
     item,
     index,
@@ -294,6 +308,7 @@ export default function WardrobeScreen() {
         contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
         decelerationRate="fast"
+        estimatedItemSize={200}
       />
 
       <View
@@ -423,14 +438,18 @@ const styles = StyleSheet.create({
     ...Typography.uiLabelMedium,
     color: Colors.light.textOnDark,
   },
+  statusBadgeText: {
+    ...Typography.uiLabelMedium,
+    color: Colors.light.textOnDark,
+  },
   processingOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 12,
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

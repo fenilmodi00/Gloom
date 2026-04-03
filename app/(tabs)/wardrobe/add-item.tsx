@@ -1,23 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Pressable, StyleSheet, BackHandler } from 'react-native';
-import { useRouter, useLocalSearchParams, Href } from 'expo-router';
+import { useRouter, useLocalSearchParams, Href, useFocusEffect } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { X, Camera as CameraIcon, Check, Image as ImageIcon } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { ZoomIn, FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { ZoomIn, FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withRepeat, withTiming, interpolate } from 'react-native-reanimated';
 import { Text } from '@/components/ui/text';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useWardrobeProcessingStore } from '@/lib/store/wardrobe-processing.store';
+import { showToast } from '@/components/shared/Toast';
 import { Typography } from '@/constants/Typography';
 import { Colors } from '@/constants/Colors';
 import { useAuthStore } from '@/lib/store/auth.store';
 // TODO: Import Gemini tagging when ready: import { tagWardrobeItem } from '@/lib/gemini';
 import { supabase } from '@/lib/supabase';
 import type { Category } from '@/types/wardrobe';
+import { uuidv4 } from '@/lib/utils/uuid';
+
+// Origin paths for navigation - defined outside component to avoid ESLint warnings
+const ORIGIN_PATHS: Record<string, string> = {
+  wardrobe: '/(tabs)/wardrobe',
+  inspo: '/(tabs)/inspo',
+  outfits: '/(tabs)/outfits',
+};
 
 /**
  * Trigger background removal via Go backend (which calls GCP Cloud Run service)
@@ -27,6 +36,10 @@ async function triggerBackgroundRemoval(
   filePath: string,
   authToken: string
 ): Promise<{ success: boolean; error?: string }> {
+  if (!authToken) {
+    console.error('No auth token available for background removal');
+    return { success: false, error: 'Authentication required' };
+  }
   try {
     const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
     // Call Go backend endpoint (not Edge Function)
@@ -51,6 +64,36 @@ async function triggerBackgroundRemoval(
   }
 }
 
+function PreviewSkeleton() {
+  const shimmer = useSharedValue(0);
+
+  useEffect(() => {
+    shimmer.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
+  }, [shimmer]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    const opacity = interpolate(shimmer.value, [0, 0.5, 1], [0.3, 0.7, 0.3]);
+    return { opacity };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: Colors.light.bgMuted,
+        },
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
 export default function AddItemScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -61,14 +104,35 @@ export default function AddItemScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Processing...');
   const [showUploadScreen, setShowUploadScreen] = useState(true);
-  const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
+  const [animationKey, setAnimationKey] = useState(0);
+const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
   const { user } = useAuthStore();
 
-  // Reset state on entry
-  useEffect(() => {
-    setPhotoUri(null);
-    setShowUploadScreen(true);
-  }, []);
+  const closeScreen = useCallback(() => {
+    const dest = origin ? ORIGIN_PATHS[origin as keyof typeof ORIGIN_PATHS] : ORIGIN_PATHS.wardrobe;
+    router.replace(dest as Href);
+  }, [origin, router]);
+
+  const goBack = useCallback(() => {
+    if (photoUri) {
+      setPhotoUri(null);
+    } else if (!showUploadScreen) {
+      setShowUploadScreen(true);
+    } else {
+      closeScreen();
+    }
+  }, [photoUri, showUploadScreen, closeScreen]);
+
+  // Reset state when screen gains focus (also triggers re-animation)
+  useFocusEffect(
+    useCallback(() => {
+      setPhotoUri(null);
+      setShowUploadScreen(true);
+      setIsProcessing(false);
+      setLoadingMessage('Processing...');
+      setAnimationKey((k) => k + 1);
+    }, [])
+  );
 
   // Handle hardware back button
   useEffect(() => {
@@ -81,33 +145,14 @@ export default function AddItemScreen() {
         setShowUploadScreen(true);
         return true;
       }
-      return false;
+      // Call goBack to respect the origin param
+      goBack();
+      return true;
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [photoUri, showUploadScreen]);
-
-  const ORIGIN_PATHS: Record<string, string> = {
-    wardrobe: '/(tabs)/wardrobe',
-    inspo: '/(tabs)/inspo',
-    outfits: '/(tabs)/outfits',
-  };
-
-  const closeScreen = () => {
-    const dest = origin ? ORIGIN_PATHS[origin as keyof typeof ORIGIN_PATHS] : ORIGIN_PATHS.wardrobe;
-    router.replace(dest as Href);
-  };
-
-  const goBack = () => {
-    if (photoUri) {
-      setPhotoUri(null);
-    } else if (!showUploadScreen) {
-      setShowUploadScreen(true);
-    } else {
-      closeScreen();
-    }
-  };
+  }, [photoUri, showUploadScreen, goBack]);
 
   const pickImage = async () => {
     try {
@@ -116,7 +161,7 @@ export default function AddItemScreen() {
         allowsEditing: true,
         aspect: [3, 4],
         quality: 0.8,
-        base64: true,
+        base64: false,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -133,7 +178,7 @@ export default function AddItemScreen() {
       try {
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
-          base64: true,
+          base64: false,
         });
         if (photo) {
           setPhotoUri(photo.uri);
@@ -150,6 +195,8 @@ export default function AddItemScreen() {
     setIsProcessing(true);
     setLoadingMessage('Uploading image...');
 
+    let newItemId: string | null = null;
+
     try {
       // Get auth session for Edge Function calls
       const { data: sessionData } = await supabase.auth.getSession();
@@ -161,16 +208,20 @@ export default function AddItemScreen() {
       }
 
       if (!authToken) {
-        console.error('No auth token available');
-        setIsProcessing(false);
-        return;
+        throw new Error('Authentication required');
       }
+
+      // Generate file path for background removal - must match what was uploaded to storage
+      const userId = user?.id || 'dev-user';
+      const fileExt = photoUri.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${userId}/temp/${fileName}`;
 
       // Upload to temporary storage and create wardrobe item with processing status
       setLoadingMessage('Saving to wardrobe...');
       const newItem = await addItem({
         image_url: photoUri,
-        category: 'tops', // Default category, will be updated after AI tagging
+        category: 'tops', // Default to tops during development
         sub_category: null,
         colors: [],
         style_tags: [],
@@ -179,54 +230,44 @@ export default function AddItemScreen() {
         fabric_guess: null,
         processing_status: 'processing',
       });
+      
+      newItemId = newItem.id;
 
-      // Generate file path for background removal - must match what was uploaded to storage
-      const { user } = useAuthStore.getState();
-      const userId = user?.id || 'dev-user';
-      const fileExt = photoUri.toString().split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${userId}/temp/${fileName}`;
+      // Always try background removal (works in DEV mode too with Go backend)
+      setLoadingMessage('Removing background...');
 
-// Always try background removal (works in DEV mode too with Go backend)
-setLoadingMessage('Removing background...');
-
-// Trigger background removal via Go backend (which calls GCP Cloud Run)
-console.log('[REMBG] Calling Go backend:', `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/wardrobe/${newItem.id}/process-rembg`);
-const triggerResult = await triggerBackgroundRemoval(newItem.id, filePath, authToken);
-console.log('[REMBG] Result:', JSON.stringify(triggerResult));
+      // Trigger background removal via Go backend (which calls GCP Cloud Run)
+      const triggerResult = await triggerBackgroundRemoval(newItem.id, filePath, authToken);
 
       if (!triggerResult.success) {
         console.error('Failed to trigger background removal:', triggerResult.error);
-        // Continue anyway - item is still saved
-      } else {
-        // Start polling via processing store (handles skeleton and updates automatically)
-        const { startProcessing } = useWardrobeProcessingStore.getState();
-        startProcessing(newItem.id);
-
-        // Show polling message until user navigates away
-        setLoadingMessage('Processing image...');
+        // Task 1.2: Mark status as failed if trigger fails
+        await supabase.from('wardrobe_items').update({ processing_status: 'failed' }).eq('id', newItem.id);
+        throw new Error(triggerResult.error || 'Failed to start background removal');
       }
 
-setLoadingMessage('Saving item...');
+       // Start polling via processing store (handles skeleton and updates automatically)
+       const { startProcessing } = useWardrobeProcessingStore.getState();
+       startProcessing(newItem.id);
 
-// TODO: Implement Gemini AI tagging later
-// For now, skip AI tagging - will add automatic categorization later
-// const imageUrl = typeof newItem.image_url === 'string' ? newItem.image_url : photoUri;
-// const tags = await tagWardrobeItem(imageUrl);
-// await updateItemTags(newItem.id, tags);
-
-Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       closeScreen();
     } catch (error) {
       console.error('Save error:', error);
       setIsProcessing(false);
+      
+      // If we created an item but trigger failed, ensure UI reflects failure
+      if (newItemId) {
+        // We catch the error but the item exists, maybe show a toast
+        showToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to save item' });
+      }
     }
   };
 
   // 1. Initial Choice Screen
   if (showUploadScreen && !photoUri) {
     return (
-      <Animated.View entering={ZoomIn.duration(350)} style={[styles.uploadContainer, { paddingTop: insets.top }]} >
+      <Animated.View key={animationKey} entering={ZoomIn.duration(350)} style={[styles.uploadContainer, { paddingTop: insets.top }]} >
         <View style={styles.uploadHeader}>
           <Pressable onPress={closeScreen} style={styles.backButton}>
             <X size={24} color={Colors.light.textPrimary} />
@@ -246,7 +287,7 @@ Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           </View>
           <View style={styles.actionButtons}>
             <Pressable style={styles.captureButton} onPress={() => setShowUploadScreen(false)} >
-              <CameraIcon size={20} color="#1c1917" />
+              <CameraIcon size={20} color={Colors.light.textOnDark} />
               <Text style={styles.captureButtonText}>Capture</Text>
             </Pressable>
             <Pressable style={styles.galleryButton} onPress={pickImage} >
@@ -312,6 +353,7 @@ Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         </View>
         <View style={styles.previewImageContainer}>
           <Image source={{ uri: photoUri }} style={styles.previewImage} contentFit="cover" />
+          {isProcessing && <PreviewSkeleton />}
         </View>
         <View style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>
           <Pressable style={styles.retakeButton} onPress={() => setPhotoUri(null)}>
@@ -400,7 +442,7 @@ const styles = StyleSheet.create({
   },
   captureButtonText: {
     ...Typography.uiLabelMedium,
-    color: Colors.light.textPrimary,
+    color: Colors.light.textOnDark,
   },
   galleryButton: {
     flexDirection: 'row',
@@ -517,10 +559,13 @@ const styles = StyleSheet.create({
   },
   previewImageContainer: {
     flex: 1,
+    aspectRatio: 3 / 4,
+    alignSelf: 'center',
     margin: 16,
     borderRadius: 24,
     backgroundColor: 'white',
     overflow: 'hidden',
+    position: 'relative',
   },
   previewImage: {
     flex: 1,

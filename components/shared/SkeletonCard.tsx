@@ -24,8 +24,10 @@ const ITEM_SIZE = (SCREEN_WIDTH - 32 - ITEM_MARGIN * (ITEMS_PER_ROW - 1)) / ITEM
  *
  * Animation: opacity 0.3 → 0.7 → 0.3 on shimmer layer
  */
-export function SkeletonCard() {
+export function SkeletonCard({ width, height }: { width?: number; height?: number }) {
   const shimmer = useSharedValue(0);
+  const cardWidth = width || ITEM_SIZE;
+  const cardHeight = height || ITEM_SIZE;
 
   useEffect(() => {
     shimmer.value = withRepeat(
@@ -48,8 +50,8 @@ export function SkeletonCard() {
   return (
     <View
       style={{
-        width: ITEM_SIZE,
-        height: ITEM_SIZE,
+        width: cardWidth,
+        height: cardHeight,
         marginRight: ITEM_MARGIN,
         marginBottom: ITEM_MARGIN,
       }}
@@ -67,8 +69,8 @@ export function SkeletonCard() {
       />
 
       {/* Processing text */}
-      <View className="absolute inset-0 items-center justify-center">
-        <Text className="font-ui text-sm text-textSecondary">Processing...</Text>
+      <View className="absolute inset-0 items-center justify-center p-2">
+        <Text className="font-ui text-xs text-textSecondary text-center">Processing...</Text>
       </View>
     </View>
   );

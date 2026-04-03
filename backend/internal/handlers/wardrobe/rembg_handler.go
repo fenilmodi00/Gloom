@@ -15,6 +15,9 @@ import (
 	"backend/internal/services/rembg"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"os"
+	"strconv"
+	"strings"
 )
 
 // RembgHandler handles async background removal processing.
@@ -28,12 +31,19 @@ type RembgHandler struct {
 
 // NewRembgHandler creates a new rembg processing handler.
 func NewRembgHandler(database *db.DB, rembgClient *rembg.Client, supabaseURL, serviceKey string) *RembgHandler {
+	maxConcurrent := 2
+	if envVal := os.Getenv("REMBG_MAX_CONCURRENT"); envVal != "" {
+		if val, err := strconv.Atoi(envVal); err == nil && val > 0 {
+			maxConcurrent = val
+		}
+	}
+
 	return &RembgHandler{
 		db:          database,
 		rembgClient: rembgClient,
 		supabaseURL: supabaseURL,
 		serviceKey:  serviceKey,
-		semaphore:   make(chan struct{}, 2), // Max 2 concurrent rembg calls
+		semaphore:   make(chan struct{}, maxConcurrent),
 	}
 }
 
@@ -85,9 +95,13 @@ func (h *RembgHandler) ProcessRembg(c *fiber.Ctx) error {
 
 // processInBackground handles the actual rembg processing asynchronously.
 func (h *RembgHandler) processInBackground(itemID uuid.UUID, userID uuid.UUID, imageURL string) {
-	// Acquire semaphore (max 2 concurrent)
+	// Acquire semaphore
 	h.semaphore <- struct{}{}
-	defer func() { <-h.semaphore }()
+	defer func() {
+		<-h.semaphore
+		// Task 4.2: Cleanup temporary image after processing attempt
+		h.deleteTempImage(imageURL)
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
@@ -165,5 +179,43 @@ func (h *RembgHandler) updateFallback(itemID uuid.UUID) {
 	`, itemID)
 	if err != nil {
 		log.Printf("ERROR: rembg_fallback item=%s err=%v", itemID, err)
+	}
+}
+
+// deleteTempImage removes the original temporary image from storage.
+func (h *RembgHandler) deleteTempImage(imageURL string) {
+	// Only delete if it's in the temp folder
+	if !strings.Contains(imageURL, "/temp/") {
+		return
+	}
+
+	// Extract path from public URL
+	// Format: https://.../storage/v1/object/public/wardrobe-images/USER_ID/temp/FILE_NAME
+	parts := strings.Split(imageURL, "/wardrobe-images/")
+	if len(parts) < 2 {
+		return
+	}
+	path := parts[1]
+
+	deleteURL := fmt.Sprintf("%s/storage/v1/object/wardrobe-images/%s", h.supabaseURL, path)
+	req, err := http.NewRequest("DELETE", deleteURL, nil)
+	if err != nil {
+		log.Printf("ERROR: rembg_cleanup_req path=%s err=%v", path, err)
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+h.serviceKey)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERROR: rembg_cleanup_do path=%s err=%v", path, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
+		log.Printf("INFO: rembg_cleanup_success path=%s status=%d", path, resp.StatusCode)
+	} else {
+		log.Printf("WARN: rembg_cleanup_failed path=%s status=%d", path, resp.StatusCode)
 	}
 }
