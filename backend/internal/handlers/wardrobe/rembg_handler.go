@@ -12,6 +12,7 @@ import (
 	"backend/internal/db"
 	"backend/internal/middleware"
 	"backend/internal/response"
+	"backend/internal/services/gemini"
 	"backend/internal/services/rembg"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -22,15 +23,16 @@ import (
 
 // RembgHandler handles async background removal processing.
 type RembgHandler struct {
-	db          *db.DB
-	rembgClient *rembg.Client
-	supabaseURL string
-	serviceKey  string
-	semaphore   chan struct{}
+	db           *db.DB
+	rembgClient  *rembg.Client
+	geminiClient *gemini.Client
+	supabaseURL  string
+	serviceKey   string
+	semaphore    chan struct{}
 }
 
 // NewRembgHandler creates a new rembg processing handler.
-func NewRembgHandler(database *db.DB, rembgClient *rembg.Client, supabaseURL, serviceKey string) *RembgHandler {
+func NewRembgHandler(database *db.DB, rembgClient *rembg.Client, geminiClient *gemini.Client, supabaseURL, serviceKey string) *RembgHandler {
 	maxConcurrent := 2
 	if envVal := os.Getenv("REMBG_MAX_CONCURRENT"); envVal != "" {
 		if val, err := strconv.Atoi(envVal); err == nil && val > 0 {
@@ -39,11 +41,12 @@ func NewRembgHandler(database *db.DB, rembgClient *rembg.Client, supabaseURL, se
 	}
 
 	return &RembgHandler{
-		db:          database,
-		rembgClient: rembgClient,
-		supabaseURL: supabaseURL,
-		serviceKey:  serviceKey,
-		semaphore:   make(chan struct{}, maxConcurrent),
+		db:           database,
+		rembgClient:  rembgClient,
+		geminiClient: geminiClient,
+		supabaseURL:  supabaseURL,
+		serviceKey:   serviceKey,
+		semaphore:    make(chan struct{}, maxConcurrent),
 	}
 }
 

@@ -30,7 +30,7 @@ func TestRembgHandler_ProcessRembg_Returns202(t *testing.T) {
 }
 
 func TestRembgHandler_NewRembgHandler(t *testing.T) {
-	handler := NewRembgHandler(nil, nil, "http://test.com", "test-key")
+	handler := NewRembgHandler(nil, nil, nil, "http://test.com", "test-key")
 	require.NotNil(t, handler)
 	assert.Equal(t, 2, cap(handler.semaphore))
 }

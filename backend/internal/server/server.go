@@ -13,6 +13,7 @@ import (
 	"backend/internal/handlers/wardrobe"
 	"backend/internal/middleware"
 	"backend/internal/response"
+	"backend/internal/services/gemini"
 	"backend/internal/services/rembg"
 
 	"github.com/gofiber/fiber/v2"
@@ -68,7 +69,8 @@ func New(cfg *config.Config, database *db.DB) *Server {
 	wardrobeUploadHandler.RegisterRoutes(api)
 
 	rembgClient := rembg.NewClient(cfg.RembgServiceURL)
-	rembgHandler := wardrobe.NewRembgHandler(database, rembgClient, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
+	geminiClient := gemini.NewClient("https://generativelanguage.googleapis.com", cfg.GeminiApiKey)
+	rembgHandler := wardrobe.NewRembgHandler(database, rembgClient, geminiClient, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	rembgHandler.RegisterRoutes(api)
 
 	outfitHandler := outfit.New(database)
