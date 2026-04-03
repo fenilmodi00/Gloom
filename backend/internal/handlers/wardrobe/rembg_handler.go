@@ -125,17 +125,66 @@ func (h *RembgHandler) processInBackground(itemID uuid.UUID, userID uuid.UUID, i
 		return
 	}
 
-	// Update DB with cutout URL and completed status
+	// Update DB with cutout URL first (status = 'analyzing' to indicate Gemini is running)
 	_, err = h.db.Exec(context.Background(), `
 	UPDATE wardrobe_items
-	SET cutout_url = $1, processing_status = 'completed'
+	SET cutout_url = $1, processing_status = 'analyzing'
 	WHERE id = $2
 	`, cutoutURL, itemID)
 	if err != nil {
 		log.Printf("ERROR: rembg_update userID=%s item=%s err=%v", userID, itemID, err)
+		h.updateFallback(itemID)
+		return
+	}
+
+	// NEW: Invoke Gemini for categorization
+	if h.geminiClient != nil {
+		h.categorizeWithGemini(ctx, itemID, userID, cutoutURL)
+	}
+
+	// Final update: mark as completed
+	_, err = h.db.Exec(context.Background(), `
+	UPDATE wardrobe_items
+	SET processing_status = 'completed'
+	WHERE id = $1
+	`, itemID)
+	if err != nil {
+		log.Printf("ERROR: rembg_complete userID=%s item=%s err=%v", userID, itemID, err)
 	} else {
 		log.Printf("INFO: rembg_complete userID=%s item=%s url=%s", userID, itemID, cutoutURL)
 	}
+}
+
+// categorizeWithGemini analyzes the cutout with Gemini and updates the item.
+func (h *RembgHandler) categorizeWithGemini(ctx context.Context, itemID, userID uuid.UUID, cutoutURL string) {
+	log.Printf("INFO: gemini_categorize_start userID=%s item=%s", userID, itemID)
+
+	result, err := h.geminiClient.CategorizeImage(ctx, cutoutURL)
+	if err != nil {
+		log.Printf("ERROR: gemini_categorize userID=%s item=%s err=%v", userID, itemID, err)
+		// Don't fail the whole process - user can manually categorize
+		return
+	}
+
+	// Update the wardrobe item with AI-generated categorization
+	_, err = h.db.Exec(ctx, `
+	UPDATE wardrobe_items
+	SET 
+		category = COALESCE($1, category),
+		sub_category = COALESCE($2, sub_category),
+		style_tags = COALESCE($3, style_tags),
+		occasion_tags = COALESCE($4, occasion_tags),
+		colors = COALESCE($5, colors)
+	WHERE id = $6
+	`, result.Category, result.SubCategory, result.StyleTags, result.OccasionTags, result.Colors, itemID)
+
+	if err != nil {
+		log.Printf("ERROR: gemini_update userID=%s item=%s err=%v", userID, itemID, err)
+		return
+	}
+
+	log.Printf("INFO: gemini_categorize_complete userID=%s item=%s category=%s tags=%v",
+		userID, itemID, result.Category, result.OccasionTags)
 }
 
 // uploadCutout uploads the cutout image to Supabase storage.
