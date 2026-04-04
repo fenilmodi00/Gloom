@@ -22,6 +22,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Trash2, Shirt, X } from 'lucide-react-native';
 import { Colors, Brand } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 import type { WardrobeItem } from '@/types/wardrobe';
 
@@ -132,14 +133,11 @@ export function ClothPopup({
       </Animated.View>
 
       {/* Popup Card */}
-      <View className="flex-1 items-center justify-center px-6">
-        <Animated.View
-          className="w-full max-w-[380px] bg-surface rounded-[32px] border border-[#D4C8B8]/30 shadow-lg p-6 overflow-hidden"
-          style={[{ height: SCREEN_HEIGHT * 0.65 }, popupStyle]}
-        >
-          <View className="h-8 w-full items-end justify-center mb-2">
-            <View className="z-10">
-              <Pressable onPress={safeClose} className="w-8 h-8 rounded-full bg-surface-raised items-center justify-center border border-[#D4C8B8]/40">
+      <View style={styles.container}>
+        <Animated.View style={[styles.popupCard, popupStyle]}>
+          <View style={styles.cardHeader}>
+            <View style={styles.closeButtonContainer}>
+              <Pressable onPress={safeClose} style={styles.closeButton}>
                 <X size={18} color={Colors.light.textSecondary} />
               </Pressable>
             </View>
@@ -147,30 +145,33 @@ export function ClothPopup({
 
           {/* Image Container */}
           {item && (
-            <View className="flex-1 items-center justify-center mt-3 mb-20">
-              <View className="w-full h-full bg-surface-raised rounded-3xl p-5 items-center justify-center border border-[#D4C8B8]/20">
+            <View style={styles.imageContainer}>
+              <View style={styles.imageWrapper}>
                 {imageSource ? (
                   <Image
                     source={imageSource}
-                    className="w-full h-full"
+                    style={styles.clothingImage}
                     contentFit="contain"
                     transition={0} // Instant when opening from list
                     priority="high"
                     cachePolicy="disk"
                   />
                 ) : (
-                  <View className="w-full h-full bg-muted" />
+                  <View style={[styles.clothingImage, styles.placeholderImage]} />
                 )}
               </View>
             </View>
           )}
 
           {/* Action Buttons */}
-          <View className="flex-row absolute bottom-6 left-6 right-6 gap-3">
+          <View style={styles.actionsContainer}>
             {/* Delete Button */}
             <Pressable
               onPress={handleDelete}
-              className="h-14 w-14 rounded-xl items-center justify-center border-[1.5px] border-[#B85C4A]/20 bg-[#B85C4A]/10"
+              style={[
+                styles.actionButton,
+                styles.deleteButton,
+              ]}
             >
               <Trash2 size={22} color={Colors.light.stateError} />
             </Pressable>
@@ -182,10 +183,13 @@ export function ClothPopup({
                   onMakeOutfit?.(item);
                 }
               }}
-              className="flex-1 h-14 rounded-xl bg-primary flex-row items-center justify-center gap-2.5"
+              style={[
+                styles.actionButton,
+                styles.makeOutfitButton,
+              ]}
             >
               <Shirt size={20} color={Colors.light.textOnDark} />
-              <Text className="font-ui text-[13px] uppercase tracking-widest font-bold text-on-dark">Make Outfit</Text>
+              <Text style={styles.buttonText}>Make Outfit</Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -194,3 +198,108 @@ export function ClothPopup({
   );
 }
 
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  popupCard: {
+    width: '100%',
+    maxWidth: 380,
+    height: SCREEN_HEIGHT * 0.65, // Rectangular profile
+    backgroundColor: Colors.light.bgSurface,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 200, 184, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
+    overflow: 'hidden',
+    padding: 24,
+  },
+  cardHeader: {
+    height: 32,
+    width: '100%',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  closeButtonContainer: {
+    zIndex: 10,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.light.bgSurfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 200, 184, 0.4)',
+  },
+  imageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    marginBottom: 80, // Space for action buttons
+  },
+  imageWrapper: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.light.bgSurfaceRaised,
+    borderRadius: 24,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 200, 184, 0.2)',
+  },
+  clothingImage: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderImage: {
+    backgroundColor: Colors.light.bgMuted,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 24,
+    left: 24,
+    right: 24,
+    gap: 12,
+  },
+  actionButton: {
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Brand.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  deleteButton: {
+    width: 56,
+    backgroundColor: 'rgba(184, 92, 74, 0.1)', // Feedback.stateError with opacity
+    borderWidth: 1.5,
+    borderColor: 'rgba(184, 92, 74, 0.2)',
+  },
+  makeOutfitButton: {
+    flex: 1,
+    backgroundColor: Colors.light.primary,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  buttonText: {
+    ...Typography.uiLabelMedium,
+    color: Colors.light.textOnDark,
+    letterSpacing: 1,
+  },
+});
