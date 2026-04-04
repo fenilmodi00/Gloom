@@ -5,7 +5,6 @@ import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 import { ClothPopup } from '@/components/wardrobe/ClothPopup';
 
-import { Typography } from '@/constants/Typography';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useWardrobeProcessingStore } from '@/lib/store/wardrobe-processing.store';
@@ -18,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Shirt } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View, ImageSourcePropType } from 'react-native';
+import { Alert, Pressable, View, ImageSourcePropType } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -59,7 +58,7 @@ const CategoryCard = memo(
     };
 
     return (
-      <Pressable onPress={handlePress} style={styles.cardContainer}>
+      <Pressable onPress={handlePress} className="w-[120px] h-[150px] mr-3 bg-transparent">
         {/* Show skeleton for processing items */}
         {isProcessing && (
           <SkeletonCard width={CARD_WIDTH} height={CARD_HEIGHT} />
@@ -67,19 +66,16 @@ const CategoryCard = memo(
         {/* Display image (cutout when available, fallback to original) */}
         <Image
           source={source}
-          style={[
-            styles.cardImage,
-            { opacity: isProcessing ? 0 : 1 },
-            isFailed && { borderWidth: 1, borderColor: Colors.light.chipIdleBorder }
-          ]}
+          className={`w-full h-full bg-transparent rounded-xl ${isFailed ? 'border border-chip-idle-border' : ''}`}
+          style={{ opacity: isProcessing ? 0 : 1 }}
           contentFit="contain"
           transition={0} // Matches modal for instant cache share
           cachePolicy="disk" // Matches modal to ensure one single memory pull
           priority="high" // High priority to keep in memory
         />
         {isFailed && !isProcessing && (
-          <View style={styles.processingOverlay}>
-             <Text style={[styles.statusBadgeText, { fontSize: 10 }]}>Original</Text>
+          <View className="absolute top-1 right-1 bg-black/40 rounded px-1 py-0.5 items-center justify-center">
+             <Text className="font-ui text-[10px] text-on-dark">Original</Text>
           </View>
         )}
       </Pressable>
@@ -112,24 +108,26 @@ function CategorySection({
       colors={[GRADIENT_START, GRADIENT_END]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
-      style={styles.gradientSection}
+      className="py-4 px-4"
     >
-      <View style={styles.sectionHeaderRow}>
-        <Pressable onPress={onSeeAll} style={styles.sectionHeader}>
-          <Text style={styles.sectionLabel}>{label}</Text>
+      <View className="mb-2">
+        <Pressable onPress={onSeeAll} className="flex-row items-center justify-between">
+          <Text className="font-body font-medium text-text-secondary">{label}</Text>
           <ChevronRight size={16} color={Colors.light.textSecondary} />
         </Pressable>
       </View>
 
-      <FlashList
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
-        estimatedItemSize={CARD_WIDTH + 12}
-      />
+      <View style={{ height: CARD_HEIGHT }}>
+        <FlashList
+          data={items}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+          estimatedItemSize={CARD_WIDTH + 12}
+        />
+      </View>
    </LinearGradient>
   );
 }
@@ -159,13 +157,26 @@ export default function WardrobeScreen() {
   const groupedItems = useMemo(() => {
     const groups: Record<string, WardrobeItem[]> = {};
     CATEGORY_CONFIG.forEach(({ key }) => {
-      // Include items that match the category OR are still processing (category may be null)
-      groups[key] = items.filter((item) => {
-        const isProcessing = processingItems[item.id]?.status === 'pending' || 
-                            processingItems[item.id]?.status === 'processing';
-        return item.category === key || (isProcessing && item.category === null);
-      });
+      groups[key] = [];
     });
+
+    items.forEach((item) => {
+      const isProcessing =
+        processingItems[item.id]?.status === 'pending' ||
+        processingItems[item.id]?.status === 'processing';
+
+      if (item.category && groups[item.category]) {
+        groups[item.category].push(item);
+      } else if (isProcessing && item.category === null) {
+        // Processing items go to all categories based on previous logic, or just a specific one?
+        // Previous logic: groups[key] = items.filter(..., (isProcessing && item.category === null)) -> means it went to ALL categories!
+        // Let's replicate this behavior to keep it identical
+        CATEGORY_CONFIG.forEach(({ key }) => {
+           groups[key].push(item);
+        });
+      }
+    });
+
     return groups;
   }, [items, processingItems]);
 
@@ -232,26 +243,24 @@ export default function WardrobeScreen() {
           colors={[GRADIENT_START, GRADIENT_END]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={[
-            styles.headerWithFirstCategory,
-            { paddingTop: insets.top - 59 },
-          ]}
+          className="pb-4 px-4"
+          style={{ paddingTop: insets.top - 59 }}
         >
-          <View style={styles.headerRow}>
-            <Text style={styles.headerTitle}>Closet</Text>
+          <View className="flex-row justify-between items-center">
+            <Text className="font-heading text-3xl color-text-primary">Closet</Text>
             <Pressable
-              style={styles.uploadButton}
+              className="bg-primary px-4 py-2 rounded-full"
               onPress={() => navigateToAddItem('camera')}
             >
-              <Text style={styles.uploadText}>Add item</Text>
+              <Text className="font-ui text-[13px] uppercase tracking-widest font-bold color-text-on-dark">Add item</Text>
             </Pressable>
           </View>
 
           {sections.length > 0 && (
             <>
-              <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
-                <Pressable style={styles.sectionHeader}>
-                  <Text style={styles.sectionLabel}>
+              <View className="mb-2 mt-6">
+                <Pressable className="flex-row items-center justify-between">
+                  <Text className="font-body font-medium text-text-secondary">
                     {sections[0].label}
                   </Text>
                   <ChevronRight
@@ -260,19 +269,18 @@ export default function WardrobeScreen() {
                   />
                 </Pressable>
               </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.sectionContent}
-              >
-                {(groupedItems[sections[0].key] || []).map((item) => (
-                  <CategoryCard
-                    key={item.id}
-                    item={item}
-                    onPress={handleItemPress}
-                  />
-                ))}
-              </ScrollView>
+              <View style={{ height: CARD_HEIGHT }}>
+                <FlashList
+                  data={groupedItems[sections[0].key] || []}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <CategoryCard item={item} onPress={handleItemPress} />
+                  )}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  estimatedItemSize={CARD_WIDTH + 12}
+                />
+              </View>
             </>
           )}
         </LinearGradient>
@@ -304,10 +312,8 @@ export default function WardrobeScreen() {
   if (items.length === 0) {
     return (
       <View
-        style={[
-          styles.container,
-          { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas },
-        ]}
+        className="flex-1 bg-bg-canvas"
+        style={{ paddingTop: insets.top }}
       >
         <EmptyState
           title="Your closet is empty"
@@ -338,10 +344,10 @@ export default function WardrobeScreen() {
 
   return (
     <Animated.View
+      className="flex-1 bg-bg-canvas"
       style={[
-        styles.container,
         animatedStyle,
-        { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas },
+        { paddingTop: insets.top },
       ]}
     >
       <FlashList
@@ -357,17 +363,15 @@ export default function WardrobeScreen() {
       />
 
       <View
-        style={[
-          styles.makeOutfitsContainer,
-          { bottom: 88 + insets.bottom, right: 16 },
-        ]}
+        className="absolute"
+        style={{ bottom: 88 + insets.bottom, right: 16 }}
       >
         <Pressable
-          style={styles.makeOutfitsButton}
+          className="flex-row items-center bg-surface px-4 py-2.5 rounded-full gap-1.5 shadow-sm border border-black/5"
           onPress={handleOpenSelectSheet}
         >
           <Shirt size={16} color="#1A1A1A" />
-          <Text style={styles.makeOutfitsText}>Make outfits</Text>
+          <Text className="font-ui text-[13px] uppercase tracking-widest font-bold color-text-primary">Make outfits</Text>
         </Pressable>
       </View>
 
@@ -391,123 +395,3 @@ export default function WardrobeScreen() {
     </Animated.View>
   );
 }
-
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.bgCanvas,
-  },
-  headerWithFirstCategory: {
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-  },
-  headerGradient: {
-    paddingTop: 6,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerSpacer: {
-    width: 40,
-    height: 40,
-  },
-  headerTitle: {
-    ...Typography.heading1,
-    color: Colors.light.textPrimary,
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.light.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gradientSection: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-  },
-  sectionHeaderRow: {
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionLabel: {
-    ...Typography.body,
-    fontWeight: '500',
-    color: Colors.light.textSecondary,
-  },
-  sectionContent: {
-    gap: 12,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginRight: 12,
-    backgroundColor: 'transparent',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'transparent',
-    borderRadius: 12,
-  },
-  makeOutfitsContainer: {
-    position: 'absolute',
-  },
-  headerButtonContainer: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 100,
-  },
-  sheetContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 50,
-  },
-  makeOutfitsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.light.bgSurface,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 999,
-    gap: 6,
-  },
-  makeOutfitsText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.textPrimary,
-  },
-  uploadButton: {
-    backgroundColor: Colors.light.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  uploadText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.textOnDark,
-  },
-  statusBadgeText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.textOnDark,
-  },
-  processingOverlay: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

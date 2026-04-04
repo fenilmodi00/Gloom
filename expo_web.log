@@ -1,1 +1,75 @@
-Resolving dependencies
+$ expo start --web
+Starting project at /app
+Starting Metro Bundler
+
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.6% (182/261)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓░░░░░░░░░░░░ 29.0% (32/84)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.6% (267/403)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓░░░░░░░░░░░░ 29.6% (162/462)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.6% (398/614)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓░░░░░░░░░░░░ 29.6% ( 260/2372)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.6% (398/614)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓░░░░░░░░░░░░ 29.6% ( 968/2712)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.6% (398/614)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.0% (2341/2751)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.6% ( 594/2642)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 75.2% (2485/2882)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.6% ( 892/2922)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.2% (2774/3163)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 64.8% (2357/2929)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.2% (2774/3163)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 79.7% (2637/2953)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 83.6% (3049/3334)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 84.5% (2950/3219)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.9% (3254/3478)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.2% (3218/3401)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.9% (3456/3663)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.2% (3538/3684)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.3% (3709/3812)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.8% (3854/3937)
+λ node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.9% (3874/3896)
+λ Bundled 46512ms node_modules/@expo/router-server/node/render.js (3905 modules)
+Supabase env variables missing. Using dummy client in DEV.
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (3953/3953)
+Web Bundled 55257ms node_modules/expo-router/entry.js (3953 modules)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 234ms node_modules/@expo/router-server/node/render.js (1 module)
+Supabase env variables missing. Using dummy client in DEV.
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 1666ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 31.8% (208/375)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 40.6% (415/743)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 40.6% ( 810/2784)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 56.6% (2128/2828)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 82.6% (2815/3115)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.4% (3294/3511)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 93.9% (3648/3776)
+Web Bundled 26739ms node_modules/expo-router/entry.js (3954 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (3954/3954)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 188ms node_modules/@expo/router-server/node/render.js (1 module)
+Supabase env variables missing. Using dummy client in DEV.
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 2065ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 103ms node_modules/@expo/router-server/node/render.js (1 module)
+Supabase env variables missing. Using dummy client in DEV.
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 1341ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 128ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 147ms node_modules/@expo/router-server/node/render.js (1 module)
+Supabase env variables missing. Using dummy client in DEV.
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 1468ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 137ms node_modules/expo-router/entry.js (1 module)
