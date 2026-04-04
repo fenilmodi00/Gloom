@@ -167,13 +167,23 @@ export default function WardrobeScreen() {
   const groupedItems = useMemo(() => {
     const groups: Record<string, WardrobeItem[]> = {};
     CATEGORY_CONFIG.forEach(({ key }) => {
-      // Include items that match the category OR are still processing (category may be null)
-      groups[key] = items.filter((item) => {
-        const isProcessing = processingItems[item.id]?.status === 'pending' || 
-                            processingItems[item.id]?.status === 'processing';
-        return item.category === key || (isProcessing && item.category === null);
-      });
+      groups[key] = [];
     });
+
+    items.forEach((item) => {
+      const isProcessing =
+        processingItems[item.id]?.status === 'pending' ||
+        processingItems[item.id]?.status === 'processing';
+
+      if (item.category && groups[item.category]) {
+        groups[item.category].push(item);
+      } else if (isProcessing && item.category === null) {
+        CATEGORY_CONFIG.forEach(({ key }) => {
+           groups[key].push(item);
+        });
+      }
+    });
+
     return groups;
   }, [items, processingItems]);
 
@@ -182,11 +192,8 @@ export default function WardrobeScreen() {
   }, [router]);
 
   const handleOpenSelectSheet = useCallback(() => {
-    console.log('[Wardrobe] Opening outfit builder screen');
     navigateToOutfitBuilder();
   }, [navigateToOutfitBuilder]);
-
-  const handleCloseSelectSheet = useCallback(() => { }, []);
 
   const handleEmptyAdd = () => {
     navigateToAddItem('camera');
@@ -268,19 +275,19 @@ export default function WardrobeScreen() {
                   />
                 </Pressable>
               </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.sectionContent}
-              >
-                {(groupedItems[sections[0].key] || []).map((item) => (
-                  <CategoryCard
-                    key={item.id}
-                    item={item}
-                    onPress={handleItemPress}
-                  />
-                ))}
-              </ScrollView>
+              <View style={{ height: CARD_HEIGHT }}>
+                <FlashList
+                  data={groupedItems[sections[0].key] || []}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <CategoryCard item={item} onPress={handleItemPress} />
+                  )}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.sectionContent}
+                  estimatedItemSize={CARD_WIDTH + 12}
+                />
+              </View>
             </>
           )}
         </LinearGradient>
