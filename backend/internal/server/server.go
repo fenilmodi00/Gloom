@@ -73,6 +73,9 @@ func New(cfg *config.Config, database *db.DB) *Server {
 	rembgHandler := wardrobe.NewRembgHandler(database, rembgClient, geminiClient, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
 	rembgHandler.RegisterRoutes(api)
 
+	parallelHandler := wardrobe.NewParallelHandler(database, rembgClient, geminiClient, cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
+	parallelHandler.RegisterRoutes(api)
+
 	outfitHandler := outfit.New(database)
 	outfitHandler.RegisterRoutes(api)
 

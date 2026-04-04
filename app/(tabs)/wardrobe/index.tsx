@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 import { SkeletonCard } from '@/components/shared/SkeletonCard';
+import { SkeletonCard as CategorySpecificSkeletonCard } from '@/components/shared/WardrobeSkeleton';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
 import { ClothPopup } from '@/components/wardrobe/ClothPopup';
@@ -52,6 +53,7 @@ const CategoryCard = memo(
     const { processingItems } = useWardrobeProcessingStore();
     const processingItem = processingItems[item.id];
     const isProcessing = processingItem?.status === 'pending' || processingItem?.status === 'processing';
+    const isAnalyzing = (processingItem?.status as any) === 'analyzing';
     const isFailed = processingItem?.status === 'failed' || processingItem?.status === 'fallback';
 
     const handlePress = () => {
@@ -60,7 +62,13 @@ const CategoryCard = memo(
 
     return (
       <Pressable onPress={handlePress} style={styles.cardContainer}>
-        {/* Show skeleton for processing items */}
+        {/* Show category-specific skeleton for analyzing items with category */}
+        {isAnalyzing && item.category && (
+          <CategorySpecificSkeletonCard 
+            variant={item.category === 'accessories' ? 'default' : item.category as any} 
+          />
+        )}
+        {/* Show generic skeleton for processing/pending items */}
         {isProcessing && (
           <SkeletonCard width={CARD_WIDTH} height={CARD_HEIGHT} />
         )}
@@ -69,7 +77,7 @@ const CategoryCard = memo(
           source={source}
           style={[
             styles.cardImage,
-            { opacity: isProcessing ? 0 : 1 },
+            { opacity: (isProcessing || isAnalyzing) ? 0 : 1 },
             isFailed && { borderWidth: 1, borderColor: Colors.light.chipIdleBorder }
           ]}
           contentFit="contain"
@@ -77,7 +85,7 @@ const CategoryCard = memo(
           cachePolicy="disk" // Matches modal to ensure one single memory pull
           priority="high" // High priority to keep in memory
         />
-        {isFailed && !isProcessing && (
+        {isFailed && !isProcessing && !isAnalyzing && (
           <View style={styles.processingOverlay}>
              <Text style={[styles.statusBadgeText, { fontSize: 10 }]}>Original</Text>
           </View>

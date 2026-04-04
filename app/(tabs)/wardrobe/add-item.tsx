@@ -43,7 +43,7 @@ async function triggerBackgroundRemoval(
   try {
     const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
     // Call Go backend endpoint (not Edge Function)
-    const response = await fetch(`${backendUrl}/api/v1/wardrobe/${itemId}/process-rembg`, {
+     const response = await fetch(`${backendUrl}/api/v1/wardrobe/${itemId}/process-parallel`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
