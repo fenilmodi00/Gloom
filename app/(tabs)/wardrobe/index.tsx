@@ -3,11 +3,13 @@ import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 import { SkeletonCard } from '@/components/shared/SkeletonCard';
 import { Text } from '@/components/ui/text';
 import { AddItemSheet } from '@/components/wardrobe/AddItemSheet';
+import { ClothPopup } from '@/components/wardrobe/ClothPopup';
 
 import { Typography } from '@/constants/Typography';
 import { useTabAnimation } from '@/lib/hooks/useTabAnimation';
 import { useWardrobeStore } from '@/lib/store/wardrobe.store';
 import { useWardrobeProcessingStore } from '@/lib/store/wardrobe-processing.store';
+import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 import type { Category, WardrobeItem, ProcessingStatus } from '@/types/wardrobe';
 import { FlashList } from '@shopify/flash-list';
@@ -16,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Shirt } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View, ImageSourcePropType } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -40,8 +42,9 @@ const CARD_WIDTH = 120;
 const CARD_HEIGHT = 150;
 
 const CategoryCard = memo(
-  ({ item }: {
+  ({ item, onPress }: {
     item: WardrobeItem;
+    onPress?: (item: WardrobeItem, source?: ImageSourcePropType) => void;
   }) => {
     const imageUrl = getWardrobeItemImageUrl(item);
     const source = imageUrl ? { uri: imageUrl } : undefined;
@@ -51,8 +54,12 @@ const CategoryCard = memo(
     const isProcessing = processingItem?.status === 'pending' || processingItem?.status === 'processing';
     const isFailed = processingItem?.status === 'failed' || processingItem?.status === 'fallback';
 
+    const handlePress = () => {
+      onPress?.(item, source);
+    };
+
     return (
-      <View style={styles.cardContainer}>
+      <Pressable onPress={handlePress} style={styles.cardContainer}>
         {/* Show skeleton for processing items */}
         {isProcessing && (
           <SkeletonCard width={CARD_WIDTH} height={CARD_HEIGHT} />
@@ -66,14 +73,16 @@ const CategoryCard = memo(
             isFailed && { borderWidth: 1, borderColor: Colors.light.chipIdleBorder }
           ]}
           contentFit="contain"
-          transition={500}
+          transition={0} // Matches modal for instant cache share
+          cachePolicy="disk" // Matches modal to ensure one single memory pull
+          priority="high" // High priority to keep in memory
         />
         {isFailed && !isProcessing && (
           <View style={styles.processingOverlay}>
              <Text style={[styles.statusBadgeText, { fontSize: 10 }]}>Original</Text>
           </View>
         )}
-      </View>
+      </Pressable>
     );
   }
 );
@@ -82,16 +91,18 @@ function CategorySection({
   label,
   items,
   onSeeAll,
+  onItemPress,
 }: {
   label: string;
   items: WardrobeItem[];
   onSeeAll?: () => void;
+  onItemPress?: (item: WardrobeItem) => void;
 }) {
   const renderItem = useCallback(
     ({ item }: { item: WardrobeItem }) => (
-      <CategoryCard item={item} />
+      <CategoryCard item={item} onPress={onItemPress} />
     ),
-    []
+    [onItemPress]
   );
 
   if (items.length === 0) return null;
@@ -127,9 +138,12 @@ function CategorySection({
 export default function WardrobeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { items: storeItems, isLoading, isHydrated, fetchItems } =
+  const { items: storeItems, isLoading, isHydrated, fetchItems, removeItem } =
     useWardrobeStore();
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
+  const [selectedSource, setSelectedSource] = useState<ImageSourcePropType | undefined>(undefined);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const { animatedStyle } = useTabAnimation('wardrobe/index');
 
   const items = storeItems;
@@ -140,13 +154,20 @@ export default function WardrobeScreen() {
     }
   }, [fetchItems, isHydrated]);
 
+  const { processingItems } = useWardrobeProcessingStore();
+
   const groupedItems = useMemo(() => {
     const groups: Record<string, WardrobeItem[]> = {};
     CATEGORY_CONFIG.forEach(({ key }) => {
-      groups[key] = items.filter((item) => item.category === key);
+      // Include items that match the category OR are still processing (category may be null)
+      groups[key] = items.filter((item) => {
+        const isProcessing = processingItems[item.id]?.status === 'pending' || 
+                            processingItems[item.id]?.status === 'processing';
+        return item.category === key || (isProcessing && item.category === null);
+      });
     });
     return groups;
-  }, [items]);
+  }, [items, processingItems]);
 
   const navigateToOutfitBuilder = useCallback(() => {
     router.push('/outfit-builder');
@@ -169,6 +190,28 @@ export default function WardrobeScreen() {
       pathname: '/(tabs)/wardrobe/add-item',
       params: { method, origin: 'wardrobe' },
     });
+  }, [router]);
+
+  const handleItemPress = useCallback((item: WardrobeItem, source?: ImageSourcePropType) => {
+    setSelectedItem(item);
+    setSelectedSource(source);
+    setIsModalVisible(true);
+  }, []);
+
+  const handleDeleteItem = useCallback(async (itemId: string) => {
+    await removeItem(itemId);
+    setIsModalVisible(false);
+    setSelectedItem(null);
+    setSelectedSource(undefined);
+  }, [removeItem]);
+
+  const handleMakeOutfit = useCallback((item: WardrobeItem) => {
+    const { toggleItem } = useOutfitBuilderStore.getState();
+    toggleItem(item);
+    setIsModalVisible(false);
+    setSelectedItem(null);
+    setSelectedSource(undefined);
+    router.push('/outfit-builder');
   }, [router]);
 
   const sections = useMemo(() => {
@@ -226,6 +269,7 @@ export default function WardrobeScreen() {
                   <CategoryCard
                     key={item.id}
                     item={item}
+                    onPress={handleItemPress}
                   />
                 ))}
               </ScrollView>
@@ -242,10 +286,11 @@ export default function WardrobeScreen() {
       <CategorySection
         label={item.label}
         items={groupedItems[item.key] || []}
+        onItemPress={handleItemPress}
       />
     );
   },
-  [groupedItems, sections, insets.top, navigateToAddItem]
+  [groupedItems, sections, insets.top, navigateToAddItem, handleItemPress]
 );
 
   const listData = useMemo(() => {
@@ -330,6 +375,18 @@ export default function WardrobeScreen() {
         isOpen={isAddSheetOpen}
         onClose={() => setIsAddSheetOpen(false)}
         onSelectMethod={navigateToAddItem}
+      />
+
+      <ClothPopup
+        visible={isModalVisible}
+        item={selectedItem}
+        source={selectedSource}
+        onClose={() => {
+          setIsModalVisible(false);
+          setSelectedSource(undefined);
+        }}
+        onDelete={handleDeleteItem}
+        onMakeOutfit={handleMakeOutfit}
       />
     </Animated.View>
   );

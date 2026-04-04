@@ -150,14 +150,15 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
     stopRealtimeSubscription(itemId);
   },
 
-  clearAll: () => {
-    // Clear all polling intervals and channels
-    const { processingItems } = get();
-    Object.keys(processingItems).forEach((itemId) => {
-      stopProcessing(itemId);
-    });
-    set({ processingItems: {} });
-  },
+ clearAll: () => {
+ // Clear all polling intervals and channels
+ const { processingItems } = get();
+ Object.keys(processingItems).forEach((itemId) => {
+ stopPolling(itemId);
+ stopRealtimeSubscription(itemId);
+ });
+ set({ processingItems: {} });
+ },
 }));
 
 // Helper functions for Realtime and Polling
