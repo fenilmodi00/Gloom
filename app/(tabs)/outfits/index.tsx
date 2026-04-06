@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
   View, Text, TouchableOpacity, RefreshControl, 
-  Alert, Platform, StyleSheet, Dimensions 
+  Platform, StyleSheet, Dimensions 
 } from 'react-native';
+import { showToast } from '@/components/shared/Toast';
 import Colors from '@/constants/Colors';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,7 +46,7 @@ export default function OutfitsScreen() {
     if (!user?.id) return;
 
     if (wardrobeItems.length < 3) {
-      Alert.alert('Add more items', 'You need at least 3 items in your wardrobe for AI suggestions.');
+      showToast({ type: 'warning', message: 'Add at least 3 items first' });
       return;
     }
 
@@ -86,10 +87,10 @@ export default function OutfitsScreen() {
         if (data) addOutfit(data);
       }
 
-      Alert.alert('Done!', 'New outfits generated.');
+      showToast({ type: 'success', message: 'New outfits generated!' });
       await fetchOutfits();
     } catch (error: any) {
-      Alert.alert('Generation Failed', error.message || 'Could not generate suggestions.');
+      showToast({ type: 'error', message: 'Generation failed. Try again.' });
     } finally {
       setIsGenerating(false);
     }

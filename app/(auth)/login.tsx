@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showToast } from '@/components/shared/Toast';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -24,7 +25,6 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Validate Indian phone number (10 digits)
   const isValidPhone = (phone: string) => {
@@ -35,7 +35,6 @@ export default function LoginScreen() {
   // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -46,10 +45,10 @@ export default function LoginScreen() {
       });
 
       if (error) {
-        setError(error.message);
+        showToast({ type: 'error', message: error.message });
       }
     } catch (err) {
-      setError('Failed to sign in with Google');
+      showToast({ type: 'error', message: 'Failed to sign in with Google' });
     } finally {
       setLoading(false);
     }
@@ -58,12 +57,11 @@ export default function LoginScreen() {
   // Handle Send OTP
   const handleSendOtp = async () => {
     if (!isValidPhone(phone)) {
-      setError('Please enter a valid 10-digit phone number');
+      showToast({ type: 'warning', message: 'Please enter a valid 10-digit phone number' });
       return;
     }
 
     setOtpLoading(true);
-    setError(null);
 
     try {
       // Format phone with +91 country code
@@ -74,12 +72,13 @@ export default function LoginScreen() {
       });
 
       if (error) {
-        setError(error.message);
+        showToast({ type: 'error', message: error.message });
       } else {
         setOtpSent(true);
+        showToast({ type: 'success', message: 'OTP sent successfully' });
       }
     } catch (err) {
-      setError('Failed to send OTP. Please try again.');
+      showToast({ type: 'error', message: 'Failed to send OTP. Please try again.' });
     } finally {
       setOtpLoading(false);
     }
@@ -88,12 +87,11 @@ export default function LoginScreen() {
   // Handle Verify OTP
   const handleVerifyOtp = async () => {
     if (otp.length !== 6) {
-      setError('Please enter the 6-digit OTP');
+      showToast({ type: 'warning', message: 'Please enter the 6-digit OTP' });
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const formattedPhone = `+91${phone.replace(/\D/g, '')}`;
@@ -105,7 +103,7 @@ export default function LoginScreen() {
       });
 
       if (error) {
-        setError(error.message);
+        showToast({ type: 'error', message: error.message });
       } else if (data.session) {
         setSession(data.session.access_token);
 
@@ -124,7 +122,7 @@ export default function LoginScreen() {
         }
       }
     } catch (err) {
-      setError('Failed to verify OTP. Please try again.');
+      showToast({ type: 'error', message: 'Failed to verify OTP. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -147,16 +145,6 @@ export default function LoginScreen() {
           <Text className="text-4xl font-hero italic tracking-tight text-textPrimary">Gloom</Text>
           <Text className="text-base text-textSecondary mt-2 font-body">Your Personal AI Stylist</Text>
         </View>
-
-        {/* Error Message */}
-        {error && (
-          <View className="flex-row items-center justify-between bg-stateError/10 p-4 rounded-xl mb-6">
-            <Text className="flex-1 text-stateError text-sm font-body">{error}</Text>
-            <TouchableOpacity onPress={() => setError(null)}>
-              <Text className="text-stateError text-lg ml-3 font-heading">✕</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
         {!otpSent ? (
           <>

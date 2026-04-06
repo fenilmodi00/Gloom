@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
-import { View, StyleSheet, Pressable, Alert, BackHandler, ScrollView } from 'react-native';
+import { View, StyleSheet, Pressable, BackHandler, ScrollView } from 'react-native';
+import { showToast } from '@/components/shared/Toast';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -88,17 +89,17 @@ const combinations = useCombinations();
   // Handle generate outfit
   const handleGenerateOutfit = useCallback(() => {
     if (selectedItemsArray.length === 0) {
-      Alert.alert('No items selected', 'Select at least one item to build an outfit.');
+      showToast({ type: 'warning', message: 'Select items to build outfit' });
       return;
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     // Placeholder alert
-    Alert.alert(
-      'Generate Outfit',
-      `Style: ${selectedStyle || 'any'}\nItems: ${selectedItemsArray.length}\n\nAI generation coming soon!`
-    );
+    showToast({ 
+      type: 'info', 
+      message: 'AI styling coming soon' 
+    });
   }, [selectedItemsArray, selectedStyle]);
 
   // Handle combination card press - navigate to combination screen

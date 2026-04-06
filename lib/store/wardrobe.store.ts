@@ -106,7 +106,7 @@ export const useWardrobeStore = create<WardrobeState>()(
         body: JSON.stringify({
           image_url: tempUrl,
           cutout_url: null, // Will be set after background removal
-          category: itemInput.category || 'tops', // Defensive fallback
+          category: itemInput.category || null, // No default, wait for Gemini
           sub_category: itemInput.sub_category,
           colors: itemInput.colors,
           style_tags: itemInput.style_tags,

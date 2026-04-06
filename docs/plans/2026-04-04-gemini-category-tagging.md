@@ -361,7 +361,7 @@ func (c *Client) doRequest(ctx context.Context, reqBody CategorizeRequest) (*Cat
 	}
 
 	// Gemini API endpoint format
-	url := fmt.Sprintf("%s/v1beta/models/gemini-2.0-flash-exp:generateContent?key=%s", c.baseURL, c.apiKey)
+	url := fmt.Sprintf("%s/v1beta/models/gemini-2.5-flash:generateContent?key=%s", c.baseURL, c.apiKey)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyBytes))
 	if err != nil {

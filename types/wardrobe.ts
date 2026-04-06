@@ -1,6 +1,6 @@
 export type Category = 'tops' | 'bottoms' | 'shoes' | 'accessories' | 'bags' | 'fullbody' | 'outerwear';
 
-export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'fallback';
+export type ProcessingStatus = 'ready' | 'pending' | 'processing' | 'analyzing' | 'completed' | 'failed' | 'fallback';
 
 export interface WardrobeItem {
 id: string;

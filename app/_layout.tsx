@@ -19,6 +19,7 @@ import { useAuthStore } from '@/lib/store/auth.store';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import 'react-native-reanimated';
 import { SplashScreenAnimation } from '@/components/shared/SplashScreenAnimation';
+import { ToastProvider } from '@/components/shared/Toast';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -50,10 +51,16 @@ function useAuthInit() {
   const { setUser, setSession, setLoading } = useAuthStore();
 
   useEffect(() => {
-    // If we are in DEV, trigger bypass immediately to skip login screen
+    // If we are in DEV, use dev JWT token for authentication
     if (__DEV__) {
-      console.log('[AuthInit] DEV Mode: bypassing auth with preset user');
-      setSession(null); // This triggers the bypass in auth.store.ts
+      console.log('[AuthInit] DEV Mode: using dev JWT token for auth');
+      const devToken = process.env.EXPO_PUBLIC_DEV_JWT_TOKEN;
+      if (devToken) {
+        setSession(devToken);
+      } else {
+        console.warn('EXPO_PUBLIC_DEV_JWT_TOKEN not set, falling back to legacy bypass (no token)');
+        setSession(null);
+      }
       setLoading(false);
       return;
     }
@@ -178,9 +185,11 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ToastProvider>
         <QueryClientProvider client={queryClient}>
           <RootLayoutNav />
         </QueryClientProvider>
+      </ToastProvider>
     </GestureHandlerRootView>
   );
 }

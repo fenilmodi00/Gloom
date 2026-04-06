@@ -59,33 +59,12 @@ type GenerationConfig struct {
 
 // Schema defines the expected response schema.
 type Schema struct {
-	Type        string     `json:"type"`
-	Description string     `json:"description,omitempty"`
-	Properties  Properties `json:"properties,omitempty"`
-	Required    []string   `json:"required,omitempty"`
-}
-
-// Properties holds the schema properties for the response.
-type Properties struct {
-	Category     StringArrayProp `json:"category"`
-	SubCategory  StringProp      `json:"sub_category,omitempty"`
-	OccasionTags StringArrayProp `json:"occasion_tags"`
-	StyleTags    StringArrayProp `json:"style_tags"`
-	Colors       StringArrayProp `json:"colors,omitempty"`
-}
-
-// StringArrayProp defines a string array property.
-type StringArrayProp struct {
-	Type        string   `json:"type"`
-	Description string   `json:"description,omitempty"`
-	Enum        []string `json:"enum,omitempty"`
-}
-
-// StringProp defines a string property.
-type StringProp struct {
-	Type        string `json:"type"`
-	Description string `json:"description,omitempty"`
-	Enum        string `json:"enum,omitempty"`
+	Type        string             `json:"type"`
+	Description string             `json:"description,omitempty"`
+	Properties  map[string]*Schema `json:"properties,omitempty"`
+	Required    []string           `json:"required,omitempty"`
+	Items       *Schema            `json:"items,omitempty"` // For array element definitions
+	Enum        []string           `json:"enum,omitempty"`  // For string enum values
 }
 
 // CategorizeRequest is the request body for the Gemini API.
@@ -96,11 +75,15 @@ type CategorizeRequest struct {
 
 // CategorizeResponse is the response from the Gemini API categorization.
 type CategorizeResponse struct {
-	Category     string   `json:"category"`
-	SubCategory  string   `json:"sub_category,omitempty"`
-	OccasionTags []string `json:"occasion_tags"`
-	StyleTags    []string `json:"style_tags"`
-	Colors       []string `json:"colors,omitempty"`
+	Category       string   `json:"category"`
+	SubCategory    string   `json:"sub_category,omitempty"`
+	OccasionTags   []string `json:"occasion_tags"`
+	StyleTags      []string `json:"style_tags"`
+	Colors         []string `json:"colors,omitempty"`
+	VibeTags       []string `json:"vibe_tags,omitempty"`
+	FunctionalTags []string `json:"functional_tags,omitempty"`
+	SilhouetteTags []string `json:"silhouette_tags,omitempty"`
+	FabricGuess    string   `json:"fabric_guess,omitempty"`
 }
 
 // CategorizeImage analyzes a clothing image URL and returns categorization tags.
@@ -170,7 +153,11 @@ Return JSON with:
 - sub_category: Specific type (e.g., "tshirt", "jeans", "sneakers", "watch")
 - occasion_tags: Array of applicable occasions from ["casual", "semi-formal", "formal", "athletic", "evening", "business", "party"]
 - style_tags: Array of style descriptors from ["minimalist", "bohemian", "streetwear", "classic", "vintage", "modern", "ethnic", "western"]
-- colors: Array of dominant colors detected in the image`
+- colors: Array of dominant colors detected in the image
+- vibe_tags: Array of aesthetic vibes (e.g., "grunge", "preppy", "minimalist", "oversized")
+- functional_tags: Array of functional features (e.g., "waterproof", "breathable", "stretchy", "warm")
+- silhouette_tags: Array of silhouette descriptors (e.g., "slim-fit", "baggy", "cropped", "a-line")
+- fabric_guess: Estimated fabric/material (e.g., "cotton", "denim", "leather", "polyester")`
 
 	return CategorizeRequest{
 		Contents: []Content{
@@ -191,31 +178,65 @@ Return JSON with:
 		GenerationConfig: GenerationConfig{
 			ResponseMimeType: "application/json",
 			ResponseSchema: &Schema{
-				Type:     "object",
+				Type:     "OBJECT",
 				Required: []string{"category", "occasion_tags"},
-				Properties: Properties{
-					Category: StringArrayProp{
-						Type:        "array",
+				Properties: map[string]*Schema{
+					"category": {
+						Type:        "STRING",
 						Description: "Item category",
 						Enum:        []string{"tops", "bottoms", "fullbody", "outerwear", "shoes", "bags", "accessories"},
 					},
-					SubCategory: StringProp{
-						Type:        "string",
+					"sub_category": {
+						Type:        "STRING",
 						Description: "Specific sub-category type",
 					},
-					OccasionTags: StringArrayProp{
-						Type:        "array",
+					"occasion_tags": {
+						Type:        "ARRAY",
 						Description: "Applicable occasions",
-						Enum:        []string{"casual", "semi-formal", "formal", "athletic", "evening", "business", "party"},
+						Items: &Schema{
+							Type: "STRING",
+							Enum: []string{"casual", "semi-formal", "formal", "athletic", "evening", "business", "party"},
+						},
 					},
-					StyleTags: StringArrayProp{
-						Type:        "array",
+					"style_tags": {
+						Type:        "ARRAY",
 						Description: "Style descriptors",
-						Enum:        []string{"minimalist", "bohemian", "streetwear", "classic", "vintage", "modern", "ethnic", "western"},
+						Items: &Schema{
+							Type: "STRING",
+							Enum: []string{"minimalist", "bohemian", "streetwear", "classic", "vintage", "modern", "ethnic", "western"},
+						},
 					},
-					Colors: StringArrayProp{
-						Type:        "array",
+					"colors": {
+						Type:        "ARRAY",
 						Description: "Dominant colors",
+						Items: &Schema{
+							Type: "STRING",
+						},
+					},
+					"vibe_tags": {
+						Type:        "ARRAY",
+						Description: "Aesthetic vibes",
+						Items: &Schema{
+							Type: "STRING",
+						},
+					},
+					"functional_tags": {
+						Type:        "ARRAY",
+						Description: "Functional features",
+						Items: &Schema{
+							Type: "STRING",
+						},
+					},
+					"silhouette_tags": {
+						Type:        "ARRAY",
+						Description: "Silhouette descriptors",
+						Items: &Schema{
+							Type: "STRING",
+						},
+					},
+					"fabric_guess": {
+						Type:        "STRING",
+						Description: "Estimated fabric",
 					},
 				},
 			},
@@ -230,7 +251,7 @@ func (c *Client) doRequest(ctx context.Context, reqBody CategorizeRequest) (*Cat
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/v1beta/models/gemini-2.0-flash-exp:generateContent?key=%s", c.baseURL, c.apiKey)
+	url := fmt.Sprintf("%s/v1beta/models/gemini-2.5-flash:generateContent?key=%s", c.baseURL, c.apiKey)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)

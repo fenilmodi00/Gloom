@@ -3,9 +3,7 @@ package wardrobe
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"strings"
 
 	"backend/internal/db"
@@ -97,16 +95,14 @@ func (h *Handler) CreateItem(c *fiber.Ctx) error {
 		return response.ValidationError(c, errs)
 	}
 
-	// Validate category is required and valid
-	if req.Category == nil || *req.Category == "" {
-		return response.ValidationError(c, []string{"category: required field"})
-	}
-	validCategories := map[string]bool{
-		"tops": true, "bottoms": true, "fullbody": true,
-		"outerwear": true, "shoes": true, "bags": true, "accessories": true,
-	}
-	if !validCategories[*req.Category] {
-		return response.ValidationError(c, []string{"category: invalid value"})
+	if req.Category != nil && *req.Category != "" {
+		validCategories := map[string]bool{
+			"tops": true, "bottoms": true, "fullbody": true,
+			"outerwear": true, "shoes": true, "bags": true, "accessories": true,
+		}
+		if !validCategories[*req.Category] {
+			return response.ValidationError(c, []string{"category: invalid value"})
+		}
 	}
 
 	if req.ProcessingStatus == "" {
@@ -275,7 +271,7 @@ func (h *Handler) DeleteItem(c *fiber.Ctx) error {
 	return response.NoContent(c)
 }
 
-// GetImage proxies image requests from Supabase Storage through the backend
+// GetImage redirects image requests to the public Supabase Storage URL
 func (h *Handler) GetImage(c *fiber.Ctx) error {
 	path := c.Params("*")
 	if path == "" {
@@ -287,54 +283,12 @@ func (h *Handler) GetImage(c *fiber.Ctx) error {
 		return response.BadRequest(c, "invalid path")
 	}
 
-	// Construct Supabase Storage URL
+	// Construct public Supabase Storage URL
 	storageURL := fmt.Sprintf("%s/storage/v1/object/public/wardrobe-images/%s", h.supabaseURL, path)
 
-	// Forward the request to Supabase Storage
-	httpReq, err := http.NewRequest("GET", storageURL, nil)
-	if err != nil {
-		log.Printf("ERROR: get_image path=%s err=%v", path, err)
-		return response.InternalError(c, "failed to create request")
-	}
+	// Set cache control header for browser caching
+	c.Set("Cache-Control", "public, max-age=31536000")
 
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		log.Printf("ERROR: get_image path=%s err=%v", path, err)
-		return response.InternalError(c, "failed to fetch image")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound {
-			return response.NotFound(c, "image not found")
-		}
-		log.Printf("ERROR: get_image path=%s status=%d", path, resp.StatusCode)
-		return response.InternalError(c, "failed to fetch image")
-	}
-
-	// Read image data
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("ERROR: get_image path=%s err=%v", path, err)
-		return response.InternalError(c, "failed to read image")
-	}
-
-	// Set content type based on extension
-	contentType := resp.Header.Get("Content-Type")
-	if contentType == "" {
-		// Fallback based on extension
-		switch {
-		case strings.HasSuffix(strings.ToLower(path), ".png"):
-			contentType = "image/png"
-		case strings.HasSuffix(strings.ToLower(path), ".webp"):
-			contentType = "image/webp"
-		default:
-			contentType = "image/jpeg"
-		}
-	}
-
-	c.Set("Content-Type", contentType)
-	c.Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
-	return c.Send(data)
+	// Redirect to Supabase CDN for direct delivery
+	return c.Redirect(storageURL, fiber.StatusFound)
 }

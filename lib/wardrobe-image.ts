@@ -25,11 +25,30 @@ export function getWardrobeImageUrl(supabaseUrl: string | null | undefined): str
 }
 
 /**
- * Get image URL for wardrobe item (uses cutout_url if available, otherwise image_url)
+ * Get image URL for wardrobe item (uses cutout_url if available, returns null during processing)
+ * Prevents raw image flash by signaling skeleton when item is being processed
  */
-export function getWardrobeItemImageUrl(item: { image_url?: string | number | null; cutout_url?: string | number | null }): string | null {
-  const url = item.cutout_url || item.image_url;
-  if (!url) return null;
-  if (typeof url === 'number') return null; // Can't proxy local assets
-  return getWardrobeImageUrl(url);
+export function getWardrobeItemImageUrl(item: { 
+  image_url?: string | number | null; 
+  cutout_url?: string | number | null;
+  processing_status?: string | null;
+}): string | null {
+  // If cutout is available, use it (processing complete)
+  if (item.cutout_url) {
+    if (typeof item.cutout_url === 'number') return null; // Can't proxy local assets
+    return getWardrobeImageUrl(item.cutout_url);
+  }
+  
+  // Return null during processing to signal skeleton display
+  if (item.processing_status === 'processing' || item.processing_status === 'analyzing') {
+    return null;
+  }
+  
+  // Otherwise fallback to original image (for completed items without cutout)
+  if (item.image_url) {
+    if (typeof item.image_url === 'number') return null; // Can't proxy local assets
+    return getWardrobeImageUrl(item.image_url);
+  }
+  
+  return null;
 }

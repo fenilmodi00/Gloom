@@ -1,159 +1,320 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { BlurView } from 'expo-blur';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSpring,
   runOnJS,
+  LinearTransition,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
+import { THEME, BLUR } from '@/constants/Colors';
+import { Typography, Fonts } from '@/constants/Typography';
+
+// ─── Types ──────────────────────────────────────────────────────────────────────
+
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
-interface ToastConfig {
-  type: ToastType;
-  message: string;
+export interface ToastConfig {
+  type:      ToastType;
+  title?:    string;
+  message:   string;
   duration?: number;
+}
+
+interface ToastInstance extends ToastConfig {
+  id: number;
 }
 
 interface ToastContextType {
   showToast: (config: ToastConfig) => void;
 }
 
-const ToastContext = createContext<ToastContextType | null>(null);
+// ─── Global imperative bridge ────────────────────────────────────────────────────
+// Allows showToast() calls from outside React (api.ts, interceptors, etc.)
 
-const TOAST_COLORS: Record<ToastType, string> = {
-  success: '#6A8C69', // stateSuccess
-  error: '#B85C4A',   // stateError
-  info: '#7A8FAB',    // stateInfo
-  warning: '#C9A84C', // stateWarning
-};
+type ToastHandler = (config: ToastConfig) => void;
+let _registeredHandler: ToastHandler | null = null;
 
-const TOAST_HEIGHT = 56;
+function registerHandler(fn: ToastHandler) { _registeredHandler = fn; }
+function unregisterHandler()               { _registeredHandler = null; }
+
+/** Call from anywhere — no hook, no prop drilling */
+export function showToast(config: ToastConfig) {
+  if (_registeredHandler) {
+    _registeredHandler(config);
+  } else {
+    console.warn('[Gloom/Toast] showToast called before <ToastProvider> mounted.');
+  }
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────────
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-function ToastItem({ 
-  config, 
-  onDismiss 
-}: { 
-  config: ToastConfig; 
-  onDismiss: () => void;
-}) {
-  const translateX = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  
-  const backgroundColor = TOAST_COLORS[config.type];
-  const duration = config.duration || 3000;
+const TOAST_WIDTH             = SCREEN_WIDTH - 40;
+const SWIPE_DISMISS_THRESHOLD = SCREEN_WIDTH * 0.28;
+const DEFAULT_DURATION        = 3500;
+const ANIMATE_IN_MS           = 380;
+const ANIMATE_OUT_MS          = 280;
+const MAX_TOASTS              = 3;
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-    opacity: opacity.value,
-  }));
+const ACCENT: Record<ToastType, string> = {
+  success: THEME.stateSuccess,
+  error:   THEME.stateError,
+  warning: THEME.stateWarning,
+  info:    THEME.stateInfo,
+};
 
-  const dismiss = useCallback(() => {
-    translateX.value = withTiming(SCREEN_WIDTH, { duration: 300 });
-    opacity.value = withTiming(0, { duration: 300 }, () => {
-      runOnJS(onDismiss)();
-    });
+const ICON: Record<ToastType, string> = {
+  success: '✓',
+  error:   '✕',
+  warning: '⚠',
+  info:    'ℹ',
+};
+
+// ─── Context ─────────────────────────────────────────────────────────────────────
+
+const ToastContext = createContext<ToastContextType | null>(null);
+
+// ─── ToastItem ───────────────────────────────────────────────────────────────────
+
+interface ToastItemProps {
+  toast:     ToastInstance;
+  onDismiss: (id: number) => void;
+}
+
+const ToastItem = React.memo(function ToastItem({ toast, onDismiss }: ToastItemProps) {
+  const accentColor = ACCENT[toast.type];
+
+  // ── Shared values ──────────────────────────────────────────────────────────────
+  const translateX = useSharedValue(SCREEN_WIDTH);  // enters from right
+  const translateY = useSharedValue(-8);
+  const opacity    = useSharedValue(0);
+  const isExiting  = useSharedValue(false);
+
+  // ── Dismiss (worklet — safe to call from gesture or JS timer) ──────────────────
+  const handleDismiss = useCallback(
+    () => onDismiss(toast.id),
+    [onDismiss, toast.id],
+  );
+
+  const animateOut = useCallback(() => {
+    'worklet';
+    if (isExiting.value) return;
+    isExiting.value = true;
+
+    translateX.value = withTiming(SCREEN_WIDTH, { duration: ANIMATE_OUT_MS });
+    opacity.value    = withTiming(
+      0,
+      { duration: ANIMATE_OUT_MS },
+      (done) => { if (done) runOnJS(handleDismiss)(); },
+    );
+  }, [handleDismiss]);
+
+  // ── Mount animation ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+    translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+    opacity.value    = withTiming(1, { duration: ANIMATE_IN_MS });
   }, []);
 
-  // Auto dismiss
-  React.useEffect(() => {
-    const timer = setTimeout(dismiss, duration);
-    return () => clearTimeout(timer);
-  }, [duration]);
+  // ── Auto-dismiss ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const t = setTimeout(animateOut, toast.duration ?? DEFAULT_DURATION);
+    return () => clearTimeout(t);
+  }, [animateOut, toast.duration]);
 
-  // Swipe to dismiss
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      if (event.translationX > 0) {
-        translateX.value = event.translationX;
-      }
+  // ── Gesture ────────────────────────────────────────────────────────────────────
+  const pan = Gesture.Pan()
+    .activeOffsetX(12)
+    .failOffsetY([-8, 8])
+    .onUpdate(({ translationX }) => {
+      translateX.value = translationX > 0
+        ? translationX
+        : translationX * 0.15;       // rubber-band resistance
     })
-    .onEnd((event) => {
-      if (event.translationX > 100) {
-        dismiss();
+    .onEnd(({ translationX, velocityX }) => {
+      if (translationX > SWIPE_DISMISS_THRESHOLD || velocityX > 900) {
+        animateOut();
       } else {
-        translateX.value = withTiming(0);
+        translateX.value = withSpring(0, { damping: 20, stiffness: 220 });
       }
     });
 
+  // ── Animated style ─────────────────────────────────────────────────────────────
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+    ],
+  }));
+
+  // ── Render ─────────────────────────────────────────────────────────────────────
   return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.toast, { backgroundColor }, animatedStyle]}>
-        <Text style={styles.toastText}>{config.message}</Text>
+    <GestureDetector gesture={pan}>
+      <Animated.View
+        layout={LinearTransition.springify().damping(18)}
+        style={[styles.wrapper, animatedStyle]}
+      >
+        <BlurView
+          intensity={BLUR.card}           // 6 — subtle, not frosted-glass heavy
+          tint="light"
+          style={styles.blur}
+        >
+          {/* Status accent bar */}
+          <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
+
+          {/* Icon badge */}
+          <View style={[
+            styles.iconBadge,
+            { backgroundColor: `${accentColor}22` },  // 13% opacity tint
+          ]}>
+            <Text style={[styles.iconText, { color: accentColor }]}>
+              {ICON[toast.type]}
+            </Text>
+          </View>
+
+          {/* Text */}
+          <View style={styles.textBlock}>
+            {toast.title ? (
+              <Text style={styles.title} numberOfLines={1}>
+                {toast.title}
+              </Text>
+            ) : null}
+            <Text style={styles.message} numberOfLines={2}>
+              {toast.message}
+            </Text>
+          </View>
+        </BlurView>
       </Animated.View>
     </GestureDetector>
   );
-}
+});
+
+// ─── Provider ─────────────────────────────────────────────────────────────────────
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<ToastConfig[]>([]);
-  const toastIdRef = useRef(0);
+  const [toasts, setToasts] = useState<ToastInstance[]>([]);
+  const nextId = useRef(0);
 
-  const showToast = useCallback((config: ToastConfig) => {
-    const id = toastIdRef.current++;
-    setToasts((prev) => [...prev, { ...config, id }]);
+  const showToastInternal = useCallback((config: ToastConfig) => {
+    setToasts((prev) => {
+      const trimmed = prev.length >= MAX_TOASTS ? prev.slice(1) : prev;
+      return [...trimmed, { ...config, id: nextId.current++ }];
+    });
   }, []);
 
-  const dismissToast = useCallback(() => {
-    setToasts((prev) => prev.slice(1));
+  // Register the global bridge when provider mounts
+  useEffect(() => {
+    registerHandler(showToastInternal);
+    return () => unregisterHandler();
+  }, [showToastInternal]);
+
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast: showToastInternal }}>
       {children}
       <View style={styles.container} pointerEvents="box-none">
-        {toasts.map((toast, index) => (
-          <ToastItem
-            key={index}
-            config={toast}
-            onDismiss={dismissToast}
-          />
+        {toasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
         ))}
       </View>
     </ToastContext.Provider>
   );
 }
 
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within ToastProvider');
-  }
-  return context;
+// ─── Hook ──────────────────────────────────────────────────────────────────────────
+
+export function useToast(): ToastContextType {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error('useToast must be used within <ToastProvider>');
+  return ctx;
 }
 
-// Convenience function to show toast
-export function showToast(config: ToastConfig) {
-  // This will be replaced by ToastContext when mounted
-  console.log(`[Toast] ${config.type}: ${config.message}`);
-}
+// ─── Styles ────────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    zIndex: 9999,
+    position:   'absolute',
+    top:        56,
+    left:       0,
+    right:      0,
+    zIndex:     9999,
     alignItems: 'center',
+    gap:        8,
   },
-  toast: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-    maxWidth: SCREEN_WIDTH - 32,
+  wrapper: {
+    width:        TOAST_WIDTH,
+    borderRadius: 16,
+    // Luxury floating shadow
+    shadowColor:   THEME.textPrimary,
+    shadowOffset:  { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius:  16,
+    elevation:     6,
   },
-  toastText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
+  blur: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    borderRadius:  16,
+    overflow:      'hidden',           // required for BlurView radius
+    borderWidth:   1,
+    borderColor:   'rgba(212, 200, 184, 0.45)',   // THEME.chipIdleBorder @ 45%
+    backgroundColor: 'rgba(253, 250, 246, 0.82)', // THEME.bgSurface @ 82%
+    paddingVertical:   13,
+    paddingRight:      16,
+  },
+  accentBar: {
+    position: 'absolute',
+    left:     0,
+    top:      0,
+    bottom:   0,
+    width:    4,
+    borderTopLeftRadius:    16,
+    borderBottomLeftRadius: 16,
+  },
+  iconBadge: {
+    width:          30,
+    height:         30,
+    borderRadius:   9,
+    alignItems:     'center',
+    justifyContent: 'center',
+    marginLeft:     16,       // clears the 4px accent bar + breathing room
+    marginRight:    10,
+    flexShrink:     0,
+  },
+  iconText: {
+    fontFamily: Fonts.ui,
+    fontSize:   12,
+    fontWeight: '700',
+  },
+  textBlock: {
+    flex: 1,
+    gap:  2,
+  },
+  title: {
+    ...Typography.uiLabelMedium,
+    color:         THEME.textPrimary,
+    textTransform: 'none',
+    letterSpacing:  0.2,
+  },
+  message: {
+    ...Typography.bodySmall,
+    color: THEME.textSecondary,
   },
 });

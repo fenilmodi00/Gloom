@@ -19,9 +19,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Shirt } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View, ImageSourcePropType } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View, ImageSourcePropType } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showToast } from '@/components/shared/Toast';
 
 // Category configuration
 const CATEGORY_CONFIG: { key: Category; label: string }[] = [
@@ -49,11 +51,15 @@ const CategoryCard = memo(
   }) => {
     const imageUrl = getWardrobeItemImageUrl(item);
     const source = imageUrl ? { uri: imageUrl } : undefined;
+    
+    // Determine if we should show skeleton (no imageUrl during processing)
+    const isProcessingItem = item.processing_status === 'processing' || item.processing_status === 'analyzing';
+    const showSkeleton = !imageUrl && isProcessingItem;
 
     const { processingItems } = useWardrobeProcessingStore();
     const processingItem = processingItems[item.id];
     const isProcessing = processingItem?.status === 'pending' || processingItem?.status === 'processing';
-    const isAnalyzing = (processingItem?.status as any) === 'analyzing';
+    const isAnalyzing = processingItem?.status === 'analyzing';
     const isFailed = processingItem?.status === 'failed' || processingItem?.status === 'fallback';
 
     const handlePress = () => {
@@ -63,28 +69,30 @@ const CategoryCard = memo(
     return (
       <Pressable onPress={handlePress} style={styles.cardContainer}>
         {/* Show category-specific skeleton for analyzing items with category */}
-        {isAnalyzing && item.category && (
-          <CategorySpecificSkeletonCard 
-            variant={item.category === 'accessories' ? 'default' : item.category as any} 
-          />
-        )}
-        {/* Show generic skeleton for processing/pending items */}
-        {isProcessing && (
+         {isAnalyzing && item.category && (
+           <CategorySpecificSkeletonCard 
+             variant={item.category === 'accessories' ? 'default' : item.category} 
+           />
+         )}
+        {/* Show generic skeleton for processing/pending items or when imageUrl is null during processing */}
+        {(isProcessing || showSkeleton) && (
           <SkeletonCard width={CARD_WIDTH} height={CARD_HEIGHT} />
         )}
-        {/* Display image (cutout when available, fallback to original) */}
-        <Image
-          source={source}
-          style={[
-            styles.cardImage,
-            { opacity: (isProcessing || isAnalyzing) ? 0 : 1 },
-            isFailed && { borderWidth: 1, borderColor: Colors.light.chipIdleBorder }
-          ]}
-          contentFit="contain"
-          transition={0} // Matches modal for instant cache share
-          cachePolicy="disk" // Matches modal to ensure one single memory pull
-          priority="high" // High priority to keep in memory
-        />
+        {/* Display image whenever a URL is available (cutout or original) */}
+        {imageUrl && (
+          <Image
+            source={source}
+            style={[
+              styles.cardImage,
+              isFailed && { borderWidth: 1, borderColor: Colors.light.chipIdleBorder },
+              (isProcessing || isAnalyzing) && { opacity: 0.6 } // Dim while processing
+            ]}
+            contentFit="contain"
+            transition={0}
+            cachePolicy="disk"
+            priority="high"
+          />
+        )}
         {isFailed && !isProcessing && !isAnalyzing && (
           <View style={styles.processingOverlay}>
              <Text style={[styles.statusBadgeText, { fontSize: 10 }]}>Original</Text>
@@ -156,13 +164,39 @@ export default function WardrobeScreen() {
 
   const items = storeItems;
 
-  useEffect(() => {
-    if (isHydrated) {
-      fetchItems();
-    }
-  }, [fetchItems, isHydrated]);
+  // Fetch items when screen comes into focus to get latest data (including processed cutouts)
+  useFocusEffect(
+    useCallback(() => {
+      if (isHydrated) {
+        fetchItems();
+      }
+    }, [fetchItems, isHydrated])
+  );
 
   const { processingItems } = useWardrobeProcessingStore();
+  
+  // Sync Sentinel: Recover any processing items that aren't being tracked (e.g. after a refresh)
+  useEffect(() => {
+    if (!isHydrated || items.length === 0) return;
+    
+    items.forEach(item => {
+      // Only recover RECENT items (last 5 minutes) to avoid infinite loops with stuck history
+      const createdDate = new Date(item.created_at);
+      const isRecent = (Date.now() - createdDate.getTime()) < 5 * 60 * 1000;
+      
+      const isProcessingInDB = 
+        item.processing_status === 'pending' || 
+        item.processing_status === 'processing' || 
+        item.processing_status === 'analyzing';
+      
+      const isTracked = !!processingItems[item.id];
+      
+      if (isRecent && isProcessingInDB && !isTracked) {
+        console.log(`[SyncSentinel] Recovering recent orphaned item: ${item.id} (${item.processing_status})`);
+        useWardrobeProcessingStore.getState().startProcessing(item.id);
+      }
+    });
+  }, [items, isHydrated]);
 
   const groupedItems = useMemo(() => {
     const groups: Record<string, WardrobeItem[]> = {};
@@ -171,16 +205,22 @@ export default function WardrobeScreen() {
     });
 
     items.forEach((item) => {
+      const pItem = processingItems[item.id];
+      const status = pItem?.status || item.processing_status;
       const isProcessing =
-        processingItems[item.id]?.status === 'pending' ||
-        processingItems[item.id]?.status === 'processing';
+        status === 'pending' ||
+        status === 'processing' || 
+        status === 'analyzing';
 
-      if (item.category && groups[item.category]) {
-        groups[item.category].push(item);
-      } else if (isProcessing && item.category === null) {
-        CATEGORY_CONFIG.forEach(({ key }) => {
-           groups[key].push(item);
-        });
+      // Use the category from the item (updated via store sync)
+      const category = item.category;
+
+      // Skip items with no category unless they are still in the active processing flow
+      // (Even then, we can't group them without a category, so we skip until Gemini sets it)
+      if (!category) return;
+
+      if (groups[category]) {
+        groups[category].push(item);
       }
     });
 
@@ -214,10 +254,15 @@ export default function WardrobeScreen() {
   }, []);
 
   const handleDeleteItem = useCallback(async (itemId: string) => {
-    await removeItem(itemId);
-    setIsModalVisible(false);
-    setSelectedItem(null);
-    setSelectedSource(undefined);
+    try {
+      await removeItem(itemId);
+      setIsModalVisible(false);
+      setSelectedItem(null);
+      setSelectedSource(undefined);
+      showToast({ type: 'success', message: 'Item removed from wardrobe' });
+    } catch (error) {
+      showToast({ type: 'error', message: 'Failed to remove item' });
+    }
   }, [removeItem]);
 
   const handleMakeOutfit = useCallback((item: WardrobeItem) => {
@@ -330,16 +375,10 @@ export default function WardrobeScreen() {
           buttonTitle="Add item"
           onPress={handleEmptyAdd}
           onSearchPress={() =>
-            Alert.alert(
-              'Coming Soon',
-              'Search web will be available in a future update.'
-            )
+            showToast({ type: 'info', message: 'Search web coming soon' })
           }
           onOutfitPress={() =>
-            Alert.alert(
-              'Coming Soon',
-              'Add items from outfit will be available soon.'
-            )
+            showToast({ type: 'info', message: 'Outfit import coming soon' })
           }
         />
         <AddItemSheet

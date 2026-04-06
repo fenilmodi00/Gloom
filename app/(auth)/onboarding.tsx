@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/lib/store/auth.store';
+import { showToast } from '@/components/shared/Toast';
 
 // Step components
 function StepIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
@@ -68,7 +69,7 @@ export default function OnboardingScreen() {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     
     if (!permissionResult.granted) {
-      Alert.alert('Permission Required', 'Please allow camera access to take a photo.');
+      showToast({ type: 'error', message: 'Camera permission required' });
       return;
     }
 
@@ -159,7 +160,7 @@ export default function OnboardingScreen() {
       router.replace('/(tabs)/inspo' as any);
     } catch (error) {
       console.error('Onboarding error:', error);
-      Alert.alert('Error', 'Failed to complete onboarding. Please try again.');
+      showToast({ type: 'error', message: 'Failed to complete onboarding' });
     } finally {
       setLoading(false);
     }

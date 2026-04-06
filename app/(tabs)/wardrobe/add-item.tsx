@@ -169,6 +169,7 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
       }
     } catch (error) {
       console.error('Gallery error:', error);
+      showToast({ type: 'error', message: 'Failed to access gallery' });
     }
   };
 
@@ -185,6 +186,7 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
         }
       } catch (error) {
         console.error('Camera error:', error);
+        showToast({ type: 'error', message: 'Failed to capture photo' });
       }
     }
   };
@@ -198,14 +200,8 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
     let newItemId: string | null = null;
 
     try {
-      // Get auth session for Edge Function calls
-      const { data: sessionData } = await supabase.auth.getSession();
-      let authToken = sessionData?.session?.access_token;
-
-      if (!authToken && __DEV__) {
-        // In DEV mode, use the anon key as fallback token for Edge Functions
-        authToken = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-      }
+      // Get dev JWT token from auth store (works for both dev token and Supabase token)
+      const { session: authToken } = useAuthStore.getState();
 
       if (!authToken) {
         throw new Error('Authentication required');
@@ -247,21 +243,21 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
         throw new Error(triggerResult.error || 'Failed to start background removal');
       }
 
-       // Start polling via processing store (handles skeleton and updates automatically)
-       const { startProcessing } = useWardrobeProcessingStore.getState();
-       startProcessing(newItem.id);
+// Start polling via processing store (handles skeleton and updates automatically)
+     const { startProcessing } = useWardrobeProcessingStore.getState();
+     startProcessing(newItem.id);
+     closeScreen();
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      closeScreen();
+     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('Save error:', error);
       setIsProcessing(false);
       
-      // If we created an item but trigger failed, ensure UI reflects failure
-      if (newItemId) {
-        // We catch the error but the item exists, maybe show a toast
-        showToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to save item' });
-      }
+      // Show meaningful error toast to user
+      showToast({ 
+        type: 'error', 
+        message: error instanceof Error ? error.message : 'Failed to save item' 
+      });
     }
   };
 
@@ -353,7 +349,9 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
           <View style={styles.headerButton} />
         </View>
         <View style={styles.previewImageContainer}>
-          <Image source={{ uri: photoUri }} style={styles.previewImage} contentFit="cover" />
+          {!isProcessing && (
+            <Image source={{ uri: photoUri }} style={styles.previewImage} contentFit="cover" />
+          )}
           {isProcessing && <PreviewSkeleton />}
         </View>
         <View style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>

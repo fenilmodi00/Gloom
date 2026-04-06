@@ -129,16 +129,17 @@ func (h *ParallelHandler) processParallelInBackground(itemID uuid.UUID, userID u
 		h.updateFallback(itemID)
 		return
 	}
+	log.Printf("INFO: parallel_upload_success userID=%s item=%s url=%s", userID, itemID, cutoutURL)
 
 	// Step 4: Update DB with cutout URL and mark as completed
+	log.Printf("INFO: parallel_db_update userID=%s item=%s url=%s", userID, itemID, cutoutURL)
 	_, err = h.db.Exec(context.Background(), `
 	UPDATE wardrobe_items
-	SET cutout_url = $1, processing_status = 'completed'
+	SET cutout_url = $1, processing_status = 'completed', image_url = ''
 	WHERE id = $2
 	`, cutoutURL, itemID)
 	if err != nil {
-		log.Printf("ERROR: parallel_complete userID=%s item=%s err=%v", userID, itemID, err)
-		h.updateFallback(itemID)
+		log.Printf("ERROR: parallel_db_update userID=%s item=%s err=%v", userID, itemID, err)
 		return
 	}
 
@@ -150,7 +151,7 @@ func (h *ParallelHandler) processParallelInBackground(itemID uuid.UUID, userID u
 func (h *ParallelHandler) categorizeWithGeminiOnOriginal(ctx context.Context, itemID, userID uuid.UUID, imageURL string) {
 	log.Printf("INFO: parallel_gemini_start userID=%s item=%s", userID, itemID)
 
-	result, err := h.geminiClient.CategorizeImage(ctx, imageURL)
+	resp, err := h.geminiClient.CategorizeImage(ctx, imageURL)
 	if err != nil {
 		log.Printf("ERROR: parallel_gemini userID=%s item=%s err=%v", userID, itemID, err)
 		// Continue with Rembrandt even if Gemini fails
@@ -161,23 +162,19 @@ func (h *ParallelHandler) categorizeWithGeminiOnOriginal(ctx context.Context, it
 	// This indicates Gemini completed but rembg is still running
 	_, err = h.db.Exec(ctx, `
 	UPDATE wardrobe_items
-	SET
-		category = COALESCE($1, category),
-		sub_category = COALESCE($2, sub_category),
-		style_tags = COALESCE($3, style_tags),
-		occasion_tags = COALESCE($4, occasion_tags),
-		colors = COALESCE($5, colors),
-		processing_status = 'analyzing'
-	WHERE id = $6
-	`, result.Category, result.SubCategory, result.StyleTags, result.OccasionTags, result.Colors, itemID)
-
+	SET category = $1, sub_category = $2, colors = $3, style_tags = $4, 
+	    occasion_tags = $5, vibe_tags = $6, functional_tags = $7, 
+	    silhouette_tags = $8, fabric_guess = $9, 
+	    processing_status = 'analyzing'
+	WHERE id = $10
+	`, resp.Category, resp.SubCategory, resp.Colors, resp.StyleTags,
+		resp.OccasionTags, resp.VibeTags, resp.FunctionalTags,
+		resp.SilhouetteTags, resp.FabricGuess, itemID)
 	if err != nil {
 		log.Printf("ERROR: parallel_gemini_update userID=%s item=%s err=%v", userID, itemID, err)
 		return
 	}
-
-	log.Printf("INFO: parallel_gemini_complete userID=%s item=%s category=%s tags=%v",
-		userID, itemID, result.Category, result.OccasionTags)
+	log.Printf("INFO: parallel_gemini_complete userID=%s item=%s category=%s", userID, itemID, resp.Category)
 }
 
 // uploadCutout uploads the cutout image to Supabase storage.

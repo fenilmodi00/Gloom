@@ -8,7 +8,7 @@ import type { WardrobeItem } from '@/types';
 interface ProcessingItem {
   itemId: string;
   status: ProcessingStatus;
-  cutoutUrl: string | null;
+  cutoutUrl: string | number | null;
   pollAttempts: number;
   pollInterval: ReturnType<typeof setInterval> | null;
   channel: any | null;
@@ -19,8 +19,8 @@ interface WardrobeProcessingState {
 
   // Actions
   startProcessing: (itemId: string) => void;
-  updateStatus: (itemId: string, status: ProcessingStatus) => void;
-  onProcessingComplete: (itemId: string, cutoutUrl: string) => void;
+  updateStatus: (itemId: string, status: ProcessingStatus, metadata?: Partial<WardrobeItem>) => void;
+  onProcessingComplete: (itemId: string, metadata: WardrobeItem) => void;
   onProcessingFailed: (itemId: string, error: Error) => void;
   getProcessingStatus: (itemId: string) => ProcessingStatus | undefined;
   getProcessingQueue: () => string[];
@@ -53,35 +53,52 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
     startRealtimeSubscription(itemId);
   },
 
-  updateStatus: (itemId: string, status: ProcessingStatus) => {
+  updateStatus: (itemId: string, status: ProcessingStatus, metadata?: Partial<WardrobeItem>) => {
+    // Update processing store status (if tracked)
     set((state) => {
       const item = state.processingItems[itemId];
       if (!item) return state;
       return {
         processingItems: {
           ...state.processingItems,
-          [itemId]: {
-            ...item,
-            status,
-          },
+          [itemId]: { ...item, status },
         },
       };
     });
-  },
 
-  onProcessingComplete: (itemId: string, cutoutUrl: string) => {
-    stopPolling(itemId);
-    stopRealtimeSubscription(itemId);
-
-    // Update wardrobe store with cutout URL using functional setState
+    // Sync status and metadata to wardrobe store
     useWardrobeStore.setState((state) => ({
       items: state.items.map((item) =>
         item.id === itemId
-          ? { ...item, cutout_url: cutoutUrl, processing_status: 'completed' as const }
+          ? { 
+              ...item, 
+              processing_status: status as any,
+              ...(metadata || {})
+            }
+          : item
+      ),
+    }));
+  },
+
+  onProcessingComplete: (itemId: string, metadata: WardrobeItem) => {
+    stopPolling(itemId);
+    stopRealtimeSubscription(itemId);
+
+    // Update wardrobe store with full item data from server
+    useWardrobeStore.setState((state) => ({
+      items: state.items.map((item) =>
+        item.id === itemId
+          ? { 
+              ...item, 
+              ...metadata,
+              processing_status: 'completed' as const,
+              image_url: '' // Backend clears this on completion
+            }
           : item
       ),
     }));
 
+    // Update processing store status (if tracked)
     set((state) => {
       const item = state.processingItems[itemId];
       if (!item) return state;
@@ -91,7 +108,7 @@ export const useWardrobeProcessingStore = create<WardrobeProcessingState>((set, 
           [itemId]: {
             ...item,
             status: 'completed',
-            cutoutUrl,
+            cutoutUrl: metadata.cutout_url,
           },
         },
       };
@@ -176,22 +193,25 @@ function startRealtimeSubscription(itemId: string) {
       },
       (payload) => {
         const newItem = payload.new;
-        const status = newItem.processing_status;
-
-        if (status === 'completed' && newItem.cutout_url) {
-          useWardrobeProcessingStore.getState().onProcessingComplete(itemId, newItem.cutout_url);
+        const status = newItem.processing_status as ProcessingStatus;
+        
+        console.log(`[Realtime] Update for ${itemId}: status=${status}`, newItem);
+        
+        if (status === 'completed') {
+          useWardrobeProcessingStore.getState().onProcessingComplete(itemId, newItem as WardrobeItem);
         } else if (status === 'failed') {
           useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing failed'));
         } else if (status === 'fallback') {
           useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing fell back to original'));
         } else {
-          useWardrobeProcessingStore.getState().updateStatus(itemId, status);
+          useWardrobeProcessingStore.getState().updateStatus(itemId, status, newItem);
         }
       }
     )
-    .subscribe((status) => {
+    .subscribe((status, err) => {
+      console.log(`[Realtime] Subscription status for ${itemId}: ${status}`, err || '');
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        console.warn(`Realtime failed for ${itemId}, falling back to polling`);
+        console.warn(`[Realtime] Failed for ${itemId}, falling back to polling`);
         startPolling(itemId);
       }
     });
@@ -257,14 +277,26 @@ function startPolling(itemId: string) {
 
       if (error) return;
 
-      if (data.processing_status === 'completed' && data.cutout_url) {
-        useWardrobeProcessingStore.getState().onProcessingComplete(itemId, data.cutout_url);
+      if (data.processing_status === 'completed') {
+        const { data: finalData } = await supabase
+          .from('wardrobe_items')
+          .select('*')
+          .eq('id', itemId)
+          .single();
+        useWardrobeProcessingStore.getState().onProcessingComplete(itemId, finalData as WardrobeItem);
       } else if (data.processing_status === 'failed') {
         useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing failed'));
       } else if (data.processing_status === 'fallback') {
         useWardrobeProcessingStore.getState().onProcessingFailed(itemId, new Error('Processing fell back to original'));
       } else {
-        useWardrobeProcessingStore.getState().updateStatus(itemId, data.processing_status as ProcessingStatus);
+        // Fetch full data in polling for better sync
+        const { data: fullData } = await supabase
+          .from('wardrobe_items')
+          .select('*')
+          .eq('id', itemId)
+          .single();
+        
+        useWardrobeProcessingStore.getState().updateStatus(itemId, data.processing_status as ProcessingStatus, fullData || {});
       }
     } catch (err) {
       console.error('Polling error:', err);
