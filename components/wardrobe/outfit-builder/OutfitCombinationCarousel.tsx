@@ -112,7 +112,7 @@ export function OutfitCombinationCarousel({
       <Animated.View 
         entering={FadeIn.duration(200)}
         exiting={FadeOut.duration(100)}
-        style={styles.slide}
+        className="flex-1"
       >
         <OutfitCombinationGrid
           combination={item}
@@ -124,8 +124,8 @@ export function OutfitCombinationCarousel({
         />
         
         {/* Pagination indicator */}
-        <View style={[styles.paginationContainer, { bottom: insets.bottom + 80 }]}>
-          <Text style={styles.paginationText}>
+        <View className="absolute left-0 right-0 items-center" style={{ bottom: insets.bottom + 80 }}>
+          <Text className="font-ui text-sm text-textSecondary bg-white/80 px-2.5 py-1.5 rounded-xl">
             {currentIndex + 1} of {safeCombinations.length}
           </Text>
         </View>
@@ -138,13 +138,13 @@ export function OutfitCombinationCarousel({
       <Animated.View 
         entering={FadeIn.duration(300)}
         exiting={FadeOut.duration(200)}
-        style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}
+        className="absolute inset-0 z-[1000]"
       >
         <StatusBar barStyle="dark-content" />
-        <View style={[styles.container, { backgroundColor: THEME.bgCanvas, alignItems: 'center', justifyContent: 'center' }]}>
-          <Text style={[{ marginBottom: 16, color: THEME.textSecondary }, Typography.body]}>No outfit combinations available</Text>
-          <Pressable onPress={handleClose} style={{ backgroundColor: THEME.goldAccent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 }}>
-            <Text style={[{ color: THEME.bgSurface }, Typography.uiLabelMedium]}>Close</Text>
+        <View className="flex-1 bg-bgCanvas items-center justify-center">
+          <Text className="mb-4 text-textSecondary font-body">No outfit combinations available</Text>
+          <Pressable onPress={handleClose} className="bg-goldAccent px-6 py-3 rounded-[20px]">
+            <Text className="text-bgSurface font-ui text-sm font-medium">Close</Text>
           </Pressable>
         </View>
       </Animated.View>
@@ -161,10 +161,10 @@ export function OutfitCombinationCarousel({
     <Animated.View 
       entering={FadeIn.duration(300)}
       exiting={FadeOut.duration(200)}
-      style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}
+      className="absolute inset-0 z-[1000]"
     >
       <StatusBar barStyle="dark-content" />
-      <View style={[styles.container, { backgroundColor: THEME.bgCanvas, height: validScreenHeight }]}>
+      <View className="flex-1 bg-bgCanvas" style={{ height: validScreenHeight }}>
         <Carousel
           ref={carouselRef}
           width={validScreenWidth}
@@ -173,7 +173,7 @@ export function OutfitCombinationCarousel({
           defaultIndex={initialIndex}
           renderItem={renderItem}
           onSnapToItem={handleSnapToItem}
-          style={[styles.carousel, { overflow: 'visible' }]}
+          style={{ flex: 1, overflow: 'visible' }}
           loop={false}
           autoPlay={false}
           enabled={true}
@@ -182,34 +182,3 @@ export function OutfitCombinationCarousel({
     </Animated.View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  carousel: {
-    flex: 1,
-  },
-  slide: {
-    flex: 1,
-  },
-  paginationContainer: {
-    position: 'absolute',
-    bottom: 100,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  paginationText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.textSecondary,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-});

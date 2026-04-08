@@ -57,16 +57,16 @@ interface ItemCardProps {
 const ItemCard = React.memo(({ item, isSelected, onPress }: ItemCardProps) => {
   const imageUrl = getWardrobeItemImageUrl(item);
   return (
-    <Pressable onPress={onPress} style={styles.cardContainer}>
+    <Pressable onPress={onPress} className="mr-3 bg-transparent" style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
       <Image
         source={imageUrl ? { uri: imageUrl } : undefined}
-        style={styles.cardImage}
+        className="w-full h-full bg-transparent rounded-xl"
         contentFit="contain"
         transition={200}
       />
       {isSelected && (
-        <View style={styles.selectedOverlay}>
-          <View style={styles.checkCircle}>
+        <View className="absolute inset-0 bg-[#8B7355]/15 rounded-xl justify-center items-center">
+          <View className="w-7 h-7 rounded-full bg-primary justify-center items-center">
             <Check size={14} color="#FFFFFF" />
           </View>
         </View>
@@ -95,7 +95,7 @@ accessory: [],
 };
 items.forEach((item) => {
 const slot = categoryToSlot(item.category);
-groups[slot].push(item);
+if (slot) groups[slot].push(item);
 });
 return groups;
 }, [items]);
@@ -126,24 +126,24 @@ return groups;
           colors={[GRADIENT_START, GRADIENT_END]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={styles.headerGradient}
+          className="pb-4 px-4"
         >
           {/* Header row */}
-          <View style={styles.headerRow}>
-            <Text style={styles.headerTitle}>Select Items</Text>
+          <View className="flex-row justify-between items-center">
+            <Text className="font-heading text-2xl text-textPrimary tracking-tight">Select Items</Text>
           </View>
 
           {/* First category - part of same gradient */}
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>{first.label}</Text>
+          <View className="mt-4 mb-2">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-body font-medium text-textSecondary">{first.label}</Text>
               <ChevronRight size={16} color={COLORS.textSecondary} />
             </View>
           </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.sectionContent}
+            contentContainerStyle={{ gap: 12, paddingRight: 16 }}
             nestedScrollEnabled
           >
             {firstItems.map((item) => (
@@ -173,18 +173,18 @@ return groups;
             colors={[GRADIENT_START, GRADIENT_END]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            style={styles.categorySection}
+            className="py-4 px-4"
           >
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionLabel}>{label}</Text>
+            <View className="mt-4 mb-2">
+              <View className="flex-row items-center justify-between">
+                <Text className="font-body font-medium text-textSecondary">{label}</Text>
                 <ChevronRight size={16} color={COLORS.textSecondary} />
               </View>
             </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.sectionContent}
+              contentContainerStyle={{ gap: 12, paddingRight: 16 }}
               nestedScrollEnabled
             >
               {categoryItems.map((item) => (
@@ -207,16 +207,16 @@ return groups;
         index={-1}
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
-        backgroundStyle={styles.background}
-        handleIndicatorStyle={styles.handleIndicator}
+        backgroundStyle={{ backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' }}
+        handleIndicatorStyle={{ display: 'none' }}
         enableOverDrag={false}
         enablePanDownToClose={false}
         enableDynamicSizing={false}
       >
         {/* Scrollable content - vertical scrolling for categories */}
         <BottomSheetScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+          className="flex-1"
+          contentContainerStyle={[{ flexGrow: 1, paddingBottom: insets.bottom + 20 }]}
           showsVerticalScrollIndicator={false}
         >
           {/* First category with header */}
@@ -231,87 +231,5 @@ return groups;
 );
 
 SelectItemsSheet.displayName = 'SelectItemsSheet';
-
-const styles = StyleSheet.create({
-  background: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-  },
-  handleIndicator: {
-    display: 'none',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  headerGradient: {
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    ...Typography.heading2,
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
-  },
-  sectionHeaderRow: {
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionLabel: {
-    ...Typography.body,
-    fontWeight: '500',
-    color: COLORS.textSecondary,
-  },
-  sectionContent: {
-    gap: 12,
-    paddingRight: 16,
-  },
-  categorySection: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-  },
-  // Transparent cards matching wardrobe screen
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginRight: 12,
-    backgroundColor: 'transparent',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'transparent',
-    borderRadius: 12,
-  },
-  selectedOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(139, 115, 85, 0.15)',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default SelectItemsSheet;

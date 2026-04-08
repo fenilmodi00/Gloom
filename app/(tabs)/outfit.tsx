@@ -19,9 +19,9 @@ export default function OutfitScreen() {
       <Stack.Screen options={{ title: 'Outfit Board' }} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.container}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 24, backgroundColor: '#E8E5E0' }}
       >
-        <View style={styles.boardWrapper}>
+        <View className="w-full items-center">
           <OutfitBoard
             top={slots.top}
             bottom={slots.bottom}
@@ -33,18 +33,3 @@ export default function OutfitScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    backgroundColor: '#E8E5E0',
-  },
-  boardWrapper: {
-    width: '100%',
-    alignItems: 'center',
-  },
-});

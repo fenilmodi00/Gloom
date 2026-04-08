@@ -19,14 +19,11 @@ import { showToast } from '@/components/shared/Toast';
 // Step components
 function StepIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
   return (
-    <View style={styles.stepIndicator}>
+    <View className="flex-row gap-2">
       {Array.from({ length: totalSteps }).map((_, index) => (
         <View
           key={index}
-          style={[
-            styles.stepDot,
-            index + 1 <= currentStep && styles.stepDotActive,
-          ]}
+          className={`h-2 rounded-full ${index + 1 === currentStep ? 'bg-primary w-6' : 'bg-divider w-2'}`}
         />
       ))}
     </View>
@@ -171,10 +168,10 @@ export default function OnboardingScreen() {
       case 1:
         // Step 1: Name input
         return (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>What should we call you?</Text>
+          <View className="flex-1 justify-center">
+            <Text className="font-hero text-4xl text-textPrimary text-center mb-2">What should we call you?</Text>
             <TextInput
-              style={styles.nameInput}
+              className="bg-card rounded-xl py-4 px-5 text-lg text-textPrimary border border-divider mb-6 text-center font-body"
               placeholder="Your name"
               placeholderTextColor="#6B6B6B"
               value={name}
@@ -182,14 +179,11 @@ export default function OnboardingScreen() {
               autoFocus
             />
             <TouchableOpacity
-              style={[
-                styles.continueButton,
-                !canProceedStep1 && styles.buttonDisabled,
-              ]}
+              className={`bg-primary py-4 rounded-xl items-center mt-6 ${!canProceedStep1 ? 'opacity-50' : ''}`}
               disabled={!canProceedStep1}
               onPress={() => setStep(2)}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <Text className="text-white text-base font-semibold font-ui">Continue</Text>
             </TouchableOpacity>
           </View>
         );
@@ -197,20 +191,17 @@ export default function OnboardingScreen() {
       case 2:
         // Step 2: Style preferences
         return (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>What's your style?</Text>
-            <Text style={styles.stepSubtitle}>Select all that apply</Text>
+          <View className="flex-1 justify-center">
+            <Text className="font-hero text-4xl text-textPrimary text-center mb-2">What's your style?</Text>
+            <Text className="text-base text-textSecondary text-center mb-8 font-body">Select all that apply</Text>
             
-            <View style={styles.styleGrid}>
+            <View className="flex-row flex-wrap justify-center gap-3">
               {styleOptions.map((option) => {
                 const isSelected = stylePreferences.includes(option.id);
                 return (
                   <TouchableOpacity
                     key={option.id}
-                    style={[
-                      styles.styleOption,
-                      isSelected && styles.styleOptionSelected,
-                    ]}
+                    className={`w-[45%] rounded-xl p-5 items-center border-2 ${isSelected ? 'border-primary bg-bgCanvas' : 'border-transparent bg-card'}`}
                     onPress={() => {
                       if (isSelected) {
                         setStylePreferences(stylePreferences.filter((s) => s !== option.id));
@@ -219,13 +210,8 @@ export default function OnboardingScreen() {
                       }
                     }}
                   >
-                    <Text style={styles.styleEmoji}>{option.emoji}</Text>
-                    <Text
-                      style={[
-                        styles.styleLabel,
-                        isSelected && styles.styleLabelSelected,
-                      ]}
-                    >
+                    <Text className="text-3xl mb-2">{option.emoji}</Text>
+                    <Text className={`text-sm font-body ${isSelected ? 'text-primary font-semibold' : 'text-textSecondary'}`}>
                       {option.label}
                     </Text>
                   </TouchableOpacity>
@@ -234,14 +220,11 @@ export default function OnboardingScreen() {
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.continueButton,
-                !canProceedStep2 && styles.buttonDisabled,
-              ]}
+              className={`bg-primary py-4 rounded-xl items-center mt-6 ${!canProceedStep2 ? 'opacity-50' : ''}`}
               disabled={!canProceedStep2}
               onPress={() => setStep(3)}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <Text className="text-white text-base font-semibold font-ui">Continue</Text>
             </TouchableOpacity>
           </View>
         );
@@ -249,32 +232,29 @@ export default function OnboardingScreen() {
       case 3:
         // Step 3: Body photo
         return (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Add your body photo</Text>
-            <Text style={styles.stepSubtitle}>
+          <View className="flex-1 justify-center">
+            <Text className="font-hero text-4xl text-textPrimary text-center mb-2">Add your body photo</Text>
+            <Text className="text-base text-textSecondary text-center mb-8 font-body">
               This helps us recommend outfits that fit you perfectly
             </Text>
 
-            <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+            <TouchableOpacity className="aspect-[3/4] max-h-[400px] rounded-2xl overflow-hidden bg-card border-2 border-divider border-dashed" onPress={pickImage}>
               {bodyPhoto ? (
-                <Image source={{ uri: bodyPhoto }} style={styles.photoPreview} />
+                <Image source={{ uri: bodyPhoto }} className="w-full h-full" />
               ) : (
-                <View style={styles.photoPlaceholder}>
-                  <Text style={styles.photoIcon}>📷</Text>
-                  <Text style={styles.photoText}>Tap to add photo</Text>
+                <View className="flex-1 justify-center items-center">
+                  <Text className="text-5xl mb-3">📷</Text>
+                  <Text className="text-base text-textSecondary font-body">Tap to add photo</Text>
                 </View>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.continueButton,
-                !canProceedStep3 && styles.buttonDisabled,
-              ]}
+              className={`bg-primary py-4 rounded-xl items-center mt-6 ${!canProceedStep3 ? 'opacity-50' : ''}`}
               disabled={!canProceedStep3}
               onPress={() => setStep(4)}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <Text className="text-white text-base font-semibold font-ui">Continue</Text>
             </TouchableOpacity>
           </View>
         );
@@ -282,20 +262,20 @@ export default function OnboardingScreen() {
       case 4:
         // Step 4: Completion
         return (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>You're all set!</Text>
-            <Text style={styles.stepSubtitle}>
+          <View className="flex-1 justify-center">
+            <Text className="font-hero text-4xl text-textPrimary text-center mb-2">You're all set!</Text>
+            <Text className="text-base text-textSecondary text-center mb-8 font-body">
               We've saved your preferences. Let's find your perfect style.
             </Text>
 
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Name</Text>
-              <Text style={styles.summaryValue}>{name}</Text>
+            <View className="bg-card rounded-xl p-4 mb-3">
+              <Text className="text-xs text-textSecondary mb-1 font-ui">Name</Text>
+              <Text className="text-base text-textPrimary font-medium font-body">{name}</Text>
             </View>
 
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Style</Text>
-              <Text style={styles.summaryValue}>
+            <View className="bg-card rounded-xl p-4 mb-3">
+              <Text className="text-xs text-textSecondary mb-1 font-ui">Style</Text>
+              <Text className="text-base text-textPrimary font-medium font-body">
                 {stylePreferences.map(
                   (s) => styleOptions.find((o) => o.id === s)?.label
                 ).join(', ')}
@@ -303,11 +283,11 @@ export default function OnboardingScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.continueButton, loading && styles.buttonDisabled]}
+              className={`bg-primary py-4 rounded-xl items-center mt-6 ${loading ? 'opacity-50' : ''}`}
               disabled={loading}
               onPress={handleComplete}
             >
-              <Text style={styles.continueButtonText}>
+              <Text className="text-white text-base font-semibold font-ui">
                 {loading ? 'Setting up...' : 'Start Exploring'}
               </Text>
             </TouchableOpacity>
@@ -320,15 +300,15 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View className="flex-1 bg-bgCanvas" style={{ paddingTop: insets.top }}>
       {/* Progress */}
-      <View style={styles.progressContainer}>
+      <View className="py-6 items-center">
         <StepIndicator currentStep={step} totalSteps={totalSteps} />
       </View>
 
       {/* Content */}
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 32, paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
       >
         {renderStep()}
@@ -336,151 +316,3 @@ export default function OnboardingScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F2EE',
-  },
-  progressContainer: {
-    paddingVertical: 24,
-    alignItems: 'center',
-  },
-  stepIndicator: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  stepDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E0DDD5',
-  },
-  stepDotActive: {
-    backgroundColor: '#8B7355',
-    width: 24,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 32,
-    paddingBottom: 48,
-  },
-  stepContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  stepTitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  stepSubtitle: {
-    fontSize: 16,
-    color: '#6B6B6B',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  nameInput: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    fontSize: 18,
-    color: '#1A1A1A',
-    borderWidth: 1,
-    borderColor: '#E0DDD5',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  continueButton: {
-    backgroundColor: '#8B7355',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  continueButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  styleGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  styleOption: {
-    width: '45%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  styleOptionSelected: {
-    borderColor: '#8B7355',
-    backgroundColor: '#F5F2EE',
-  },
-  styleEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  styleLabel: {
-    fontSize: 14,
-    color: '#6B6B6B',
-  },
-  styleLabelSelected: {
-    color: '#8B7355',
-    fontWeight: '600',
-  },
-  photoButton: {
-    aspectRatio: 3 / 4,
-    maxHeight: 400,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#E0DDD5',
-    borderStyle: 'dashed',
-  },
-  photoPreview: {
-    width: '100%',
-    height: '100%',
-  },
-  photoPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  photoText: {
-    fontSize: 16,
-    color: '#6B6B6B',
-  },
-  summaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#6B6B6B',
-    marginBottom: 4,
-  },
-  summaryValue: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
-  },
-});

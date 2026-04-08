@@ -69,31 +69,31 @@ index={-1}
 snapPoints={snapPoints}
 enablePanDownToClose
 onClose={closeCombinationSheet}
-backgroundStyle={styles.sheetBackground}
-handleIndicatorStyle={styles.handleIndicator}
+backgroundStyle={{ backgroundColor: THEME.bgSurface, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+handleIndicatorStyle={{ backgroundColor: THEME.textTertiary }}
 backgroundComponent={() => (
-<BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+<BlurView intensity={80} tint="light" className="absolute inset-0" />
 )}
 >
 <BottomSheetScrollView
-contentContainerStyle={styles.content}
+contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
 showsVerticalScrollIndicator={false}
 >
 {/* Header */}
-<View style={styles.header}>
-<View style={styles.headerLeft}>
-<Text style={styles.title}>Outfit Preview</Text>
-<Text style={styles.subtitle}>
+<View className="flex-row justify-between items-center mb-4">
+<View className="flex-1">
+<Text className="font-heading text-2xl text-textPrimary">Outfit Preview</Text>
+<Text className="font-body text-xs text-textSecondary mt-0.5">
 {activeCombination.matchScore}% match
 </Text>
 </View>
-<Pressable onPress={handleClose} style={styles.closeButton}>
+<Pressable onPress={handleClose} className="w-9 h-9 rounded-full bg-bgMuted items-center justify-center">
 <X size={20} color={THEME.textPrimary} />
 </Pressable>
 </View>
 
 {/* OutfitBoard */}
-<View style={styles.boardWrapper}>
+<View className="items-center mb-6">
 <OutfitBoard
 selection={activeCombination.selection}
 width={boardWidth}
@@ -102,69 +102,11 @@ height={boardHeight}
 </View>
 
 {/* Generate CTA */}
-<Pressable style={styles.generateButton} onPress={handleGenerate}>
+<Pressable className="flex-row items-center justify-center gap-2 bg-goldAccent py-4 rounded-2xl" onPress={handleGenerate}>
 <Sparkles size={18} color={THEME.bgSurface} />
-<Text style={styles.generateText}>Generate Outfit</Text>
+<Text className="font-ui text-sm font-medium text-white">Generate Outfit</Text>
 </Pressable>
 </BottomSheetScrollView>
 </BottomSheet>
 );
 }
-
-const styles = StyleSheet.create({
-sheetBackground: {
-backgroundColor: THEME.bgSurface,
-borderTopLeftRadius: 24,
-borderTopRightRadius: 24,
-},
-handleIndicator: {
-backgroundColor: THEME.textTertiary,
-},
-content: {
-paddingHorizontal: 16,
-paddingBottom: 32,
-},
-header: {
-flexDirection: 'row',
-justifyContent: 'space-between',
-alignItems: 'center',
-marginBottom: 16,
-},
-headerLeft: {
-flex: 1,
-},
-title: {
-    ...Typography.heading2,
-    color: THEME.textPrimary,
-  },
-subtitle: {
-...Typography.bodySmall,
-color: THEME.textSecondary,
-marginTop: 2,
-},
-closeButton: {
-width: 36,
-height: 36,
-borderRadius: 18,
-backgroundColor: THEME.bgMuted,
-alignItems: 'center',
-justifyContent: 'center',
-},
-boardWrapper: {
-alignItems: 'center',
-marginBottom: 24,
-},
-generateButton: {
-flexDirection: 'row',
-alignItems: 'center',
-justifyContent: 'center',
-gap: 8,
-backgroundColor: THEME.goldAccent,
-paddingVertical: 16,
-borderRadius: 16,
-},
-generateText: {
-...Typography.uiLabelMedium,
-color: THEME.bgSurface,
-},
-});

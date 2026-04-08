@@ -33,33 +33,36 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
   };
 
   return (
-    <View style={styles.card}>
+    <View
+      className="bg-[#FDFAF6] rounded-3xl overflow-hidden mb-5 border border-[#8B7355]/10 shadow-xl shadow-[#8B7355]/10"
+      style={{ elevation: 4 }}
+    >
       {/* Header */}
       <View className="px-5 pt-5 pb-3">
         <View className="flex-row justify-between items-start mb-2">
-          <OccasionBadge occasion={outfit.occasion} />
+          <OccasionBadge occasion={outfit.occasion || ''} />
           <View className="bg-bgMuted px-3 py-1 rounded-full">
             <Text className="text-textPrimary font-product text-xs">
               {Math.round((outfit.ai_score || 0.95) * 100)}% match
             </Text>
           </View>
         </View>
-        <Text className="text-lg font-heading text-textPrimary tracking-tight">{outfit.vibe}</Text>
+        <Text className="text-lg font-heading text-textPrimary tracking-tight">{outfit.vibe || ''}</Text>
         <Text className="text-textSecondary text-sm mt-1 leading-5 font-body">{outfit.color_reasoning}</Text>
       </View>
 
       {/* Item images grid */}
       <View className="flex-row flex-wrap px-5 py-3 gap-2 justify-center">
         {outfitItems.map((item, index) => {
-          const imageUrl = getWardrobeImageUrl(item?.image_url);
+          const imageUrl = item?.image_url ? getWardrobeImageUrl(item.image_url) : null;
           return (
             <View
               key={item?.id ?? index}
-              style={styles.imageWrapper}
+              className="w-[46%] aspect-[3/4] rounded-2xl bg-[#EAE4DA] overflow-hidden border-4 border-[#FDFAF6]"
             >
               <Image
-                source={imageUrl ? { uri: imageUrl } : undefined}
-                style={StyleSheet.absoluteFill}
+                source={imageUrl ? { uri: imageUrl as string } : undefined}
+                className="absolute inset-0 w-full h-full"
                 contentFit="cover"
               />
             </View>
@@ -74,7 +77,7 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
       <View className="px-5 pb-5 pt-2">
         <TouchableOpacity
           onPress={handleTryOn}
-          style={styles.tryOnButton}
+          className="bg-[#8B7355] py-3.5 rounded-full items-center justify-center"
           activeOpacity={0.85}
         >
           <Text className="text-bgSurface font-ui uppercase text-sm tracking-wide">✦ Try On</Text>
@@ -83,35 +86,3 @@ export function OutfitCard({ outfit }: OutfitCardProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FDFAF6',
-    borderRadius: 24,
-    overflow: 'hidden',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 115, 85, 0.08)',
-    shadowColor: '#8B7355',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 4,
-  },
-  imageWrapper: {
-    width: '46%',
-    aspectRatio: 3 / 4,
-    borderRadius: 16,
-    backgroundColor: '#EAE4DA',
-    overflow: 'hidden',
-    borderWidth: 4,
-    borderColor: '#FDFAF6',
-  },
-  tryOnButton: {
-    backgroundColor: '#8B7355',
-    paddingVertical: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

@@ -99,13 +99,15 @@ function toItem(item: WardrobeItem | undefined): ClothingItem | null {
   }
   
   // Transform to backend proxy URL
-  const uri = getWardrobeImageUrl(originalUri);
+  const uri = getWardrobeImageUrl(originalUri as string);
   
+  if (!uri) return null;
+
   return {
-    id: item.id,
+    id: String(item.id),
     uri,
     name: item.sub_category || undefined,
-    category: item.category,
+    category: item.category as any,
   };
 }
 
@@ -168,15 +170,10 @@ export function OutfitBoard({
 
   return (
     <View
+      className={`overflow-hidden ${transparent ? 'bg-transparent' : 'bg-bgSurface'} ${!disableShadow ? 'shadow-md shadow-primaryDark/10' : ''} ${!noBorderRadius ? 'rounded-3xl' : ''}`}
       style={[
-        styles.board,
-        {
-          width: boardWidth,
-          height: boardHeight,
-          backgroundColor: transparent ? 'transparent' : THEME.bgSurface,
-          ...(disableShadow ? { shadowOpacity: 0, elevation: 0 } : {}),
-          ...(noBorderRadius ? { borderRadius: 0 } : {}),
-        },
+        { width: boardWidth, height: boardHeight },
+        !disableShadow && { elevation: 4 },
       ]}
     >
       {/* Dotted background */}
@@ -202,10 +199,10 @@ export function OutfitBoard({
         };
 
         return (
-          <View key={config.key} style={[styles.itemContainer, positionStyle]}>
+          <View key={config.key} className="shadow-lg shadow-primaryDark/10" style={positionStyle}>
             <Image
               source={item.uri as any}
-              style={StyleSheet.absoluteFill}
+              className="absolute inset-0 w-full h-full"
               contentFit="contain"
             />
           </View>
@@ -214,24 +211,3 @@ export function OutfitBoard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  board: {
-    borderRadius: 24, // Matches rounded-2xl
-    overflow: 'hidden',
-    backgroundColor: THEME.bgSurface,
-    // Soft shadow following brand guidelines
-    shadowColor: THEME.primaryDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  itemContainer: {
-    // Elegant shadow for items to make them feel "placed"
-    shadowColor: THEME.primaryDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-  },
-});

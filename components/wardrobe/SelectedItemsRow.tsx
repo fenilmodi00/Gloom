@@ -45,7 +45,7 @@ const SelectedItemPill = React.memo(({ item, onRemove }: SelectedItemPillProps) 
         transition={150}
       />
       <Text className="text-xs font-product text-textPrimary max-w-[50px]" numberOfLines={1}>
-        {CATEGORY_LABELS[item.category] || item.category}
+        {CATEGORY_LABELS[item.category as keyof typeof CATEGORY_LABELS] || item.category}
       </Text>
       <Pressable onPress={onRemove} className="w-5 h-5 rounded-full bg-black/5 justify-center items-center" hitSlop={8}>
         <X size={12} color="#6B6B6B" />
@@ -91,7 +91,10 @@ export const SelectedItemsRow = () => {
               <SelectedItemPill
                 key={item.id}
                 item={item}
-                onRemove={() => removeItem(categoryToSlot(item.category))}
+                onRemove={() => {
+                  const slot = categoryToSlot(item.category);
+                  if (slot) removeItem(slot as any);
+                }}
               />
             ))}
           </ScrollView>

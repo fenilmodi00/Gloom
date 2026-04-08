@@ -109,164 +109,57 @@ export function OutfitCombinationGrid({
   }, [onBookmark]);
   
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-bgCanvas">
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={handleClose} style={styles.headerButton}>
+      <View className="flex-row items-center justify-between px-4 pb-4 bg-transparent" style={{ paddingTop: insets.top + 8 }}>
+        <Pressable onPress={handleClose} className="w-11 h-11 rounded-full bg-white/80 items-center justify-center shadow-sm shadow-black/5">
           <ChevronLeft size={24} color={THEME.textPrimary} />
         </Pressable>
         
-        <Pressable onPress={handleUpload} style={styles.uploadButton}>
+        <Pressable onPress={handleUpload} className="flex-row items-center justify-center bg-white/80 rounded-full px-4 py-2 shadow-sm shadow-black/5">
           <Upload size={16} color={THEME.textPrimary} style={{ marginRight: 4 }} />
-          <Text style={styles.uploadButtonText}>Upload outfit</Text>
+          <Text className="font-ui text-sm font-medium text-textPrimary">Upload outfit</Text>
         </Pressable>
         
-        <Pressable onPress={handleBookmark} style={styles.headerButton}>
+        <Pressable onPress={handleBookmark} className="w-11 h-11 rounded-full bg-white/80 items-center justify-center shadow-sm shadow-black/5">
           {/* Settings/filter icon */}
-          <View style={styles.settingsIcon}>
-            <View style={styles.settingsLine} />
-            <View style={styles.settingsLine} />
-            <View style={styles.settingsLine} />
+          <View className="w-5 h-4 justify-between">
+            <View className="w-5 h-0.5 bg-textPrimary rounded-sm" />
+            <View className="w-5 h-0.5 bg-textPrimary rounded-sm" />
+            <View className="w-5 h-0.5 bg-textPrimary rounded-sm" />
           </View>
         </Pressable>
       </View>
       
       {/* Outfit Board Grid with overlaid title */}
-      <View style={styles.boardWrapper}>
+      <View className="flex-1 items-center justify-center">
         <OutfitBoard
           selection={combination.selection}
           width={screenWidth}
           height={screenWidth * 1.60}
         />
         {/* Title overlaid on top of DotGrid */}
-        <Text style={styles.overlaidTitle} numberOfLines={1}>
+        <Text className="absolute left-0 right-0 text-center font-heading text-4xl text-textSecondary" style={{ top: 60 }} numberOfLines={1}>
           {title}
         </Text>
       </View>
       
       {/* Bottom action bar */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
-        <Pressable style={[styles.actionButton, styles.lightButton]} onPress={handleTryOn}>
+      <View className="flex-row items-center justify-center px-4 gap-3" style={{ paddingBottom: insets.bottom + 16 }}>
+        <Pressable className="flex-row items-center justify-center bg-goldAccent border border-goldAccent px-6 py-3.5 rounded-[20px] gap-2 shadow-md shadow-black/10" onPress={handleTryOn}>
           <Sparkles size={18} color={THEME.bgSurface} />
-          <Text style={[styles.actionButtonText, styles.lightButtonText]}>Try on</Text>
+          <Text className="font-ui text-sm font-medium text-white">Try on</Text>
         </Pressable>
         
-        <Pressable style={styles.actionButton} onPress={handleEdit}>
+        <Pressable className="flex-row items-center justify-center bg-goldAccent px-6 py-3.5 rounded-[20px] gap-2 shadow-md shadow-black/10" onPress={handleEdit}>
           <Edit3 size={18} color={THEME.bgSurface} />
-          <Text style={styles.actionButtonText}>Edit</Text>
+          <Text className="font-ui text-sm font-medium text-white">Edit</Text>
         </Pressable>
         
-        <Pressable style={styles.iconButton} onPress={handleBookmark}>
+        <Pressable className="w-12 h-12 rounded-full bg-white/90 items-center justify-center shadow-sm shadow-black/5" onPress={handleBookmark}>
           <Bookmark size={20} color={THEME.textPrimary} />
         </Pressable>
       </View>
     </View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.bgCanvas,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: 'transparent',
-  },
-  headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-  },
-  uploadButtonText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.textPrimary,
-  },
-  settingsIcon: {
-    width: 20,
-    height: 16,
-    justifyContent: 'space-between',
-  },
-  settingsLine: {
-    width: 20,
-    height: 2,
-    backgroundColor: THEME.textPrimary,
-    borderRadius: 1,
-  },
-  overlaidTitle: {
-    position: 'absolute',
-    top: 60, // Position below header
-    left: 0,
-    right: 0,
-    ...Typography.heading1,
-    color: THEME.textSecondary,
-    textAlign: 'center',
-  },
-  boardWrapper: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 0,
-  },
-  bottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: THEME.goldAccent,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 20,
-    gap: 8,
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  },
-  actionButtonText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.bgSurface,
-  },
-  lightButton: {
-    backgroundColor: THEME.goldAccent,
-    borderWidth: 1,
-    borderColor: THEME.goldAccent,
-  },
-  lightButtonText: {
-    color: THEME.bgSurface,
-  },
-  iconButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-  },
-});

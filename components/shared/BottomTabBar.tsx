@@ -114,9 +114,9 @@ function AnimatedTabItem({
       accessibilityRole="button"
       accessibilityState={{ selected: isFocused }}
       accessibilityLabel={options.tabBarAccessibilityLabel ?? cfg.label}
-      style={styles.pressable}
+      className="items-center justify-center"
     >
-      <Animated.View style={[styles.tabItem, containerStyle]}>
+      <Animated.View className="flex-row items-center justify-center rounded-full min-h-[48px] min-w-[48px] overflow-hidden" style={containerStyle}>
         <Feather
           name={cfg.icon}
           size={22}
@@ -124,7 +124,8 @@ function AnimatedTabItem({
         />
         <Animated.Text
           numberOfLines={1}
-          style={[styles.label, textStyle]}
+          className="text-xs font-semibold tracking-[0.5px]"
+          style={[{ color: COLORS.activeColor, includeFontPadding: false }, textStyle]}
         >
           {cfg.label}
         </Animated.Text>
@@ -154,25 +155,23 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
 
   return (
     <View
-      style={[
-        styles.outerContainer,
-        { paddingBottom: Math.max(insets.bottom, 8) },
-      ]}
+      className="absolute bottom-[6px] left-0 right-0 items-center z-50 bg-transparent"
+      style={{ paddingBottom: Math.max(insets.bottom, 8) }}
       pointerEvents="box-none"
     >
       {/* Fade gradient below the tab bar pill */}
-      <View style={styles.fadeContainer} pointerEvents="none">
+      <View className="absolute -bottom-2.5 left-0 right-0 h-20 z-[49]" pointerEvents="none">
         <LinearGradient
           colors={['transparent', Colors.light.bgCanvas]}
-          style={styles.fadeGradient}
+          className="flex-1"
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
         />
       </View>
 
       {/* Solid white background - experimental UX */}
-      <View style={styles.Pill}>
-        <View style={styles.pill}>
+      <View className="rounded-[32px] overflow-hidden w-[80%] max-w-[380px]">
+        <View className="bg-[#FDFAF6] border border-[#EAE4DA] rounded-[32px] py-2.5 px-3 flex-row items-center justify-between w-full">
           {tabRoutes.map((route) => {
             const isFocused = state.routes[state.index]?.key === route.key;
             const { options } = descriptors[route.key];
@@ -210,66 +209,3 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  outerContainer: {
-    position: 'absolute',
-    bottom: 6,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 50,
-    backgroundColor: 'transparent',
-  },
-  fadeContainer: {
-    position: 'absolute',
-    bottom: -10,
-    left: 0,
-    right: 0,
-    height: 80,
-    zIndex: 49,
-  },
-  fadeGradient: {
-    flex: 1,
-  },
-  Pill: {
-    borderRadius: 32,
-    overflow: 'hidden',
-    width: '80%',
-    maxWidth: 380,
-  },
-  pill: {
-    backgroundColor: '#FDFAF6',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 32,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    // NO shadow - removed as requested
-  },
-  pressable: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-    minHeight: 48,
-    minWidth: 48,
-    overflow: 'hidden',
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    color: COLORS.activeColor,
-    // Ensure text stays single line
-    includeFontPadding: false,
-  },
-});

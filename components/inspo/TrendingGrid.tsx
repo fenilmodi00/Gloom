@@ -99,31 +99,29 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
 
   // Render a single card
   const renderCard = ({ item }: { item: TrendingItem }) => (
-    <View style={styles.card}>
+    <View className="rounded-2xl overflow-hidden bg-bgSurfaceRaised shadow-sm" style={{ width: CARD_WIDTH, height: CARD_HEIGHT, elevation: 3 }}>
             <Image
         source={
           typeof item.imageUrl === 'string' && item.imageUrl.startsWith('http')
             ? { uri: item.imageUrl }
             : (item.imageUrl as any)
         }
-        style={StyleSheet.absoluteFill}
+        className="absolute inset-0 w-full h-full"
         contentFit="cover"
       />
       {/* Bottom content */}
-      <View style={styles.cardBottom}>
+      <View className="absolute bottom-2.5 left-2.5 right-2.5 items-start gap-1.5">
         {item.outfitName && (
-          <Text style={styles.outfitName} numberOfLines={1}>
+          <Text className="font-product text-white text-shadow-sm" style={{ textShadowColor: 'rgba(0, 0, 0, 0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }} numberOfLines={1}>
             {item.outfitName}
           </Text>
         )}
         <Pressable
-          style={({ pressed }) => [
-            styles.tryOnButton,
-            pressed && styles.tryOnButtonPressed,
-          ]}
+          className="bg-white/95 py-1.5 px-3.5 rounded-full"
+          style={({ pressed }: any) => (pressed ? { opacity: 0.85, transform: [{ scale: 0.95 }] } : {})}
           onPress={() => onTryOnPress?.(item)}
         >
-          <Text style={styles.tryOnText}>Try on</Text>
+          <Text className="font-ui text-sm text-textPrimary">Try on</Text>
         </Pressable>
       </View>
     </View>
@@ -136,9 +134,9 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
       <Pressable
         key={category}
         onPress={() => setActiveCategory(category)}
-        style={[styles.categoryChip, isSelected && styles.categoryChipActive]}
+        className={`px-4 py-2 rounded-full border ${isSelected ? 'bg-primary border-primary' : 'bg-bgSurface border-bgMuted'}`}
       >
-        <Text style={[styles.categoryText, isSelected && styles.categoryTextActive]}>
+        <Text className={`font-body text-xs ${isSelected ? 'text-white font-semibold' : 'text-textSecondary'}`}>
           {category}
         </Text>
       </Pressable>
@@ -147,9 +145,9 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
 
   // Render a section row
   const renderSection = ({ item: section }: { item: TrendingSection }) => (
-    <View style={styles.sectionContainer}>
+    <View className="mb-6">
       {/* Section Title */}
-      <Text style={styles.sectionTitle}>{section.title}</Text>
+      <Text className="font-heading text-xl text-textPrimary mb-3 ml-6">{section.title}</Text>
       {/* Horizontal scrollable cards */}
       <FlatList
         data={section.items}
@@ -157,35 +155,35 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.cardsContainer}
-        ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
+        contentContainerStyle={{ paddingHorizontal: 24 }}
+        ItemSeparatorComponent={() => <View className="w-3" />}
         nestedScrollEnabled
       />
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View className="pb-5">
       {/* Main Title */}
-      <Text style={styles.mainTitle}>Trending Ideas</Text>
+      <Text className="font-heading text-2xl text-textPrimary mb-4 mx-6">Trending Ideas</Text>
 
       {/* Category Filter - Fixed, wraps to multiple lines if needed */}
-      <View style={styles.categoryContainer}>
+      <View className="flex-row flex-wrap gap-2 mb-5 px-6">
         {categories.map(renderCategoryChip)}
       </View>
 
       {/* Sections with horizontal scrolling cards */}
       {filteredSections.map((section) => (
-        <View key={section.id} style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
+        <View key={section.id} className="mb-6">
+          <Text className="font-heading text-xl text-textPrimary mb-3 ml-6">{section.title}</Text>
           <FlatList
             data={section.items}
             renderItem={renderCard}
             keyExtractor={(item) => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardsContainer}
-            ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
+            contentContainerStyle={{ paddingHorizontal: 24 }}
+            ItemSeparatorComponent={() => <View className="w-3" />}
             nestedScrollEnabled
           />
         </View>
@@ -193,107 +191,3 @@ export function TrendingGrid({ sections, onTryOnPress }: TrendingGridProps) {
     </View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 20,
-  },
-  mainTitle: {
-    ...Typography.heading2,
-    color: Colors.light.textPrimary,
-    marginBottom: 16,
-    marginHorizontal: 24,
-  },
-  // Category Filter - wraps to multiple lines
-  categoryContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
-    paddingHorizontal: 24,
-  },
-  categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: Colors.light.bgSurface,
-    borderWidth: 1,
-    borderColor: Colors.light.bgMuted,
-  },
-  categoryChipActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-  },
-  categoryText: {
-    ...Typography.bodySmall,
-    color: Colors.light.textSecondary,
-  },
-  categoryTextActive: {
-    color: Colors.light.textOnDark,
-    fontWeight: '600',
-  },
-  // Section
-  sectionContainer: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    ...Typography.heading3,
-    color: Colors.light.textPrimary,
-    marginBottom: 12,
-    marginLeft: 24,
-  },
-  // Cards Container
-  cardsContainer: {
-    paddingLeft: 24,
-    paddingRight: 24,
-  },
-  cardSeparator: {
-    width: 12,
-  },
-  // Card
-  card: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: Colors.light.bgSurfaceRaised,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardBottom: {
-    position: 'absolute',
-    bottom: 10,
-    left: 10,
-    right: 10,
-    alignItems: 'flex-start',
-    gap: 6,
-  },
-  outfitName: {
-    ...Typography.productName,
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  tryOnButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-  },
-  tryOnButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.97 }],
-  },
-  tryOnText: {
-    ...Typography.uiLabel,
-    color: Colors.light.textPrimary,
-  },
-});

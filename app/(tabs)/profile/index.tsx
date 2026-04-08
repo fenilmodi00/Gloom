@@ -27,147 +27,57 @@ export default function ProfileScreen() {
   }, [fetchImages]);
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
+    <Animated.View style={animatedStyle} className="flex-1 bg-bgCanvas">
+      <View className="flex-1 bg-bgCanvas" style={{ paddingTop: insets.top }}>
+      <View className="px-4 py-3">
+        <Text className="text-4xl font-semibold italic text-textPrimary font-heading">Profile</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-          <Text style={styles.avatar}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="items-center px-6 pt-6">
+          <View className="w-20 h-20 rounded-full bg-primary justify-center items-center mb-4">
+          <Text className="text-3xl font-semibold text-white font-ui">
             {user?.name?.charAt(0).toUpperCase() || '?'}
           </Text>
         </View>
 
-          <Text style={styles.name}>
+          <Text className="text-xl font-semibold text-textPrimary mb-1 font-body">
             {user?.name || 'Style Enthusiast'}
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text className="text-sm text-textSecondary mb-8 text-center font-body">
             {user?.style_tags?.join(' · ') || 'Setting up your style profile'}
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Looks</Text>
+        <View className="mt-4 mb-8 px-4">
+          <Text className="text-xl font-semibold text-textPrimary mb-4 px-2 font-heading">My Looks</Text>
           <ModelImageGrid
             images={images}
             onImageDelete={deleteImage}
           />
         </View>
 
-        <View style={styles.menu}>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Edit Profile</Text>
+        <View className="bg-white rounded-2xl px-4 mx-6 mb-6">
+          <TouchableOpacity className="py-4 border-b border-bgMuted">
+            <Text className="text-base text-textPrimary font-body">Edit Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Style Preferences</Text>
+          <TouchableOpacity className="py-4 border-b border-bgMuted">
+            <Text className="text-base text-textPrimary font-body">Style Preferences</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Notifications</Text>
+          <TouchableOpacity className="py-4 border-b border-bgMuted">
+            <Text className="text-base text-textPrimary font-body">Notifications</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Help & Support</Text>
+          <TouchableOpacity className="py-4">
+            <Text className="text-base text-textPrimary font-body">Help & Support</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutText}>Sign Out</Text>
+        <TouchableOpacity className="py-4 px-8 self-center mb-8" onPress={handleSignOut}>
+          <Text className="text-base font-medium text-stateError font-ui">Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.bgCanvas,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '600',
-    color: Colors.light.textPrimary,
-    fontStyle: 'italic',
-  },
-  content: {
-    flex: 1,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.light.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatar: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: Colors.light.bgSurface,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.light.textPrimary,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.light.textSecondary,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  section: {
-    marginTop: 16,
-    marginBottom: 32,
-    paddingHorizontal: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.light.textPrimary,
-    marginBottom: 16,
-    paddingHorizontal: 8,
-  },
-  menu: {
-    backgroundColor: Colors.light.bgSurface,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    marginHorizontal: 24,
-    marginBottom: 24,
-  },
-  menuItem: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.bgMuted,
-  },
-  menuText: {
-    fontSize: 16,
-    color: Colors.light.textPrimary,
-  },
-  signOutButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    alignSelf: 'center',
-    marginBottom: 32,
-  },
-  signOutText: {
-    fontSize: 16,
-    color: Colors.light.stateError,
-    fontWeight: '500',
-  },
-});

@@ -21,35 +21,16 @@ export function BottomContentFade() {
   
   return (
     <View
-      style={[
-        styles.container,
-        { 
-          // Position at the very bottom of screen (below tab bar)
-          bottom: 0,
-          // Below tab bar in z-order (tab bar is zIndex: 50)
-          zIndex: 49,
-        },
-      ]}
+      className="absolute left-0 right-0 z-[49] bottom-0"
+      style={{ height: FADE_HEIGHT }}
       pointerEvents="none"
     >
       <LinearGradient
         colors={['transparent', Colors.light.bgCanvas]}
-        style={styles.gradient}
+        className="flex-1"
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: FADE_HEIGHT,
-  },
-  gradient: {
-    flex: 1,
-  },
-});

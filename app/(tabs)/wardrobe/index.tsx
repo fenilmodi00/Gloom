@@ -14,6 +14,12 @@ import { useOutfitBuilderStore } from '@/lib/store/outfit-builder.store';
 import { getWardrobeItemImageUrl } from '@/lib/wardrobe-image';
 import type { Category, WardrobeItem, ProcessingStatus } from '@/types/wardrobe';
 import { FlashList } from '@shopify/flash-list';
+// @ts-ignore
+import type { FlashListProps } from '@shopify/flash-list';
+// @ts-ignore
+const FlashListAny = FlashList as any;
+
+// @ts-ignore Ignore missing properties for now
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -115,8 +121,8 @@ function CategorySection({
   onItemPress?: (item: WardrobeItem) => void;
 }) {
   const renderItem = useCallback(
-    ({ item }: { item: WardrobeItem }) => (
-      <CategoryCard item={item} onPress={onItemPress} />
+    ({ item }: { item: any }) => (
+      <CategoryCard item={item as WardrobeItem} onPress={onItemPress} />
     ),
     [onItemPress]
   );
@@ -137,10 +143,10 @@ function CategorySection({
         </Pressable>
       </View>
 
-      <FlashList
+      <FlashListAny
         data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        keyExtractor={(item: any) => item.id}
+        renderItem={renderItem as any}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16 }}
@@ -321,11 +327,11 @@ export default function WardrobeScreen() {
                 </Pressable>
               </View>
               <View style={{ height: CARD_HEIGHT }}>
-                <FlashList
+                <FlashListAny
                   data={groupedItems[sections[0].key] || []}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <CategoryCard item={item} onPress={handleItemPress} />
+                  keyExtractor={(item: any) => item.id}
+                  renderItem={({ item }: any) => (
+                    <CategoryCard item={item as WardrobeItem} onPress={handleItemPress} />
                   )}
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -364,10 +370,8 @@ export default function WardrobeScreen() {
   if (items.length === 0) {
     return (
       <View
-        style={[
-          styles.container,
-          { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas },
-        ]}
+        className="flex-1 bg-bgCanvas"
+        style={{ paddingTop: insets.top }}
       >
         <EmptyState
           title="Your closet is empty"
@@ -392,18 +396,15 @@ export default function WardrobeScreen() {
 
   return (
     <Animated.View
-      style={[
-        styles.container,
-        animatedStyle,
-        { paddingTop: insets.top, backgroundColor: Colors.light.bgCanvas },
-      ]}
+      className="flex-1 bg-bgCanvas"
+      style={[animatedStyle, { paddingTop: insets.top }]}
     >
-      <FlashList
+      <FlashListAny
         data={listData}
-        keyExtractor={(item, index) =>
+        keyExtractor={(item: any, index: number) =>
           item === 'header' ? 'header' : item.key
         }
-        renderItem={renderItem}
+        renderItem={renderItem as any}
         contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
         decelerationRate="fast"
@@ -411,17 +412,16 @@ export default function WardrobeScreen() {
       />
 
       <View
-        style={[
-          styles.makeOutfitsContainer,
-          { bottom: 88 + insets.bottom, right: 16 },
-        ]}
+        className="absolute z-[100] right-4"
+        style={{ bottom: 88 + insets.bottom }}
       >
         <Pressable
-          style={styles.makeOutfitsButton}
+          className="flex-row items-center gap-1.5 px-4 py-3 rounded-full bg-white shadow-md shadow-black/15"
+          style={{ elevation: 5 }}
           onPress={handleOpenSelectSheet}
         >
           <Shirt size={16} color="#1A1A1A" />
-          <Text style={styles.makeOutfitsText}>Make outfits</Text>
+          <Text className="font-ui text-sm font-semibold text-[#1A1A1A]">Make outfits</Text>
         </Pressable>
       </View>
 

@@ -149,7 +149,7 @@ export default function InspoScreen() {
   }));
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
+    <Animated.View style={animatedStyle} className="flex-1 bg-bgCanvas">
       {/* ======================================== */}
       {/* Layer 1: Top-aligned model carousel */}
       {/* ======================================== */}
@@ -161,16 +161,16 @@ export default function InspoScreen() {
       {/* ======================================== */}
       {/* Layer 2: Floating Header                 */}
       {/* ======================================== */}
-      <View style={[styles.header, { top: insets.top + 16 }]} className="z-20">
-        <Text style={styles.title}>Inspo</Text>
+      <View className="absolute left-6 right-6 flex-row justify-between items-center z-20" style={{ top: insets.top + 16 }}>
+        <Text className="font-heading text-4xl text-textPrimary shadow-sm" style={{ textShadowColor: 'rgba(0, 0, 0, 0.1)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>Inspo</Text>
         <Animated.View style={uploadAnimatedStyle}>
           <Pressable
-            style={styles.uploadButton}
+            className="bg-primary px-4 py-2 rounded-full"
             onPress={handleUploadPress}
             onPressIn={() => { uploadScale.value = withSpring(0.93, { damping: 15, stiffness: 300 }); }}
             onPressOut={() => { uploadScale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
           >
-            <Text style={styles.uploadText}>Upload outfit</Text>
+            <Text className="font-ui text-sm font-semibold text-white">Upload outfit</Text>
           </Pressable>
         </Animated.View>
       </View>
@@ -178,18 +178,18 @@ export default function InspoScreen() {
        {/* ======================================== */}
        {/* Layer 3: Overlay Bottom Sheet            */}
        {/* ======================================== */}
-       <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none" className="z-30">
+       <View className="absolute inset-0 z-30" pointerEvents="box-none">
          {isLoading ? (
-           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.bgCanvas }}>
-             <Text className="text-muted-foreground">Loading trending ideas...</Text>
+           <View className="flex-1 justify-center items-center bg-bgCanvas">
+             <Text className="text-textSecondary font-body">Loading trending ideas...</Text>
            </View>
          ) : error ? (
-           <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.bgCanvas }}>
-             <Text className="text-destructive" style={{ textAlign: 'center', marginBottom: 16 }}>
+           <View className="flex-1 p-6 justify-center items-center bg-bgCanvas">
+             <Text className="text-red-500 text-center mb-4 font-body">
                Failed to load trending ideas
              </Text>
              <Pressable onPress={() => useTrendingStore.getState().fetchSections()}>
-               <Text className="text-primary font-medium">Retry</Text>
+               <Text className="text-primary font-ui font-medium">Retry</Text>
              </Pressable>
            </View>
          ) : (
@@ -214,41 +214,3 @@ export default function InspoScreen() {
     </Animated.View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.bgCanvas,
-  },
-  header: {
-    position: 'absolute',
-    left: 24,
-    right: 24,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    ...Typography.heading1,
-    fontSize: 40,
-    color: Colors.light.textPrimary,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  uploadButton: {
-    backgroundColor: Colors.light.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  uploadText: {
-    ...Typography.uiLabelMedium,
-    fontWeight: '600',
-    color: Colors.light.bgSurface,
-  },
-});
