@@ -59,42 +59,40 @@ export const StyleSelector = () => {
   };
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
+    <Animated.View className="absolute left-4 z-[150] items-start" style={animatedStyle}>
       {/* Dropdown options - solid white glassmorphism */}
       {isOpen && (
         <Animated.View 
           entering={FadeInDown.springify().mass(2)}
           exiting={FadeOutDown.duration(200)}
-          style={styles.dropdownWrapper}
+          className="absolute left-0 w-[180px] mb-2.5 rounded-3xl bg-bgSurface/98 overflow-hidden border-[1.5px] border-white/90 shadow-lg shadow-black/10"
+          style={{ bottom: '100%', elevation: 4 }}
         >
-          <View style={styles.dropdown}>
+          <View className="p-1.5">
             <Pressable 
               onPress={() => handleSelect(null)}
-              style={({ pressed }) => [
-                styles.option, 
-                !selectedStyle && styles.optionSelected,
-                pressed && styles.optionPressed
-              ]}
+              className={`flex-row items-center justify-between px-3.5 py-3 rounded-2xl mb-0.5 ${!selectedStyle ? 'bg-primary/15' : ''}`}
+              style={({ pressed }: any) => (!selectedStyle ? {} : pressed ? { backgroundColor: 'rgba(var(--primary), 0.1)' } : {})}
             >
-              <RNText style={[styles.optionText, !selectedStyle && styles.optionTextSelected]}>Any Style</RNText>
+              <RNText className={`font-ui text-sm ${!selectedStyle ? 'text-textPrimary font-bold' : 'text-textSecondary'}`}>Any Style</RNText>
               {!selectedStyle && <Check size={16} color={THEME.primary} strokeWidth={3} />}
             </Pressable>
-            {OUTFIT_STYLES.map((style) => (
-              <Pressable
-                key={style}
-                onPress={() => handleSelect(style)}
-                style={({ pressed }) => [
-                  styles.option, 
-                  selectedStyle === style && styles.optionSelected,
-                  pressed && styles.optionPressed
-                ]}
-              >
-                <RNText style={[styles.optionText, selectedStyle === style && styles.optionTextSelected]}>
-                  {STYLE_LABELS[style]}
-                </RNText>
-                {selectedStyle === style && <Check size={16} color={THEME.primary} strokeWidth={3} />}
-              </Pressable>
-            ))}
+            {OUTFIT_STYLES.map((style) => {
+              const isSelected = selectedStyle === style;
+              return (
+                <Pressable
+                  key={style}
+                  onPress={() => handleSelect(style)}
+                  className={`flex-row items-center justify-between px-3.5 py-3 rounded-2xl mb-0.5 ${isSelected ? 'bg-primary/15' : ''}`}
+                  style={({ pressed }: any) => (isSelected ? {} : pressed ? { backgroundColor: 'rgba(var(--primary), 0.1)' } : {})}
+                >
+                  <RNText className={`font-ui text-sm ${isSelected ? 'text-textPrimary font-bold' : 'text-textSecondary'}`}>
+                    {STYLE_LABELS[style]}
+                  </RNText>
+                  {isSelected && <Check size={16} color={THEME.primary} strokeWidth={3} />}
+                </Pressable>
+              );
+            })}
           </View>
         </Animated.View>
       )}
@@ -102,17 +100,14 @@ export const StyleSelector = () => {
       {/* Trigger Button */}
       <Pressable 
         onPress={toggleOpen} 
-        style={({ pressed }) => [
-          styles.trigger, 
-          isOpen && styles.triggerActive,
-          pressed && styles.triggerPressed
-        ]}
+        className={`rounded-[20px] overflow-hidden border ${isOpen ? 'border-goldAccent' : 'border-white/60'}`}
+        style={({ pressed }: any) => (pressed ? { transform: [{ scale: 0.95 }], opacity: 0.9 } : {})}
       >
-        <View style={styles.triggerContent}>
-          <RNText style={styles.triggerText}>
+        <View className="flex-row items-center px-4 py-2.5 bg-bgSurface/85">
+          <RNText className="font-ui text-sm text-textSecondary mr-2">
             {selectedStyle ? STYLE_LABELS[selectedStyle] : 'Any Style'}
           </RNText>
-          <View style={styles.iconContainer}>
+          <View className="w-5 h-5 rounded-full bg-bgSurface justify-center items-center">
             {isOpen ? (
               <ChevronUp size={14} color={THEME.primary} strokeWidth={3} />
             ) : (
@@ -124,90 +119,5 @@ export const StyleSelector = () => {
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: 16,
-    zIndex: 150,
-    alignItems: 'flex-start',
-  },
-  trigger: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  triggerActive: {
-    borderColor: THEME.goldAccent,
-  },
-  triggerPressed: {
-    transform: [{ scale: 0.97 }],
-    opacity: 0.9,
-  },
-  triggerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(253, 250, 246, 0.85)', // surfaceGlass equivalent
-  },
-  triggerText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.textSecondary,
-    marginRight: 8,
-  },
-  iconContainer: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: THEME.bgSurface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownWrapper: {
-    position: 'absolute',
-    bottom: '100%',
-    left: 0,
-    width: 180,
-    marginBottom: 10,
-    borderRadius: 24,
-    backgroundColor: 'rgba(253, 250, 246, 0.98)',
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  dropdown: {
-    padding: 6,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 16,
-    marginBottom: 2,
-  },
-  optionPressed: {
-    backgroundColor: 'rgba(139, 115, 85, 0.1)',
-  },
-  optionSelected: {
-    backgroundColor: 'rgba(139, 115, 85, 0.15)',
-  },
-  optionText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.textSecondary,
-  },
-  optionTextSelected: {
-    color: THEME.textPrimary,
-    fontWeight: '700',
-  },
-});
 
 export default StyleSelector;

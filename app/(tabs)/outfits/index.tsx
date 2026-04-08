@@ -100,21 +100,21 @@ export default function OutfitsScreen() {
   const renderEmptyState = () => (
     <View className="flex-1 justify-center items-center px-6">
       {/* Cursive tagline — matches Stitch reference */}
-      <Text style={styles.tagline}>
+      <Text className="text-3xl font-bold italic text-textPrimary text-center leading-[36px] mb-7 font-heading">
         Curated styles for your{'\n'}inspired wardrobe
       </Text>
 
       {/* Stacked card illustration — mimics the Stitch card fan */}
-      <View style={styles.cardFan}>
+      <View className="items-center justify-center relative" style={{ width: SCREEN_W * 0.85, height: 400 }}>
         {/* Back-left card */}
-        <View style={[styles.fanCard, styles.fanCardLeft]} />
+        <View className="absolute bg-bgSurfaceRaised rounded-3xl overflow-hidden border-[6px] border-bgSurface opacity-70 w-[130px] h-[180px] left-2.5 top-2.5 -rotate-[8deg]" />
         {/* Back-right card */}
-        <View style={[styles.fanCard, styles.fanCardRight]} />
+        <View className="absolute bg-bgMuted rounded-3xl overflow-hidden border-[6px] border-bgSurface opacity-70 w-[135px] h-[190px] right-2.5 top-5 rotate-[6deg]" />
         {/* Front center card */}
-        <View style={[styles.fanCard, styles.fanCardCenter]}>
-          <View style={styles.fanCardLabel}>
-            <Text style={styles.fanCardLabelSub}>SIGNATURE LOOK</Text>
-            <Text style={styles.fanCardLabelTitle}>Modern Classics</Text>
+        <View className="absolute bg-bgSurface rounded-3xl overflow-hidden border-[6px] border-bgSurface w-[230px] h-[310px] top-10 shadow-xl shadow-primary/15" style={{ elevation: 10 }}>
+          <View className="absolute bottom-3 left-3 right-3 bg-white/95 rounded-xl py-2.5 px-3.5">
+            <Text className="text-[9px] font-bold tracking-[1.5px] text-[#2D2F1D]/60 uppercase font-ui">SIGNATURE LOOK</Text>
+            <Text className="text-sm font-semibold italic text-textPrimary mt-0.5 font-heading">Modern Classics</Text>
           </View>
         </View>
       </View>
@@ -123,7 +123,7 @@ export default function OutfitsScreen() {
       <View className="w-full px-4 mt-8 gap-3">
            {wardrobeItems.length === 0 ? (
              <TouchableOpacity
-               style={styles.primaryBtn}
+               className="flex-row items-center justify-center bg-primary py-4 rounded-full gap-2 shadow-lg shadow-[#8B7355]/25" style={{ elevation: 6 }}
                onPress={() =>
                  router.push({
                    pathname: '/(tabs)/wardrobe/add-item',
@@ -133,11 +133,11 @@ export default function OutfitsScreen() {
                activeOpacity={0.85}
              >
                <Feather name="plus" size={18} color={Colors.light.bgCanvas} />
-               <Text style={styles.primaryBtnText}>Add items to wardrobe</Text>
+               <Text className="text-bgSurface text-[15px] font-semibold tracking-[0.3px] font-ui">Add items to wardrobe</Text>
              </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.primaryBtn} onPress={generateSuggestions} activeOpacity={0.85}>
-            <Text style={styles.primaryBtnText}>✦ Generate Outfits</Text>
+          <TouchableOpacity className="flex-row items-center justify-center bg-primary py-4 rounded-full gap-2 shadow-lg shadow-[#8B7355]/25" style={{ elevation: 6 }} onPress={generateSuggestions} activeOpacity={0.85}>
+            <Text className="text-bgSurface text-[15px] font-semibold tracking-[0.3px] font-ui">✦ Generate Outfits</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -147,8 +147,8 @@ export default function OutfitsScreen() {
   // ─── MAIN RENDER ────────────────────────────────────────
   if (isLoading && outfits.length === 0) {
     return (
-      <Animated.View style={animatedStyle}>
-        <View style={{ flex: 1, backgroundColor: Colors.light.bgCanvas, justifyContent: 'center', alignItems: 'center' }}>
+      <Animated.View style={animatedStyle} className="flex-1 bg-bgCanvas">
+        <View className="flex-1 bg-bgCanvas justify-center items-center">
           <LoadingOverlay message="Loading outfits..." />
         </View>
       </Animated.View>
@@ -156,17 +156,17 @@ export default function OutfitsScreen() {
   }
 
   return (
-    <Animated.View style={animatedStyle}>
-      <SafeAreaView style={styles.container} edges={['top']}>
+    <Animated.View style={animatedStyle} className="flex-1 bg-bgCanvas">
+      <SafeAreaView className="flex-1 bg-bgCanvas" edges={['top']}>
         {/* Header — Stitch style */}
         <View className="flex-row justify-between items-center px-8 pt-2 pb-4">
-          <Text style={styles.headerTitle}>Outfits</Text>
+          <Text className="text-4xl font-semibold italic text-textPrimary tracking-tight font-heading">Outfits</Text>
           <View className="flex-row items-center gap-3">
-            <TouchableOpacity style={styles.uploadBtn} onPress={() => generateSuggestions()} activeOpacity={0.85}>
+            <TouchableOpacity className="flex-row items-center gap-1.5 bg-primary px-3.5 py-2.5 rounded-full shadow-md shadow-[#8B7355]/20" style={{ elevation: 4 }} onPress={() => generateSuggestions()} activeOpacity={0.85}>
               <Feather name="plus" size={16} color={Colors.light.bgCanvas} />
-              <Text style={styles.uploadBtnText}>Upload outfit</Text>
+              <Text className="text-bgSurface text-xs font-medium tracking-[0.3px] font-ui">Upload outfit</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.filterBtn} activeOpacity={0.7}>
+            <TouchableOpacity className="bg-[#EAE4DA]/50 p-2.5 rounded-full border border-[#A89880]/10" activeOpacity={0.7}>
               <Feather name="sliders" size={20} color={Colors.light.textPrimary} />
             </TouchableOpacity>
           </View>
@@ -186,7 +186,7 @@ export default function OutfitsScreen() {
         )}
 
         {isGenerating && (
-          <View style={StyleSheet.absoluteFill}>
+          <View className="absolute inset-0 z-50">
             <LoadingOverlay message="AI is styling your outfits..." />
           </View>
         )}
@@ -194,141 +194,3 @@ export default function OutfitsScreen() {
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.bgCanvas,
-  },
-  headerTitle: {
-    fontSize: 34,
-    fontWeight: '600',
-    fontStyle: 'italic',
-    color: Colors.light.textPrimary,
-    letterSpacing: -0.5,
-  },
-  uploadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.light.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    shadowColor: '#8B7355',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  uploadBtnText: {
-    color: Colors.light.bgSurface,
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: 0.3,
-  },
-  filterBtn: {
-    backgroundColor: 'rgba(234, 228, 218, 0.5)', // bgMuted with alpha
-    padding: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(168, 152, 128, 0.1)', // textTertiary with alpha
-  },
-  tagline: {
-    fontSize: 26,
-    fontWeight: '700',
-    fontStyle: 'italic',
-    color: Colors.light.textPrimary,
-    textAlign: 'center',
-    lineHeight: 36,
-    marginBottom: 28,
-  },
-  cardFan: {
-    width: SCREEN_W * 0.85,
-    height: 400,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  fanCard: {
-    position: 'absolute',
-    backgroundColor: Colors.light.bgSurface,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 6,
-    borderColor: Colors.light.bgSurface,
-  },
-  fanCardLeft: {
-    width: 130,
-    height: 180,
-    left: 10,
-    top: 10,
-    transform: [{ rotate: '-8deg' }],
-    opacity: 0.7,
-    backgroundColor: Colors.light.bgSurfaceRaised,
-  },
-  fanCardRight: {
-    width: 135,
-    height: 190,
-    right: 10,
-    top: 20,
-    transform: [{ rotate: '6deg' }],
-    opacity: 0.7,
-    backgroundColor: Colors.light.bgMuted,
-  },
-  fanCardCenter: {
-    width: 230,
-    height: 310,
-    top: 40,
-    backgroundColor: Colors.light.bgSurface,
-    shadowColor: Colors.light.primary,
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.15,
-    shadowRadius: 40,
-    elevation: 10,
-  },
-  fanCardLabel: {
-    position: 'absolute',
-    bottom: 12,
-    left: 12,
-    right: 12,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  fanCardLabelSub: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    color: 'rgba(45, 47, 29, 0.6)',
-    textTransform: 'uppercase',
-  },
-  fanCardLabelTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontStyle: 'italic',
-    color: Colors.light.textPrimary,
-    marginTop: 2,
-  },
-  primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 16,
-    borderRadius: 999,
-    gap: 8,
-    shadowColor: '#8B7355',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  primaryBtnText: {
-    color: Colors.light.bgSurface,
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-});

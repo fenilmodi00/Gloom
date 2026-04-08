@@ -217,18 +217,18 @@ export function ModelDetailPopup({
   const renderItem = ({ index }: { index: number }) => {
     if (index === 0) {
       return (
-        <View style={styles.slide}>
-          <View style={styles.imageContainer}>
+        <View className="flex-1 w-full bg-bgCanvas" style={{ width: SCREEN_WIDTH }}>
+          <View className="flex-1 mx-4 mt-2 rounded-[20px] overflow-hidden bg-bgSurface">
             <Image
               source={imageSource}
-              style={styles.modelImage}
+              className="w-full h-full"
               contentFit="cover"
               transition={200}
             />
           </View>
-          <View style={styles.swipeHint}>
+          <View className="flex-row items-center justify-center gap-1.5 py-2.5">
             <Feather name="chevron-left" size={13} color={Colors.light.textSecondary} />
-            <Text style={styles.hintText}>Swipe for outfit details</Text>
+            <Text className="font-body text-xs text-textSecondary">Swipe for outfit details</Text>
             <Feather name="chevron-right" size={13} color={Colors.light.textSecondary} />
           </View>
         </View>
@@ -236,20 +236,20 @@ export function ModelDetailPopup({
     }
 
     return (
-      <View style={styles.slide}>
-        <View style={styles.outfitHeader}>
+      <View className="flex-1 w-full bg-bgCanvas" style={{ width: SCREEN_WIDTH }}>
+        <View className="flex-row items-center justify-between px-4 py-3 bg-bgSurface">
           <Pressable
             onPress={() => navigateToSlide(0)}
-            style={styles.backButton}
+            className="w-9 h-9 rounded-full bg-bgCanvas items-center justify-center"
           >
             <Feather name="arrow-left" size={18} color={Colors.light.textPrimary} />
           </Pressable>
-          <Text style={styles.outfitTitle}>Complete Look</Text>
+          <Text className="font-heading text-lg text-textPrimary">Complete Look</Text>
           <View style={{ width: 36 }} />
         </View>
 
         {clothItems.length > 0 ? (
-          <View style={styles.outfitBoardContainer}>
+          <View className="flex-1 items-center justify-center px-4 pb-4">
             <OutfitBoard
               top={mappedOutfit.top}
               bottom={mappedOutfit.bottom}
@@ -261,8 +261,8 @@ export function ModelDetailPopup({
             />
           </View>
         ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No outfit items</Text>
+          <View className="flex-1 items-center justify-center">
+            <Text className="font-body text-base text-textSecondary">No outfit items</Text>
           </View>
         )}
       </View>
@@ -277,11 +277,11 @@ export function ModelDetailPopup({
       onRequestClose={safeClose}
       statusBarTranslucent
     >
-      <GestureHandlerRootView style={styles.gestureRoot}>
+      <GestureHandlerRootView className="flex-1">
         {/* Backdrop */}
-        <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
+        <Animated.View className="absolute inset-0" style={backdropStyle}>
           <Pressable
-            style={StyleSheet.absoluteFill}
+            className="absolute inset-0"
             onPress={safeClose}
           >
             <LinearGradient
@@ -301,17 +301,23 @@ export function ModelDetailPopup({
         </Animated.View>
 
         {/* Popup Card */}
-        <Animated.View style={[styles.popupCard, popupStyle]}>
-          <View style={styles.header}>
-            <View style={styles.headerSpacer} />
-            <Pressable onPress={safeClose} style={styles.closeButton}>
+        <Animated.View
+          className="absolute left-0 right-0 z-10 bg-bgCanvas rounded-[28px] overflow-hidden shadow-2xl shadow-black/10"
+          style={[
+            popupStyle,
+            { top: SCREEN_HEIGHT * 0.10, bottom: SCREEN_HEIGHT * 0.10, elevation: 8 }
+          ]}
+        >
+          <View className="flex-row items-center px-4 py-3 bg-bgSurface rounded-t-[28px]">
+            <View className="flex-1" />
+            <Pressable onPress={safeClose} className="w-9 h-9 rounded-full bg-bgCanvas items-center justify-center">
               <Feather name="x" size={20} color={Colors.light.textPrimary} />
             </Pressable>
           </View>
 
           {/* Swipeable slides using Carousel */}
           <View
-            style={styles.slideOuter}
+            className="flex-1 overflow-hidden bg-bgCanvas"
             onLayout={(e) => setCarouselHeight(e.nativeEvent.layout.height)}
           >
             {carouselHeight > 0 && (
@@ -330,21 +336,21 @@ export function ModelDetailPopup({
           </View>
 
           {/* Footer */}
-          <View style={styles.footer}>
-            <View style={styles.pagination}>
-              <View style={[styles.dot, currentSlide === 0 && styles.dotActive]} />
-              <View style={[styles.dot, currentSlide === 1 && styles.dotActive]} />
+          <View className="px-5 pt-3.5 pb-7 bg-bgSurface rounded-b-[28px] gap-3.5">
+            <View className="flex-row justify-center gap-2">
+              <View className={`h-2 rounded-full ${currentSlide === 0 ? 'w-6 bg-primary' : 'w-2 bg-[#D0D0D0]'}`} />
+              <View className={`h-2 rounded-full ${currentSlide === 1 ? 'w-6 bg-primary' : 'w-2 bg-[#D0D0D0]'}`} />
             </View>
 
-            <View style={styles.actions}>
-              <Pressable style={styles.saveBtn} onPress={() => handleSave(imageSource)}>
+            <View className="flex-row gap-3">
+              <Pressable className="flex-1 flex-row items-center justify-center gap-1.5 py-3.5 rounded-full border-[1.5px] border-primary bg-bgSurface" onPress={() => handleSave(imageSource)}>
                 <Feather name="bookmark" size={18} color={Colors.light.primary} />
-                <Text style={styles.saveBtnText}>Save</Text>
+                <Text className="font-ui text-sm font-medium text-primary">Save</Text>
               </Pressable>
 
-              <Pressable style={styles.shareBtn} onPress={() => handleShare(imageSource)}>
+              <Pressable className="flex-1 flex-row items-center justify-center gap-1.5 py-3.5 rounded-full bg-primary" onPress={() => handleShare(imageSource)}>
                 <Feather name="share" size={18} color={Colors.light.bgSurface} />
-                <Text style={styles.shareBtnText}>Share</Text>
+                <Text className="font-ui text-sm font-medium text-white">Share</Text>
               </Pressable>
             </View>
           </View>
@@ -353,171 +359,3 @@ export function ModelDetailPopup({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  gestureRoot: {
-    flex: 1,
-  },
-  popupCard: {
-    position: 'absolute',
-    top: SCREEN_HEIGHT * 0.10,
-    bottom: SCREEN_HEIGHT * 0.10,
-    left: 0,
-    right: 0,
-    zIndex: 2,
-    backgroundColor: Colors.light.bgCanvas,
-    borderRadius: 28,
-    shadowColor: '#1A1A1A',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.light.bgSurface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-  },
-  headerSpacer: { flex: 1 },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.light.bgCanvas,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  slideOuter: {
-    flex: 1,
-    overflow: 'hidden',
-    backgroundColor: Colors.light.bgCanvas,
-  },
-  slide: {
-    flex: 1,
-    width: SCREEN_WIDTH,
-    backgroundColor: Colors.light.bgCanvas,
-  },
-  imageContainer: {
-    flex: 1,
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: Colors.light.bgSurface,
-  },
-  modelImage: {
-    width: '100%',
-    height: '100%',
-  },
-  swipeHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-  },
-  hintText: {
-    ...Typography.bodySmall,
-    color: Colors.light.textSecondary,
-  },
-  outfitHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.light.bgSurface,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.light.bgCanvas,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  outfitTitle: {
-    ...Typography.heading3,
-    color: Colors.light.textPrimary,
-  },
-  outfitBoardContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    ...Typography.body,
-    color: Colors.light.textSecondary,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 28,
-    backgroundColor: Colors.light.bgSurface,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    gap: 14,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#D0D0D0',
-  },
-  dotActive: {
-    width: 24,
-    borderRadius: 3,
-    backgroundColor: Colors.light.primary,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  saveBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 13,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: Colors.light.primary,
-    backgroundColor: Colors.light.bgSurface,
-  },
-  saveBtnText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.primary,
-  },
-  shareBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 13,
-    borderRadius: 999,
-    backgroundColor: Colors.light.primary,
-  },
-  shareBtnText: {
-    ...Typography.uiLabelMedium,
-    color: Colors.light.bgSurface,
-  },
-});

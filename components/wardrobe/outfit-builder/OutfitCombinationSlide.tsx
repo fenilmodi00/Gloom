@@ -63,7 +63,7 @@ export function OutfitCombinationSlide({ combination }: OutfitCombinationSlidePr
   const title = getCombinationTitle(combination);
   
   return (
-    <View style={styles.slide}>
+    <View className="flex-1 items-center justify-center">
       {/* Outfit Board - 2x2 grid with DotGrid background */}
       <OutfitBoard
         selection={combination.selection}
@@ -75,30 +75,9 @@ export function OutfitCombinationSlide({ combination }: OutfitCombinationSlidePr
       />
       
       {/* Title overlaid on DotGrid */}
-      <Text style={styles.overlaidTitle} numberOfLines={1}>
+      <Text className="absolute left-0 right-0 text-center font-heading text-4xl text-textSecondary" style={{ top: 60 }} numberOfLines={1}>
         {title}
       </Text>
     </View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  slide: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  overlaidTitle: {
-    position: 'absolute',
-    top: 60, // Position below header area
-    left: 0,
-    right: 0,
-    ...Typography.heading1,
-    color: THEME.textSecondary,
-    textAlign: 'center',
-  },
-});

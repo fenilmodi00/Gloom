@@ -166,34 +166,35 @@ const ToastItem = React.memo(function ToastItem({ toast, onDismiss }: ToastItemP
     <GestureDetector gesture={pan}>
       <Animated.View
         layout={LinearTransition.springify().damping(18)}
-        style={[styles.wrapper, animatedStyle]}
+        className="rounded-2xl shadow-lg shadow-textPrimary/10"
+        style={[
+          { width: TOAST_WIDTH, elevation: 6 },
+          animatedStyle
+        ]}
       >
         <BlurView
           intensity={BLUR.card}           // 6 — subtle, not frosted-glass heavy
           tint="light"
-          style={styles.blur}
+          className="flex-row items-center rounded-2xl overflow-hidden border border-[#D4C8B8]/45 bg-[#FDFAF6]/80 py-3 pr-4"
         >
           {/* Status accent bar */}
-          <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
+          <View className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ backgroundColor: accentColor }} />
 
           {/* Icon badge */}
-          <View style={[
-            styles.iconBadge,
-            { backgroundColor: `${accentColor}22` },  // 13% opacity tint
-          ]}>
-            <Text style={[styles.iconText, { color: accentColor }]}>
+          <View className="w-[30px] h-[30px] rounded-[9px] items-center justify-center ml-4 mr-2.5 shrink-0" style={{ backgroundColor: `${accentColor}22` }}>
+            <Text className="font-product text-base" style={{ color: accentColor }}>
               {ICON[toast.type]}
             </Text>
           </View>
 
           {/* Text */}
-          <View style={styles.textBlock}>
+          <View className="flex-1 justify-center py-px">
             {toast.title ? (
-              <Text style={styles.title} numberOfLines={1}>
+              <Text className="font-ui text-[13px] font-semibold text-textPrimary leading-4 mb-px" numberOfLines={1}>
                 {toast.title}
               </Text>
             ) : null}
-            <Text style={styles.message} numberOfLines={2}>
+            <Text className="font-body text-[13px] text-textSecondary leading-[18px]" numberOfLines={2}>
               {toast.message}
             </Text>
           </View>
@@ -229,7 +230,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast: showToastInternal }}>
       {children}
-      <View style={styles.container} pointerEvents="box-none">
+      <View className="absolute top-14 left-0 right-0 z-[9999] items-center gap-2" pointerEvents="box-none">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
         ))}

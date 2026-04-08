@@ -301,35 +301,35 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
   if (!showUploadScreen && !photoUri) {
     if (!permission?.granted) {
       return (
-        <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
-          <Text style={styles.permissionText}>We need camera permission to continue</Text>
-          <Pressable style={styles.permissionButton} onPress={requestPermission}>
-            <Text style={styles.permissionButtonText}>Grant Permission</Text>
+        <View className="flex-1 bg-background justify-center items-center p-8" style={{ paddingTop: insets.top }}>
+          <Text className="font-body text-base text-center mb-6">We need camera permission to continue</Text>
+          <Pressable className="bg-primary px-7 py-3.5 rounded-full" onPress={requestPermission}>
+            <Text className="font-ui text-sm font-semibold text-white">Grant Permission</Text>
           </Pressable>
-          <Pressable onPress={closeScreen} style={{ marginTop: 24 }}>
-            <Text style={{ color: Colors.light.textSecondary }}>Cancel</Text>
+          <Pressable onPress={closeScreen} className="mt-6">
+            <Text className="font-ui text-sm text-textSecondary">Cancel</Text>
           </Pressable>
         </View>
       );
     }
 
     return (
-      <View style={styles.cameraContainer}>
-        <View style={[styles.cameraHeader, { paddingTop: insets.top }]}>
-          <Pressable onPress={() => setShowUploadScreen(true)} style={styles.headerButton}>
+      <View className="flex-1 bg-black">
+        <View className="flex-row justify-between items-center px-6 py-4" style={{ paddingTop: insets.top }}>
+          <Pressable onPress={() => setShowUploadScreen(true)} className="p-2 w-10">
             <X size={24} color="white" />
           </Pressable>
-          <Text style={styles.cameraTitle}>Add to Wardrobe</Text>
-          <View style={styles.headerButton} />
+          <Text className="font-ui text-sm font-medium text-white tracking-widest">Add to Wardrobe</Text>
+          <View className="w-10" />
         </View>
-        <View style={styles.cameraPreview}>
-          <CameraView ref={cameraRef} style={styles.cameraView} facing="back" />
-          <View style={styles.guideOverlay} />
-          <Text style={styles.guideText}>Position item clearly in frame</Text>
+        <View className="flex-1 mx-4 rounded-3xl overflow-hidden relative">
+          <CameraView ref={cameraRef} className="flex-1" facing="back" />
+          <View className="absolute inset-0 border-2 border-white/30 border-dashed m-8 rounded-2xl" />
+          <Text className="font-body text-xs text-white absolute bottom-8 w-full text-center">Position item clearly in frame</Text>
         </View>
-        <View style={[styles.cameraControls, { paddingBottom: insets.bottom + 24 }]}>
-          <Pressable style={styles.captureButtonOuter} onPress={takePhoto}>
-            <View style={styles.captureButtonInner} />
+        <View className="items-center justify-center pt-8" style={{ paddingBottom: insets.bottom + 24 }}>
+          <Pressable className="w-[72px] h-[72px] rounded-full border-4 border-white items-center justify-center" onPress={takePhoto}>
+            <View className="w-14 h-14 rounded-full bg-white" />
           </Pressable>
         </View>
       </View>
@@ -339,28 +339,28 @@ const { addItem, uploadImage, updateItemTags } = useWardrobeStore();
   // 3. Preview Screen
   if (photoUri) {
     return (
-      <View style={[styles.previewContainer, { paddingTop: insets.top }]}>
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
         <LoadingOverlay visible={isProcessing} message={loadingMessage} />
-        <View style={styles.previewHeader}>
-          <Pressable onPress={() => setPhotoUri(null)} style={styles.headerButton}>
+        <View className="flex-row justify-between items-center px-6 py-4">
+          <Pressable onPress={() => setPhotoUri(null)} className="p-2 w-10">
             <X size={24} color={Colors.light.textPrimary} />
           </Pressable>
-          <Text style={styles.previewTitle}>Preview</Text>
-          <View style={styles.headerButton} />
+          <Text className="font-heading text-xl text-textPrimary">Preview</Text>
+          <View className="w-10" />
         </View>
-        <View style={styles.previewImageContainer}>
+        <View className="flex-1 mx-6 mb-6 rounded-3xl overflow-hidden bg-bgSurfaceRaised shadow-md shadow-black/10" style={{ elevation: 4 }}>
           {!isProcessing && (
-            <Image source={{ uri: photoUri }} style={styles.previewImage} contentFit="cover" />
+            <Image source={{ uri: photoUri }} className="w-full h-full" contentFit="cover" />
           )}
           {isProcessing && <PreviewSkeleton />}
         </View>
-        <View style={[styles.previewActions, { paddingBottom: insets.bottom + 16 }]}>
-          <Pressable style={styles.retakeButton} onPress={() => setPhotoUri(null)}>
-            <Text style={styles.retakeButtonText}>Retake</Text>
+        <View className="flex-row px-6 gap-4" style={{ paddingBottom: insets.bottom + 16 }}>
+          <Pressable className="flex-1 py-4 rounded-full border border-navbarBorder items-center justify-center" onPress={() => setPhotoUri(null)}>
+            <Text className="font-ui text-sm font-medium text-textPrimary">Retake</Text>
           </Pressable>
-          <Pressable style={styles.saveButton} onPress={handleSave}>
+          <Pressable className="flex-[2] flex-row items-center justify-center gap-2 bg-primary py-4 rounded-full" onPress={handleSave}>
             <Check size={18} color="white" />
-            <Text style={styles.saveButtonText}>Analyze & Save</Text>
+            <Text className="font-ui text-sm font-medium text-white">Analyze & Save</Text>
           </Pressable>
         </View>
       </View>

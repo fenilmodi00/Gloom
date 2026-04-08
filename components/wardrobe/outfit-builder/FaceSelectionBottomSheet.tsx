@@ -73,8 +73,8 @@ export function FaceSelectionBottomSheet({
       snapPoints={snapPoints}
       onChange={handleSheetChange}
       enablePanDownToClose
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.handleIndicator}
+      backgroundStyle={{ backgroundColor: THEME.bgSurface, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+      handleIndicatorStyle={{ backgroundColor: THEME.dragHandle, width: 40 }}
       backdropComponent={renderBackdrop}
     >
       {/*
@@ -84,12 +84,12 @@ export function FaceSelectionBottomSheet({
         correct non-scrollable container for @gorhom/bottom-sheet
         and respects overflow:'visible' unlike BottomSheetScrollView.
       */}
-      <BottomSheetView style={styles.contentContainer}>
+      <BottomSheetView className="p-4 gap-5">
 
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Select Face for Try-On</Text>
-          <Pressable onPress={handleClose} style={styles.closeButton}>
+        <View className="flex-row items-center justify-between">
+          <Text className="font-heading text-xl text-textPrimary">Select Face for Try-On</Text>
+          <Pressable onPress={handleClose} className="w-9 h-9 rounded-full bg-black/5 items-center justify-center">
             <X size={20} color={THEME.textPrimary} />
           </Pressable>
         </View>
@@ -108,79 +108,14 @@ export function FaceSelectionBottomSheet({
 
         {/* Try On Button */}
         <Pressable
-          style={[
-            styles.tryOnButton,
-            !selectedFace && styles.tryOnButtonDisabled,
-          ]}
+          className={`flex-row items-center justify-center py-4 rounded-2xl gap-2 mt-5 ${selectedFace ? 'bg-goldAccent shadow-md shadow-black/10' : 'bg-black/10'}`}
           onPress={handleTryOn}
           disabled={!selectedFace}
         >
-          <Text style={styles.tryOnButtonText}>Try on</Text>
+          <Text className="font-ui text-sm font-medium text-bgSurface">Try on</Text>
           <Sparkles size={18} color={THEME.bgSurface} />
         </Pressable>
       </BottomSheetView>
     </BottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  sheetBackground: {
-    backgroundColor: THEME.bgSurface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  handleIndicator: {
-    backgroundColor: THEME.dragHandle,
-    width: 40,
-  },
-  contentContainer: {
-    padding: 16,
-    gap: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    ...Typography.heading3,
-    color: THEME.textPrimary,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  carouselContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  selectedFaceName: {
-    ...Typography.body,
-    color: THEME.textSecondary,
-    textAlign: 'center',
-  },
-  tryOnButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: THEME.goldAccent,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 20,
-    gap: 8,
-    marginTop: 20,
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  },
-  tryOnButtonDisabled: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  tryOnButtonText: {
-    ...Typography.uiLabelMedium,
-    color: THEME.bgSurface,
-  },
-});

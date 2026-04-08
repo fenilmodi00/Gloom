@@ -107,7 +107,7 @@ export function FaceCarousel({
   }
 
   return (
-    <View style={styles.carouselContainer}>
+    <View className="items-center justify-center -mx-4" style={{ height: CARD_HEIGHT, width: SCREEN_WIDTH }}>
       <Carousel
         width={SCREEN_WIDTH}
         height={CARD_HEIGHT}
@@ -193,17 +193,18 @@ function FaceCard({ item, isSelected, onPress, animationValue }: FaceCardProps &
   const content = item.isAddButton ? (
     <Pressable
       onPress={onPress}
-      style={styles.addFaceButton}
+      className="items-center justify-center bg-black/5 border border-black/10 border-dashed"
+      style={{ width: FACE_IMAGE_WIDTH, height: FACE_IMAGE_HEIGHT, borderRadius: FACE_IMAGE_RADIUS }}
     >
-      <View style={styles.addFaceIcon} />
-      <View style={[styles.addFaceIcon, styles.addFaceIconCenter]} />
+      <View className="absolute w-6 h-0.5 bg-textTertiary rounded-sm" />
+      <View className="absolute w-6 h-0.5 bg-textTertiary rounded-sm rotate-90" />
     </Pressable>
   ) : (
-    <View style={styles.faceImageContainer}>
-      <Animated.View style={[styles.faceImageWrapper, borderStyle]}>
+    <View className="items-center justify-center" style={{ width: FACE_IMAGE_WIDTH, height: FACE_IMAGE_HEIGHT }}>
+      <Animated.View className="overflow-hidden border-[3px]" style={[borderStyle, { width: FACE_IMAGE_WIDTH, height: FACE_IMAGE_HEIGHT, borderRadius: FACE_IMAGE_RADIUS }]}>
         <Image
           source={typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl}
-          style={styles.faceImage}
+          className="flex-1 w-full h-full"
           contentFit="cover"
         />
       </Animated.View>
@@ -211,79 +212,8 @@ function FaceCard({ item, isSelected, onPress, animationValue }: FaceCardProps &
   );
 
   return (
-    <View style={styles.faceCard}>
+    <View className="items-center justify-center gap-2" style={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}>
       {content}
     </View>
   );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-  carouselContainer: {
-    height: CARD_HEIGHT,
-    width: SCREEN_WIDTH,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: -16,
-  },
-  faceCard: {
-    width: SCREEN_WIDTH,
-    height: CARD_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  faceCardSelected: {
-    // Add some visual indicator for selected face
-  },
-  faceImageContainer: {
-    width: FACE_IMAGE_WIDTH,
-    height: FACE_IMAGE_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  faceImageWrapper: {
-    width: FACE_IMAGE_WIDTH,
-    height: FACE_IMAGE_HEIGHT,
-    borderRadius: FACE_IMAGE_RADIUS,
-    borderWidth: 3,
-    borderColor: 'transparent',
-    overflow: 'hidden',
-  },
-  faceImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  addFaceButton: {
-    width: FACE_IMAGE_WIDTH,
-    height: FACE_IMAGE_HEIGHT,
-    borderRadius: FACE_IMAGE_RADIUS,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    borderStyle: 'dashed',
-  },
-  addFaceIcon: {
-    position: 'absolute',
-    width: 24,
-    height: 2,
-    backgroundColor: THEME.textTertiary,
-    borderRadius: 1,
-  },
-  addFaceIconCenter: {
-    transform: [{ rotate: '90deg' }],
-  },
-  faceName: {
-    ...Typography.bodySmall,
-    color: THEME.textSecondary,
-    textAlign: 'center',
-  },
-});

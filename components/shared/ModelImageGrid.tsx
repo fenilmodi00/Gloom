@@ -14,17 +14,17 @@ interface Props {
 export function ModelImageGrid({ images, onImagePress, onImageDelete }: Props) {
   if (images.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No model images saved yet.</Text>
-        <Text style={styles.emptySubtext}>Try on an outfit to save your look!</Text>
+      <View className="p-8 items-center justify-center">
+        <Text className="text-lg font-body text-textPrimary mb-2">No model images saved yet.</Text>
+        <Text className="text-sm font-body text-textSecondary text-center">Try on an outfit to save your look!</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.grid}>
+    <View className="flex-row flex-wrap p-2">
       {images.map((image) => (
-        <View key={image.id} style={styles.gridItem}>
+        <View key={image.id} className="w-1/2 p-2">
           <ModelImageCard
             image={image}
             onPress={() => onImagePress?.(image)}
@@ -35,30 +35,3 @@ export function ModelImageGrid({ images, onImagePress, onImageDelete }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 8,
-  },
-  gridItem: {
-    width: '50%',
-    padding: 8,
-  },
-  emptyContainer: {
-    padding: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    ...Typography.bodyLarge,
-    color: Colors.light.textPrimary,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    ...Typography.bodyMedium,
-    color: Colors.light.textSecondary,
-    textAlign: 'center',
-  },
-});
