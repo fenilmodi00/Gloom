@@ -4,6 +4,7 @@ import (
 	"backend/internal/db"
 	"backend/internal/middleware"
 	"backend/internal/response"
+	"context"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"

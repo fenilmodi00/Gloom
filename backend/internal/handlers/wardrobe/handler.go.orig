@@ -3,7 +3,6 @@ package wardrobe
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"backend/internal/db"
 	"backend/internal/middleware"
