@@ -87,10 +87,6 @@ func (h *ParallelHandler) ProcessParallel(c *fiber.Ctx) error {
 		return response.InternalError(c, "failed to update processing status")
 	}
 
-	if tag.RowsAffected() == 0 {
-		return response.Conflict(c, "Item is already being processed or is not in a processable state")
-	}
-
 	// Start async processing in goroutine
 	go h.processParallelInBackground(id, userID, item.ImageURL)
 
@@ -173,9 +169,9 @@ func (h *ParallelHandler) categorizeWithGeminiOnOriginal(ctx context.Context, it
 	// This indicates Gemini completed but rembg is still running
 	_, err = h.db.Exec(ctx, `
 	UPDATE wardrobe_items
-	SET category = $1, sub_category = $2, colors = $3, style_tags = $4, 
-	    occasion_tags = $5, vibe_tags = $6, functional_tags = $7, 
-	    silhouette_tags = $8, fabric_guess = $9, 
+	SET category = $1, sub_category = $2, colors = $3, style_tags = $4,
+	    occasion_tags = $5, vibe_tags = $6, functional_tags = $7,
+	    silhouette_tags = $8, fabric_guess = $9,
 	    processing_status = 'analyzing'
 	WHERE id = $10
 	`, resp.Category, resp.SubCategory, resp.Colors, resp.StyleTags,
